@@ -1,0 +1,137 @@
+if !exists('*job_start') || !has('channel') || !has('patch-7.4.1590')
+    finish
+endif
+if !empty(get(g:, 'ZFVimJobImpl', {}))
+    finish
+endif
+
+" {
+"   'jobImplIdNumber/jobImplChannelNumber' : {
+"     'jobImplId' : '',
+"     'jobImplIdNumber' : '',
+"     'jobImplChannel' : '',
+"     'jobImplChannelNumber' : '',
+"     'onOutput' : '',
+"     'onExit' : '',
+"   }
+" }
+if !exists('s:jobImplIdMap')
+    let s:jobImplIdMap = {}
+endif
+if !exists('s:jobImplChannelMap')
+    let s:jobImplChannelMap = {}
+endif
+
+function! s:toString(a)
+    redir => s
+    echo a:a
+    redir END
+    return substitute(s, '\n', '', 'g')
+endfunction
+function! s:traitNumber(jobImplId)
+    silent! let s = s:toString(a:jobImplId)
+    return substitute(s, '^.\{-}\([0-9]\+\).\{-}$', '\1', '')
+endfunction
+function! s:jobImplIdNumber(jobImplId)
+    return s:traitNumber(a:jobImplId)
+endfunction
+function! s:jobImplChannelNumber(jobImplChannel)
+    return s:traitNumber(a:jobImplChannel)
+endfunction
+
+function! s:jobStart(jobStatus, onOutput, onExit)
+    let jobImplOption = {
+                \   'out_cb' : function('s:vim_out_cb'),
+                \   'err_cb' : function('s:vim_err_cb'),
+                \   'exit_cb' : function('s:vim_exit_cb'),
+                \   'mode' : 'nl',
+                \ }
+    if !empty(get(a:jobStatus['jobOption'], 'jobCwd', ''))
+        let jobImplOption['cwd'] = a:jobStatus['jobOption']['jobCwd']
+    endif
+
+    let jobImplId = job_start(a:jobStatus['jobOption']['jobCmd'], jobImplOption)
+    if job_status(jobImplId) != 'run'
+        return 0
+    endif
+    let jobImplChannel = job_getchannel(jobImplId)
+    if empty(jobImplChannel) || string(jobImplChannel) == 'channel fail'
+        call job_stop(jobImplId)
+        return 0
+    endif
+    let a:jobStatus['jobImplData']['jobImplId'] = jobImplId
+    let a:jobStatus['jobImplData']['jobImplChannel'] = jobImplChannel
+
+    let jobImplIdNumber = s:jobImplIdNumber(jobImplId)
+    let jobImplChannelNumber = s:jobImplChannelNumber(jobImplChannel)
+    let jobImplState = {
+                \   'jobImplId' : jobImplId,
+                \   'jobImplIdNumber' : jobImplIdNumber,
+                \   'jobImplChannel' : jobImplChannel,
+                \   'jobImplChannelNumber' : jobImplChannelNumber,
+                \   'onOutput' : a:onOutput,
+                \   'onExit' : a:onExit,
+                \ }
+    let s:jobImplIdMap[jobImplIdNumber] = jobImplState
+    let s:jobImplChannelMap[jobImplChannelNumber] = jobImplState
+    return 1
+endfunction
+
+function! s:jobStop(jobStatus)
+    let jobImplId = a:jobStatus['jobImplData']['jobImplId']
+    let jobImplChannel = a:jobStatus['jobImplData']['jobImplChannel']
+    let jobImplIdNumber = s:jobImplIdNumber(jobImplId)
+    let jobImplChannelNumber = s:jobImplChannelNumber(jobImplChannel)
+    unlet s:jobImplIdMap[jobImplIdNumber]
+    unlet s:jobImplChannelMap[jobImplChannelNumber]
+    try
+        silent! call ch_close(a:jobStatus['jobImplData']['jobImplChannel'])
+    endtry
+    call job_stop(a:jobStatus['jobImplData']['jobImplId'])
+    return 1
+endfunction
+
+function! s:jobSend(jobStatus, text)
+    let jobImplChannel = a:jobStatus['jobImplData']['jobImplChannel']
+    call ch_sendraw(jobImplChannel, a:text)
+    return 1
+endfunction
+
+function! s:vim_out_cb(jobImplChannel, msg, ...)
+    let jobImplChannelNumber = s:jobImplChannelNumber(a:jobImplChannel)
+    let jobImplState = get(s:jobImplChannelMap, jobImplChannelNumber, {})
+    if empty(jobImplState)
+        return
+    endif
+
+    call ZFJobFuncCall(jobImplState['onOutput'], [a:msg, 'stdout'])
+endfunction
+function! s:vim_err_cb(jobImplChannel, msg, ...)
+    let jobImplChannelNumber = s:jobImplChannelNumber(a:jobImplChannel)
+    let jobImplState = get(s:jobImplChannelMap, jobImplChannelNumber, {})
+    if empty(jobImplState)
+        return
+    endif
+
+    call ZFJobFuncCall(jobImplState['onOutput'], [a:msg, 'stderr'])
+endfunction
+function! s:vim_exit_cb(jobImplId, exitCode, ...)
+    let jobImplIdNumber = s:jobImplIdNumber(a:jobImplId)
+    if !exists('s:jobImplIdMap[jobImplIdNumber]')
+        return
+    endif
+    let jobImplState = remove(s:jobImplIdMap, jobImplIdNumber)
+    call remove(s:jobImplChannelMap, jobImplState['jobImplChannelNumber'])
+
+    try
+        silent! call ch_close(jobImplState['jobImplChannel'])
+    endtry
+    call ZFJobFuncCall(jobImplState['onExit'], [a:exitCode])
+endfunction
+
+let g:ZFVimJobImpl = {
+            \   'jobStart' : function('s:jobStart'),
+            \   'jobStop' : function('s:jobStop'),
+            \   'jobSend' : function('s:jobSend'),
+            \ }
+
