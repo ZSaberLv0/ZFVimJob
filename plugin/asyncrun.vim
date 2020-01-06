@@ -89,10 +89,6 @@ function! s:taskName(taskName)
     endif
 endfunction
 
-function! s:logId(taskName)
-    return 'ZFAsyncRun:' . a:taskName
-endfunction
-
 function! ZFAsyncRun(param, ...)
     let taskName = s:taskName(get(a:, 1, ''))
     if empty(taskName)
@@ -100,21 +96,26 @@ function! ZFAsyncRun(param, ...)
     endif
     call ZFAsyncRunStop(taskName)
 
-    let outputConfig = {
-                \   'outputTo' : extend(deepcopy(g:ZFAsyncRun_outputTo), {
-                \     'initCallback' : ZFJobFunc(function('s:logwinOnInit'), [taskName]),
-                \   }),
-                \ }
+    let outputTo = extend(deepcopy(g:ZFAsyncRun_outputTo), {
+                \   'initCallback' : ZFJobFunc(function('s:logwinOnInit'), [taskName]),
+                \ })
     if type(a:param) == type('') || ZFJobFuncCallable(a:param)
-        let jobOption = extend(outputConfig, {
+        let jobOption = {
                     \   'jobCmd' : a:param,
-                    \ })
+                    \   'outputTo' : outputTo,
+                    \ }
     elseif type(a:param) == type({})
-        let jobOption = extend(outputConfig, a:param)
+        let jobOption = deepcopy(a:param)
+        let jobOption['outputTo'] = extend(outputTo, get(jobOption, 'outputTo', {}))
     else
         echo '[ZFVimJob] unsupported param type: ' . type(a:param)
         return -1
     endif
+
+    if empty(get(jobOption['outputTo'], 'outputId', ''))
+        let jobOption['outputTo']['outputId'] = 'ZFAsyncRun:' . taskName
+    endif
+
     if !exists("jobOption['jobImplData']")
         let jobOption['jobImplData'] = {}
     endif
@@ -227,12 +228,12 @@ endfunction
 
 function! s:onOutput(taskName, onOutput, jobStatus, text, type)
     call ZFJobFuncCall(a:onOutput, [a:jobStatus, a:text, a:type])
-    call ZFJobOutput(s:logId(a:taskName), a:jobStatus, a:text)
+    call ZFJobOutput(a:jobStatus, a:text)
 endfunction
 
 function! s:onExit(taskName, onExit, jobStatus, exitCode)
     let s:taskMap[a:taskName] = a:jobStatus
     call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])
-    call ZFJobOutputCleanup(s:logId(a:taskName), a:jobStatus)
+    call ZFJobOutputCleanup(a:jobStatus)
 endfunction
 

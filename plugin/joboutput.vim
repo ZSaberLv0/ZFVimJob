@@ -4,7 +4,7 @@
 "   'outputTo' : {
 "     'outputType' : 'statusline/logwin/popup',
 "     'outputCallback' : 'optional, function(jobStatus, text), return text',
-"     'outputTaskId' : 'if exists, use this fixed outputTaskId',
+"     'outputId' : 'if exists, use this fixed outputId',
 "     'outputAutoCleanup' : 10000,
 "     'outputManualCleanup' : 3000,
 "
@@ -19,7 +19,7 @@
 "   },
 " }
 
-function! ZFJobOutput(outputId, jobStatus, text)
+function! ZFJobOutput(jobStatus, text)
     if empty(a:jobStatus)
         return
     endif
@@ -38,12 +38,13 @@ function! ZFJobOutput(outputId, jobStatus, text)
         let text = ZFJobFuncCall(outputTo['outputCallback'], [a:jobStatus, a:text])
     endif
 
-    let outputTaskId = get(outputTo, 'outputTaskId', '')
-    if empty(outputTaskId)
-        let outputTaskId = a:outputId
+    let outputId = get(outputTo, 'outputId', '')
+    if empty(outputId)
+        let outputId = 'ZFJobOutput:' . s:outputIdNext()
     endif
+    let a:jobStatus['jobImplData']['ZFJobOutput_outputId'] = outputId
 
-    if !exists('s:status[a:outputId]')
+    if !exists('s:status[outputId]')
         while 1
             let Fn = get(impl, 'fallbackCheck', 0)
             if type(Fn) != type(function('function'))
@@ -60,68 +61,62 @@ function! ZFJobOutput(outputId, jobStatus, text)
             endif
         endwhile
 
-        let s:outputTaskCountMap[outputTaskId] = get(s:outputTaskCountMap, outputTaskId, 0) + 1
-        let s:status[a:outputId] = {
+        let s:status[outputId] = {
                     \   'outputTo' : outputTo,
                     \   'outputType' : outputType,
-                    \   'outputTaskId' : outputTaskId,
-                    \   'outputTaskCount' : s:outputTaskCountMap[outputTaskId],
+                    \   'outputId' : outputId,
                     \   'jobList' : [],
                     \   'autoCloseTimerId' : -1,
                     \   'outputImplData' : {},
                     \ }
-
         let Fn = get(impl, 'init', 0)
         if type(Fn) == type(function('function'))
-            call Fn(a:outputId, s:status[a:outputId], a:jobStatus)
+            call Fn(outputId, s:status[outputId], a:jobStatus)
         endif
     endif
 
-    if index(s:status[a:outputId]['jobList'], a:jobStatus) < 0
-        call add(s:status[a:outputId]['jobList'], a:jobStatus)
+    if index(s:status[outputId]['jobList'], a:jobStatus) < 0
+        call add(s:status[outputId]['jobList'], a:jobStatus)
         let Fn = get(impl, 'attach', 0)
         if type(Fn) == type(function('function'))
-            call Fn(a:outputId, s:status[a:outputId], a:jobStatus)
+            call Fn(outputId, s:status[outputId], a:jobStatus)
         endif
     endif
 
-    call s:autoCloseStop(a:outputId)
+    call s:autoCloseStop(outputId)
 
     let Fn = get(impl, 'output', 0)
     if type(Fn) == type(function('function'))
-        call Fn(a:outputId, s:status[a:outputId], a:jobStatus, a:text)
+        call Fn(outputId, s:status[outputId], a:jobStatus, a:text)
     endif
 
-    if get(s:status[a:outputId]['outputTo'], 'outputAutoCleanup', 10000) > 0
-        call s:autoCloseStart(a:outputId, a:jobStatus, get(s:status[a:outputId]['outputTo'], 'outputAutoCleanup', 10000))
+    if get(s:status[outputId]['outputTo'], 'outputAutoCleanup', 10000) > 0
+        call s:autoCloseStart(outputId, a:jobStatus, get(s:status[outputId]['outputTo'], 'outputAutoCleanup', 10000))
     endif
 endfunction
 
-function! ZFJobOutputCleanup(outputId, jobStatus)
-    if !exists('s:status[a:outputId]')
+function! ZFJobOutputCleanup(jobStatus)
+    let outputId = get(a:jobStatus['jobImplData'], 'ZFJobOutput_outputId', '')
+    if empty(outputId) || !exists('s:status[outputId]')
         return
     endif
-    let index = index(s:status[a:outputId]['jobList'], a:jobStatus)
+    let index = index(s:status[outputId]['jobList'], a:jobStatus)
     if index < 0
         return
     endif
-    call remove(s:status[a:outputId]['jobList'], index)
+    call remove(s:status[outputId]['jobList'], index)
 
-    let outputTaskId = s:status[a:outputId]['outputTaskId']
-    let s:outputTaskCountMap[outputTaskId] = s:outputTaskCountMap[outputTaskId] - 1
-    let s:status[a:outputId]['outputTaskCount'] = s:outputTaskCountMap[outputTaskId]
-
-    let Fn = get(g:ZFJobOutputImpl[s:status[a:outputId]['outputType']], 'detach', 0)
+    let Fn = get(g:ZFJobOutputImpl[s:status[outputId]['outputType']], 'detach', 0)
     if type(Fn) == type(function('function'))
-        call Fn(a:outputId, s:status[a:outputId], a:jobStatus)
+        call Fn(outputId, s:status[outputId], a:jobStatus)
     endif
 
-    if !empty(s:status[a:outputId]['jobList'])
-        if get(s:status[a:outputId]['outputTo'], 'outputAutoCleanup', 10000) > 0
-            call s:autoCloseStart(a:outputId, a:jobStatus, get(s:status[a:outputId]['outputTo'], 'outputAutoCleanup', 10000))
+    if !empty(s:status[outputId]['jobList'])
+        if get(s:status[outputId]['outputTo'], 'outputAutoCleanup', 10000) > 0
+            call s:autoCloseStart(outputId, a:jobStatus, get(s:status[outputId]['outputTo'], 'outputAutoCleanup', 10000))
         endif
     else
-        call s:autoCloseStart(a:outputId, a:jobStatus, get(s:status[a:outputId]['outputTo'], 'outputManualCleanup', 3000))
+        call s:autoCloseStart(outputId, a:jobStatus, get(s:status[outputId]['outputTo'], 'outputManualCleanup', 3000))
     endif
 endfunction
 
@@ -133,17 +128,15 @@ endfunction
 "   'outputType' : {
 "     'fallbackCheck' : 'optional, function() that return fallback outputType or empty to use current',
 "     'init' : 'optional, function(outputId, outputStatus, jobStatus)',
+"     'cleanup' : 'optional, function(outputId, outputStatus, jobStatus)',
 "     'attach' : 'optional, function(outputId, outputStatus, jobStatus)',
 "     'detach' : 'optional, function(outputId, outputStatus, jobStatus)',
-"     'cleanup' : 'optional, function(outputId, outputStatus, jobStatus)',
 "     'output' : 'optional, function(outputId, outputStatus, jobStatus, text)',
 "   },
 " }
 "
-" different output task may have same outputTaskId,
-" each of them would have `attach` and `detach` called for once,
-" when all of them finished,
-" we would wait for some time and `cleanup` to cleanup output
+" different output task may have same outputId,
+" and each of them would have `attach` and `detach` called for once
 if !exists('g:ZFJobOutputImpl')
     let g:ZFJobOutputImpl = {}
 endif
@@ -154,8 +147,7 @@ endif
 "   outputId : { // first output jobStatus decide actual outputType and param
 "     'outputTo' : {}, // jobStatus['jobOption']['outputTo']
 "     'outputType' : '',
-"     'outputTaskId' : '',
-"     'outputTaskCount' : 0,
+"     'outputId' : '',
 "     'logwinNoCloseWhenFocused' : 1,
 "     'logwinAutoClosePreferHide' : 0,
 "     'jobList' : [
@@ -168,12 +160,16 @@ endif
 if !exists('s:status')
     let s:status = {}
 endif
-" {
-"   'outputTaskId' : count,
-" }
-if !exists('s:outputTaskCountMap')
-    let s:outputTaskCountMap = {}
+if !exists('s:outputIdCur')
+    let s:outputIdCur = 0
 endif
+function! s:outputIdNext()
+    let s:outputIdCur += 1
+    while exists('s:status[s:outputIdCur]') || s:outputIdCur <= 0
+        let s:outputIdCur += 1
+    endwhile
+    return s:outputIdCur
+endfunction
 
 function! s:autoCloseStart(outputId, jobStatus, timeout)
     call s:autoCloseStop(a:outputId)
@@ -201,26 +197,25 @@ function! s:autoCloseOnTimer(outputId, jobStatus, ...)
     let outputStatus['autoCloseTimerId'] = -1
     let index = index(outputStatus['jobList'], a:jobStatus)
     if index >= 0
-        let s:outputTaskCountMap[outputStatus['outputTaskId']] = s:outputTaskCountMap[outputStatus['outputTaskId']] - 1
-        let outputStatus['outputTaskCount'] = s:outputTaskCountMap[outputStatus['outputTaskId']]
-
         call remove(s:status[a:outputId]['jobList'], index)
+    endif
+
+    if empty(outputStatus['jobList'])
+        unlet s:status[a:outputId]
+    endif
+
+    if index >= 0
         let Fn = get(g:ZFJobOutputImpl[outputStatus['outputType']], 'detach', 0)
         if type(Fn) == type(function('function'))
             call Fn(a:outputId, outputStatus, a:jobStatus)
         endif
     endif
+
     if empty(outputStatus['jobList'])
-        unlet s:status[a:outputId]
-    endif
-
-    if s:outputTaskCountMap[outputStatus['outputTaskId']] == 0
-        unlet s:outputTaskCountMap[outputStatus['outputTaskId']]
-    endif
-
-    let Fn = get(g:ZFJobOutputImpl[outputStatus['outputType']], 'cleanup', 0)
-    if type(Fn) == type(function('function'))
-        call Fn(a:outputId, outputStatus, a:jobStatus)
+        let Fn = get(g:ZFJobOutputImpl[outputStatus['outputType']], 'cleanup', 0)
+        if type(Fn) == type(function('function'))
+            call Fn(a:outputId, outputStatus, a:jobStatus)
+        endif
     endif
 endfunction
 

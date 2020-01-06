@@ -8,40 +8,31 @@ function! s:fallbackCheck()
 endfunction
 
 function! s:init(outputId, outputStatus, jobStatus)
-endfunction
-
-function! s:attach(outputId, outputStatus, jobStatus)
-    let outputTo = a:jobStatus['jobOption']['outputTo']
-    let outputTaskId = a:outputStatus['outputTaskId']
-    if a:outputStatus['outputTaskCount'] == 1
-        call ZFLogWinConfig(outputTaskId, get(outputTo, 'logwin', {}))
-    endif
-endfunction
-
-function! s:detach(outputId, outputStatus, jobStatus)
-    let outputTaskId = a:outputStatus['outputTaskId']
-    call ZFLogWinJobStatusSet(outputTaskId, a:jobStatus)
-    call ZFLogWinRedraw(outputTaskId)
+    call ZFLogWinConfig(a:outputId, get(a:jobStatus['jobOption']['outputTo'], 'logwin', {}))
 endfunction
 
 function! s:cleanup(outputId, outputStatus, jobStatus)
-    let outputTaskId = a:outputStatus['outputTaskId']
-    if a:outputStatus['outputTaskCount'] == 0
-        if !get(get(a:outputStatus['outputTo'], 'logwin', {}), 'logwinNoCloseWhenFocused', 1) || !ZFLogWinIsFocused(outputTaskId)
-            if get(get(a:outputStatus['outputTo'], 'logwin', {}), 'logwinAutoClosePreferHide', 0)
-                call ZFLogWinHide(outputTaskId)
-            else
-                call ZFLogWinClose(outputTaskId)
-            endif
-            call ZFLogWinJobStatusSet(outputTaskId, {})
+    if !get(get(a:outputStatus['outputTo'], 'logwin', {}), 'logwinNoCloseWhenFocused', 1) || !ZFLogWinIsFocused(a:outputId)
+        if get(get(a:outputStatus['outputTo'], 'logwin', {}), 'logwinAutoClosePreferHide', 0)
+            call ZFLogWinHide(a:outputId)
+        else
+            call ZFLogWinClose(a:outputId)
         endif
+        call ZFLogWinJobStatusSet(a:outputId, {})
     endif
 endfunction
 
+function! s:attach(outputId, outputStatus, jobStatus)
+endfunction
+
+function! s:detach(outputId, outputStatus, jobStatus)
+    call ZFLogWinJobStatusSet(a:outputId, a:jobStatus)
+    call ZFLogWinRedraw(a:outputId)
+endfunction
+
 function! s:output(outputId, outputStatus, jobStatus, text)
-    let outputTaskId = a:outputStatus['outputTaskId']
-    call ZFLogWinJobStatusSet(outputTaskId, a:jobStatus)
-    call ZFLogWinAdd(outputTaskId, a:text)
+    call ZFLogWinJobStatusSet(a:outputId, a:jobStatus)
+    call ZFLogWinAdd(a:outputId, a:text)
 endfunction
 
 if !exists('g:ZFJobOutputImpl')
@@ -50,9 +41,9 @@ endif
 let g:ZFJobOutputImpl['logwin'] = {
             \   'fallbackCheck' : function('s:fallbackCheck'),
             \   'init' : function('s:init'),
+            \   'cleanup' : function('s:cleanup'),
             \   'attach' : function('s:attach'),
             \   'detach' : function('s:detach'),
-            \   'cleanup' : function('s:cleanup'),
             \   'output' : function('s:output'),
             \ }
 

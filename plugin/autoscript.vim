@@ -14,7 +14,7 @@ endfunction
 if !exists('g:ZFAutoScript_outputTo')
     let g:ZFAutoScript_outputTo = {
                 \   'outputType' : 'popup',
-                \   'outputTaskId' : 'ZFAutoScript',
+                \   'outputId' : 'ZFAutoScript',
                 \   'logwin' : {
                 \     'newWinCmd' : '99wincmd l | vertical rightbelow 20new',
                 \     'filetype' : 'ZFAutoScriptLog',
@@ -49,21 +49,18 @@ command! -nargs=0 ZFAutoScriptLogAll :call ZFAutoScriptLogAll()
 " }
 function! ZFAutoScript(projDir, param)
     let projDir = s:projDir(a:projDir)
-    let outputConfig = {
-                \   'outputTo' : g:ZFAutoScript_outputTo,
-                \ }
     if type(a:param) == type('') || ZFJobFuncCallable(a:param)
-        let jobOption = extend(outputConfig, {
+        let jobOption = {
                     \   'jobCmd' : a:param,
-                    \ })
+                    \   'outputTo' : g:ZFAutoScript_outputTo,
+                    \ }
     elseif type(a:param) == type({})
-        let jobOption = extend(outputConfig, a:param)
+        let jobOption = deepcopy(a:param)
+        let jobOption['outputTo'] = extend(deepcopy(g:ZFAutoScript_outputTo), get(jobOption, 'outputTo', {}))
     else
         echo '[ZFVimJob] unsupported param type: ' . type(a:param)
         return -1
     endif
-    let jobOption['outputTo'] = deepcopy(jobOption['outputTo'])
-
     if !exists("jobOption['jobImplData']")
         let jobOption['jobImplData'] = {}
     endif

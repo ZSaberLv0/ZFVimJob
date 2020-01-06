@@ -257,7 +257,7 @@ and for timers:
 
 ## Job output
 
-* `call ZFJobOutput(outputId, jobStatus, text)`
+* `call ZFJobOutput(jobStatus, text)`
 
     output accorrding to job's output configs:
 
@@ -282,6 +282,10 @@ and for timers:
         },
     }
     ```
+
+* `call ZFJobOutputCleanup(jobStatus)`
+
+    manually cleanup output
 
 
 ### Statusline log
@@ -411,7 +415,7 @@ options:
     ```
     let g:ZFAutoScript_outputTo = {
                 \   'outputType' : 'popup',
-                \   'outputTaskId' : 'ZFAutoScript',
+                \   'outputId' : 'ZFAutoScript',
                 \   'logwin' : {
                 \     'newWinCmd' : '99wincmd l | vertical rightbelow 20new',
                 \     'filetype' : 'ZFAutoScriptLog',

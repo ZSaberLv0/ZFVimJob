@@ -189,7 +189,7 @@ function! s:groupJobStart(groupJobOption)
                 \   'jobStatusFailed' : {},
                 \   'jobIndex' : -1,
                 \   'jobStatusList' : [],
-                \   'jobImplData' : deepcopy(get(groupJobOption, 'jobImplData', {})),
+                \   'jobImplData' : copy(get(groupJobOption, 'jobImplData', {})),
                 \ }
     let groupJobStatus['jobImplData']['groupJobRunning'] = 1
     let jobStatusList = groupJobStatus['jobStatusList']
@@ -246,7 +246,7 @@ function! s:groupJobRunNext(groupJobStatus)
     endif
 
     for jobOption in jobList
-        let jobId = ZFJobStart(extend(extend(deepcopy(jobOptionDefault), jobOption), {
+        let jobId = ZFJobStart(extend(extend(copy(jobOptionDefault), jobOption), {
                     \   'onLog' : ZFJobFunc(function('s:onJobLog'), [a:groupJobStatus, get(jobOption, 'onLog', '')]),
                     \   'onOutput' : ZFJobFunc(function('s:onJobOutput'), [a:groupJobStatus, get(jobOption, 'onOutput', '')]),
                     \   'onExit' : ZFJobFunc(function('s:onJobExit'), [a:groupJobStatus, get(jobOption, 'onExit', '')]),

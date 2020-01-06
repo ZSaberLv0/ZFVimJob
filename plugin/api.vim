@@ -162,7 +162,7 @@ function! s:jobStart(param)
                 \   'jobOutput' : [],
                 \   'jobLog' : [],
                 \   'exitCode' : '',
-                \   'jobImplData' : deepcopy(get(jobOption, 'jobImplData', {})),
+                \   'jobImplData' : copy(get(jobOption, 'jobImplData', {})),
                 \ }
     let success = ZFJobFuncCall(g:ZFVimJobImpl['jobStart'], [
                 \   jobStatus
