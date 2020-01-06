@@ -22,6 +22,7 @@ endfunction
 
 function! s:cleanup(outputId, outputStatus, jobStatus)
     if a:outputStatus['outputImplData']['popupid'] < 0
+                \ || a:outputStatus['outputTaskCount'] != 1
         return
     endif
     call ZFPopupClose(a:outputStatus['outputImplData']['popupid'])
