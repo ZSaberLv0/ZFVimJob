@@ -6,7 +6,7 @@ function! ZF_AutoScriptOutputInfo(jobStatus)
         let statusline = '(finished) '
     endif
     let projDir = s:projDir(get(get(a:jobStatus, 'jobImplData', {}), 'ZFAutoScript_projDir', ''))
-    return ZFStatuslineLogValue(statusline . fnamemodify(projDir, ':~'))
+    return statusline . fnamemodify(projDir, ':~')
 endfunction
 
 " ============================================================

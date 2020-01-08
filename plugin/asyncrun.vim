@@ -11,7 +11,7 @@ function! ZF_AsyncRunOutputInfo(jobStatus)
     else
         let statusline .= taskName . ': ' . ZFGroupJobInfo(a:jobStatus)
     endif
-    return ZFStatuslineLogValue(statusline)
+    return statusline
 endfunction
 
 function! ZF_AsyncRunMakeDefaultKeymap_input(input, cr)

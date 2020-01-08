@@ -8,7 +8,7 @@ function! s:fallbackCheck()
 endfunction
 
 function! s:outputInfoWrap(outputInfo, logId)
-    return ZFJobFuncCall(a:outputInfo, [ZFLogWinJobStatusGet(a:logId)])
+    return ZFStatuslineLogValue(ZFJobFuncCall(a:outputInfo, [ZFLogWinJobStatusGet(a:logId)]))
 endfunction
 
 function! s:init(outputId, outputStatus, jobStatus)
