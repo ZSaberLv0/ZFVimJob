@@ -353,9 +353,9 @@ options:
     ```
     let g:ZFAsyncRun_outputTo = {
                 \   'outputType' : 'logwin',
+                \   'outputInfo' : function('ZF_AsyncRunOutputInfo'),
                 \   'logwin' : {
                 \     'filetype' : 'ZFAsyncRunLog',
-                \     'statusline' : function('ZF_AsyncRunStatusline'),
                 \     'autoShow' : 1,
                 \   },
                 \   'popup' : {
@@ -364,6 +364,8 @@ options:
                 \     'height' : 1.0/4,
                 \     'x' : 1,
                 \     'y' : &cmdheight + 2,
+                \     'wrap' : 1,
+                \     'contentAlign' : 'bottom',
                 \   },
                 \ }
     ```
@@ -416,10 +418,10 @@ options:
     let g:ZFAutoScript_outputTo = {
                 \   'outputType' : 'popup',
                 \   'outputId' : 'ZFAutoScript',
+                \   'outputInfo' : function('ZF_AutoScriptOutputInfo'),
                 \   'logwin' : {
                 \     'newWinCmd' : '99wincmd l | vertical rightbelow 20new',
                 \     'filetype' : 'ZFAutoScriptLog',
-                \     'statusline' : function('ZF_AutoScriptStatusline'),
                 \     'autoShow' : 1,
                 \   },
                 \   'popup' : {
@@ -428,6 +430,8 @@ options:
                 \     'height' : 1.0/4,
                 \     'x' : 1,
                 \     'y' : &cmdheight + 2,
+                \     'wrap' : 0,
+                \     'contentAlign' : 'bottom',
                 \   },
                 \ }
     ```

@@ -7,8 +7,23 @@ function! s:fallbackCheck()
     endif
 endfunction
 
+function! s:outputInfoWrap(outputInfo, logId)
+    return ZFJobFuncCall(a:outputInfo, [ZFLogWinJobStatusGet(a:logId)])
+endfunction
+
 function! s:init(outputId, outputStatus, jobStatus)
-    call ZFLogWinConfig(a:outputId, get(a:jobStatus['jobOption']['outputTo'], 'logwin', {}))
+    let config = get(a:jobStatus['jobOption']['outputTo'], 'logwin', {})
+    if empty(get(config, 'statusline', '')) && !empty(get(a:jobStatus['jobOption']['outputTo'], 'outputInfo', ''))
+        let T_outputInfo = a:jobStatus['jobOption']['outputTo']['outputInfo']
+        if type(T_outputInfo) == type('')
+            let config = copy(config)
+            let config['statusline'] = T_outputInfo
+        elseif ZFJobFuncCallable(T_outputInfo)
+            let config = copy(config)
+            let config['statusline'] = ZFJobFunc(function('s:outputInfoWrap'), [T_outputInfo])
+        endif
+    endif
+    call ZFLogWinConfig(a:outputId, config)
 endfunction
 
 function! s:cleanup(outputId, outputStatus, jobStatus)

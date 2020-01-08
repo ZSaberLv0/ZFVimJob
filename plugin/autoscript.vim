@@ -1,12 +1,11 @@
 
-function! ZF_AutoScriptStatusline(logId)
-    let jobStatus = ZFLogWinJobStatusGet(a:logId)
-    if len(get(jobStatus, 'exitCode', '')) == 0
+function! ZF_AutoScriptOutputInfo(jobStatus)
+    if len(get(a:jobStatus, 'exitCode', '')) == 0
         let statusline = ' (running) '
     else
         let statusline = '(finished) '
     endif
-    let projDir = s:projDir(get(get(jobStatus, 'jobImplData', {}), 'ZFAutoScript_projDir', ''))
+    let projDir = s:projDir(get(get(a:jobStatus, 'jobImplData', {}), 'ZFAutoScript_projDir', ''))
     return ZFStatuslineLogValue(statusline . fnamemodify(projDir, ':~'))
 endfunction
 
@@ -15,10 +14,10 @@ if !exists('g:ZFAutoScript_outputTo')
     let g:ZFAutoScript_outputTo = {
                 \   'outputType' : 'popup',
                 \   'outputId' : 'ZFAutoScript',
+                \   'outputInfo' : function('ZF_AutoScriptOutputInfo'),
                 \   'logwin' : {
                 \     'newWinCmd' : '99wincmd l | vertical rightbelow 20new',
                 \     'filetype' : 'ZFAutoScriptLog',
-                \     'statusline' : function('ZF_AutoScriptStatusline'),
                 \     'autoShow' : 1,
                 \   },
                 \   'popup' : {

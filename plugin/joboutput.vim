@@ -4,6 +4,7 @@
 "   'outputTo' : {
 "     'outputType' : 'statusline/logwin/popup',
 "     'outputCallback' : 'optional, function(jobStatus, text), return text',
+"     'outputInfo' : 'optional, text or function(jobStatus) which return text',
 "     'outputId' : 'if exists, use this fixed outputId',
 "     'outputAutoCleanup' : 10000,
 "     'outputManualCleanup' : 3000,
