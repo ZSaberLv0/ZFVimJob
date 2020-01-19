@@ -257,7 +257,7 @@ and for timers:
 
 ## Job output
 
-* `call ZFJobOutput(jobStatus, text)`
+* `call ZFJobOutput(jobStatus, text [, outputId])`
 
     output accorrding to job's output configs:
 

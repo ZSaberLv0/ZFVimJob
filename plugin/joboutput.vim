@@ -20,7 +20,7 @@
 "   },
 " }
 
-function! ZFJobOutput(jobStatus, text)
+function! ZFJobOutput(jobStatus, text, ...)
     if empty(a:jobStatus)
         return
     endif
@@ -41,11 +41,20 @@ function! ZFJobOutput(jobStatus, text)
 
     let outputId = get(outputTo, 'outputId', '')
     if empty(outputId)
+        let outputId = get(a:, 1, '')
+    endif
+    if empty(outputId)
         let outputId = 'ZFJobOutput:' . s:outputIdNext()
     endif
     let a:jobStatus['jobImplData']['ZFJobOutput_outputId'] = outputId
 
-    if !exists('s:status[outputId]')
+    if exists('s:status[outputId]')
+        let outputType = s:status[outputId]['outputType']
+        let impl = get(g:ZFJobOutputImpl, outputType, {})
+        if empty(impl)
+            return
+        endif
+    else
         while 1
             let Fn = get(impl, 'fallbackCheck', 0)
             if type(Fn) != type(function('function'))
