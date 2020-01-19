@@ -220,7 +220,7 @@ function! s:groupJobRunNext(groupJobStatus)
         call s:groupJobStop(a:groupJobStatus, {}, '0')
         return 0
     endif
-    let jobList = a:groupJobStatus['jobOption']['jobList']
+    let jobList = a:groupJobStatus['jobOption']['jobList'][jobIndex]
     if empty(jobList)
         return -1
     endif
