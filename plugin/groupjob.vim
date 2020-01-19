@@ -245,7 +245,6 @@ function! s:groupJobRunNext(groupJobStatus)
         let jobOptionDefault['jobFallback'] = a:groupJobStatus['jobOption']['jobFallback']
     endif
 
-    let g:zfzfzf=deepcopy(a:groupJobStatus)
     for jobOption in jobList
         let jobId = ZFJobStart(extend(extend(copy(jobOptionDefault), jobOption), {
                     \   'onLog' : ZFJobFunc(function('s:onJobLog'), [a:groupJobStatus, get(jobOption, 'onLog', '')]),
