@@ -179,7 +179,12 @@ function! s:projDir(projDir)
     if empty(a:projDir)
         return fnamemodify(getcwd(), ':p')
     else
-        return fnamemodify(a:projDir, ':p')
+        let projDir = a:projDir
+        " ^[ \t]*"
+        let projDir = substitute(projDir, '^[ \t]*"', '', '')
+        " "[ \t]*$
+        let projDir = substitute(projDir, '"[ \t]*$', '', '')
+        return fnamemodify(projDir, ':p')
     endif
 endfunction
 
