@@ -63,7 +63,7 @@ if !exists('g:ZFAsyncRun_outputTo')
 endif
 
 " ============================================================
-command! -nargs=+ -complete=file ZFAsyncRun :call ZFAsyncRun(<q-args>)
+command! -nargs=+ -complete=customlist,ZFJobCmdComplete ZFAsyncRun :call ZFAsyncRun(<q-args>)
 command! -nargs=0 ZFAsyncRunStop :call ZFAsyncRunStop()
 command! -nargs=0 ZFAsyncRunStopAll :call ZFAsyncRunStopAll()
 command! -nargs=* ZFAsyncRunSend :call ZFAsyncRunSend(<q-args> . "\n")
