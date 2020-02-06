@@ -46,15 +46,33 @@ function! ZFJobCmdComplete_env(ArgLead, CmdLine, CursorPos)
     endif
     let pos += 1
 
-    let lines = split(system('export'), "\n")
-    let ret = []
-    for line in lines
-        " ^[a-zA-Z0-9_]+=
-        if match(line, '^[a-zA-Z0-9_]\+=') >= 0
-            " ^([a-zA-Z0-9_]+)=.*$
-            call add(ret, substitute(line, '^\([a-zA-Z0-9_]\+\)=.*$', '\1', ''))
+    if exists('*getcompletion')
+        let m = {}
+        for item in getcompletion('', 'environment')
+            " [:\\\(\[\{].*
+            let m[substitute(item, '[:\\([{].*', '', 'g')] = 1
+        endfor
+        let ret = keys(m)
+    else
+        let cmd = 'export'
+        if has('win32')
+            if executable('sh')
+                let cmd = 'sh -c export'
+            else
+                let cmd = 'set'
+            endif
         endif
-    endfor
+        let lines = split(system(cmd), "\n")
+        let ret = []
+        for line in lines
+            " ^(export )?[a-zA-Z0-9_]+=
+            if match(line, '^\(export \)\=[a-zA-Z0-9_]\+=') >= 0
+                " ^(export )?([a-zA-Z0-9_]+)=.*$
+                call add(ret, substitute(line, '^\(export \)\=\([a-zA-Z0-9_]\+\)=.*$', '\2', ''))
+            endif
+        endfor
+    endif
+
     if pos < len(a:ArgLead)
         call ZFJobCmdComplete_filter(ret, strpart(a:ArgLead, pos))
     endif
