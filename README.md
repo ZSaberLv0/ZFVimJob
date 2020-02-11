@@ -18,6 +18,7 @@ features / why another remake:
     * abstract job output (`ZFJobOutput`)
         * output to `statusline` async (`ZFStatuslineLog`)
         * output to temp log window (`ZFLogWinAdd`)
+        * output to popup window (`ZFPopupCreate`)
     * observe file write event and run build script automatically (`ZFAutoScript`)
 
 
