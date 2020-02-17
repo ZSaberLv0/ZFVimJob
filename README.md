@@ -129,6 +129,8 @@ we supply a wrapper to simulate:
     func can be:
 
     * vim `function('name')`
+        * for `vim 7.4` or above, `function('s:func')` can be used
+        * for `vim 7.3` or below, you must put it in global scope, like `function('Fn_func')`
     * string or string list to `:execute`
 
         function params can be accessed by `a:000` series, example:
