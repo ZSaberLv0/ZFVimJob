@@ -1,6 +1,7 @@
 
 <!-- vim-markdown-toc GFM -->
 
+* [Intro](#intro)
 * [How to use](#how-to-use)
 * [API](#api)
     * [Util functions](#util-functions)
@@ -14,6 +15,9 @@
     * [Auto script](#auto-script)
 
 <!-- vim-markdown-toc -->
+
+
+# Intro
 
 job util for `vim8` and `neovim`
 
