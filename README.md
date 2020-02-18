@@ -1,4 +1,20 @@
 
+<!-- vim-markdown-toc GFM -->
+
+* [How to use](#how-to-use)
+* [API](#api)
+    * [Util functions](#util-functions)
+* [Jobs](#jobs)
+* [Group jobs](#group-jobs)
+* [Utils](#utils)
+    * [Job output](#job-output)
+        * [Statusline log](#statusline-log)
+        * [Log window](#log-window)
+    * [Async run](#async-run)
+    * [Auto script](#auto-script)
+
+<!-- vim-markdown-toc -->
+
 job util for `vim8` and `neovim`
 
 features / why another remake:
