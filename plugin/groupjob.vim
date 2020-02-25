@@ -330,11 +330,13 @@ function! s:onJobOutput(groupJobStatus, onOutput, jobStatus, text, type)
     call ZFJobFuncCall(a:onOutput, [a:jobStatus, a:text, a:type])
     call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onJobOutput', ''), [a:groupJobStatus, a:jobStatus, a:text, a:type])
     call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onOutput', ''), [a:groupJobStatus, a:text, a:type])
+    call ZFJobOutput(a:groupJobStatus, a:text)
 endfunction
 
 function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
     call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])
     call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onJobExit', ''), [a:groupJobStatus, a:jobStatus, a:exitCode])
+    call ZFJobOutputCleanup(a:groupJobStatus)
 
     if !a:groupJobStatus['jobImplData']['groupJobRunning']
         return

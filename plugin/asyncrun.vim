@@ -227,12 +227,10 @@ endfunction
 
 function! s:onOutput(taskName, onOutput, jobStatus, text, type)
     call ZFJobFuncCall(a:onOutput, [a:jobStatus, a:text, a:type])
-    call ZFJobOutput(a:jobStatus, a:text)
 endfunction
 
 function! s:onExit(taskName, onExit, jobStatus, exitCode)
     let s:taskMap[a:taskName] = a:jobStatus
     call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])
-    call ZFJobOutputCleanup(a:jobStatus)
 endfunction
 

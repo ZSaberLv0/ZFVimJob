@@ -216,6 +216,7 @@ function! s:jobStop(jobStatus, exitCode, callImpl)
 
     let jobStatus['exitCode'] = a:exitCode
     call ZFJobFuncCall(get(jobStatus['jobOption'], 'onExit', ''), [jobStatus, a:exitCode])
+    call ZFJobOutputCleanup(a:jobStatus)
 
     let jobStatus['jobId'] = -1
     return ret
@@ -249,10 +250,6 @@ function! s:onOutput(jobStatus, text, type)
     if jobOutputLimit >= 0 && len(a:jobStatus['jobOutput']) > jobOutputLimit
         call remove(a:jobStatus['jobOutput'], jobOutputLimit)
     endif
-    let Fn_onOutput = get(a:jobStatus['jobOption'], 'onOutput', '')
-    if empty(Fn_onOutput)
-        return
-    endif
 
     let text = a:text
     if get(g:, 'ZFVimJobFixTermSpecialChar', 1)
@@ -267,7 +264,8 @@ function! s:onOutput(jobStatus, text, type)
         let text = iconv(text, jobEncoding, &encoding)
     endif
 
-    call ZFJobFuncCall(Fn_onOutput, [a:jobStatus, text, a:type])
+    call ZFJobFuncCall(get(a:jobStatus['jobOption'], 'onOutput', ''), [a:jobStatus, text, a:type])
+    call ZFJobOutput(a:jobStatus, a:text)
 endfunction
 function! s:onExit(jobStatus, exitCode)
     call s:jobStop(a:jobStatus, a:exitCode, 0)

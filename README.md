@@ -11,6 +11,7 @@
     * [Job output](#job-output)
         * [Statusline log](#statusline-log)
         * [Log window](#log-window)
+        * [Popup](#popup)
     * [Async run](#async-run)
     * [Auto script](#auto-script)
 
@@ -356,6 +357,12 @@ and for timers:
     * `statusline` : string or `function(logId)`
     * `makeDefaultKeymap` : if set, default `q` to hide log window
     * `initCallback` / `cleanupCallback` / `updateCallback` : `function(logId)`
+
+
+### Popup
+
+use [ZSaberLv0/ZFVimPopup](https://github.com/ZSaberLv0/ZFVimPopup) to show job output,
+see `g:ZFAutoScript_outputTo` for how to config
 
 
 ## Async run
