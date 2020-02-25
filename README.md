@@ -281,6 +281,15 @@ and for timers:
 
 ## Job output
 
+abstract job output is done by default
+
+typically, what you needs to care
+is the `outputTo` option in your job option
+
+you may also supply your own `onOutput`, though
+
+functions:
+
 * `call ZFJobOutput(jobStatus, text [, outputId])`
 
     output accorrding to job's output configs:
