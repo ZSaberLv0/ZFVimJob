@@ -300,6 +300,7 @@ function! s:groupJobStop(groupJobStatus, jobStatusFailed, exitCode)
     let groupJobStatus['exitCode'] = a:exitCode
     let groupJobStatus['jobStatusFailed'] = a:jobStatusFailed
     call ZFJobFuncCall(get(groupJobStatus['jobOption'], 'onExit', ''), [groupJobStatus, a:exitCode])
+    call ZFJobOutputCleanup(a:groupJobStatus)
 
     let groupJobStatus['jobId'] = -1
     return 1
@@ -336,7 +337,6 @@ endfunction
 function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
     call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])
     call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onJobExit', ''), [a:groupJobStatus, a:jobStatus, a:exitCode])
-    call ZFJobOutputCleanup(a:groupJobStatus)
 
     if !a:groupJobStatus['jobImplData']['groupJobRunning']
         return
