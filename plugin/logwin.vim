@@ -260,9 +260,6 @@ endfunction
 " moveTo: head/tail/none
 function! s:redraw(logId, moveTo)
     let oldState = winsaveview()
-    silent! unlet oldState['lnum']
-    silent! unlet oldState['col']
-    silent! unlet oldState['col']
 
     let cursor = getpos('.')
     if a:moveTo == 'none'
@@ -288,9 +285,8 @@ function! s:redraw(logId, moveTo)
             let cursor[1] = getpos('$')[1] + cursor[1] - oldLine
         endif
     endif
-    call setpos('.', cursor)
-
     call winrestview(oldState)
+    call setpos('.', cursor)
 
     call s:logWinStatusline(a:logId, s:status[a:logId]['config']['statusline'])
     call ZFJobFuncCall(s:status[a:logId]['config']['updateCallback'], [a:logId])
