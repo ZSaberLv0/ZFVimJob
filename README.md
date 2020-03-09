@@ -340,6 +340,7 @@ functions:
     * `call ZFLogWinShow(logId)`
     * `call ZFLogWinFocus(logId)`
     * `call ZFLogWinHide(logId)`
+    * `call ZFLogWinRedraw(logId)`
     * `call ZFLogWinClear(logId)`
     * `call ZFLogWinClose(logId)`
 

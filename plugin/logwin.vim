@@ -102,7 +102,7 @@ function! ZFLogWinClear(logId, ...)
     if bn == -1
         return
     endif
-    let alsoDeleteStatus = get(a:, 1, 1)
+    let alsoDeleteStatus = get(a:, 1, 0)
     if alsoDeleteStatus
         execute bn . 'bdelete'
         call s:statusCleanup(s:status[a:logId])
