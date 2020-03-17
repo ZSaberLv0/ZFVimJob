@@ -349,10 +349,7 @@ function! s:logWinStatusline(logId, statusline)
     else
         return
     endif
-    let value = substitute(value, ' ', '\\ ', 'g')
-    let value = substitute(value, '|', '\\|', 'g')
-    let value = substitute(value, '"', '\\"', 'g')
-    execute 'setlocal statusline=' . value
+    let &l:statusline = value
 endfunction
 
 function! s:logWinInit(logId)

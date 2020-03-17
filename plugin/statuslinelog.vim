@@ -41,8 +41,7 @@ function! ZFStatuslineLogValue(text, ...)
         let postfix = g:ZFStatuslineLog_postfix
     endif
     if get(option, 'escape', 1)
-        let text = substitute(a:text, '\\', '\\\\', 'g')
-        let text = substitute(text, '%', '%%', 'g')
+        let text = substitute(a:text, '%', '%%', 'g')
     else
         let text = a:text
     endif
