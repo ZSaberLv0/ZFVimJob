@@ -306,7 +306,7 @@ function! ZFJobFallback(param)
                 \   'jobOutput' : [],
                 \   'jobLog' : [],
                 \   'exitCode' : '',
-                \   'jobImplData' : {},
+                \   'jobImplData' : copy(get(jobOption, 'jobImplData', {})),
                 \ }
 
     call s:jobLog(jobStatus, 'start (fallback): `' . ZFJobInfo(jobStatus) . '`')

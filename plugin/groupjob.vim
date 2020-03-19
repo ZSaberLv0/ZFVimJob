@@ -246,11 +246,19 @@ function! s:groupJobRunNext(groupJobStatus)
     endif
 
     for jobOption in jobList
-        let jobId = ZFJobStart(extend(extend(copy(jobOptionDefault), jobOption), {
+        let jobOptionTmp = extend(extend(copy(jobOptionDefault), jobOption), {
                     \   'onLog' : ZFJobFunc(function('s:onJobLog'), [a:groupJobStatus, get(jobOption, 'onLog', '')]),
                     \   'onOutput' : ZFJobFunc(function('s:onJobOutput'), [a:groupJobStatus, get(jobOption, 'onOutput', '')]),
                     \   'onExit' : ZFJobFunc(function('s:onJobExit'), [a:groupJobStatus, get(jobOption, 'onExit', '')]),
-                    \ }))
+                    \ })
+        if !exists("jobOptionTmp['jobImplData']")
+            let jobOptionTmp['jobImplData'] = {}
+        endif
+        let jobOptionTmp['jobImplData']['groupJobId'] = a:groupJobStatus['jobId']
+        let jobOptionTmp['jobImplData']['groupJobChildState'] = 1
+        let jobOptionTmp['jobImplData']['groupJobChildIndex'] = jobIndex
+        let jobOptionTmp['jobImplData']['groupJobChildSubIndex'] = len(jobStatusList)
+        let jobId = ZFJobStart(jobOptionTmp)
         if jobId == 0
             continue
         endif
@@ -260,10 +268,6 @@ function! s:groupJobRunNext(groupJobStatus)
             call s:groupJobStop(a:groupJobStatus, {}, '-1')
             return -1
         endif
-        let jobStatus['jobImplData']['groupJobId'] = a:groupJobStatus['jobId']
-        let jobStatus['jobImplData']['groupJobChildState'] = 1
-        let jobStatus['jobImplData']['groupJobChildIndex'] = jobIndex
-        let jobStatus['jobImplData']['groupJobChildSubIndex'] = len(jobStatusList)
         call add(jobStatusList, jobStatus)
     endfor
     return 1
@@ -335,6 +339,14 @@ function! s:onJobOutput(groupJobStatus, onOutput, jobStatus, text, type)
 endfunction
 
 function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
+    if a:jobStatus['jobImplData']['groupJobChildState'] == 1
+        if a:exitCode != '0'
+            let a:jobStatus['jobImplData']['groupJobChildState'] = -1
+        else
+            let a:jobStatus['jobImplData']['groupJobChildState'] = 0
+        endif
+    endif
+
     call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])
     call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onJobExit', ''), [a:groupJobStatus, a:jobStatus, a:exitCode])
 
@@ -343,21 +355,14 @@ function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
     endif
 
     if a:exitCode != '0'
-        let a:jobStatus['jobImplData']['groupJobChildState'] = -1
         call s:groupJobStop(a:groupJobStatus, a:jobStatus, a:exitCode)
         return
     endif
-
-    let a:jobStatus['jobImplData']['groupJobChildState'] = 0
 
     let jobIndex = a:groupJobStatus['jobIndex']
     let jobList = a:groupJobStatus['jobOption']['jobList'][jobIndex]
     let jobStatusList = a:groupJobStatus['jobStatusList'][jobIndex]
     if a:jobStatus['jobId'] == 0
-        let a:jobStatus['jobImplData']['groupJobId'] = a:groupJobStatus['jobId']
-        let a:jobStatus['jobImplData']['groupJobChildState'] = 0
-        let a:jobStatus['jobImplData']['groupJobChildIndex'] = jobIndex
-        let a:jobStatus['jobImplData']['groupJobChildSubIndex'] = len(jobStatusList)
         call add(jobStatusList, a:jobStatus)
 
         if len(jobList) == len(jobStatusList)
