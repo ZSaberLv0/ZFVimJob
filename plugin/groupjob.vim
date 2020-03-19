@@ -200,7 +200,7 @@ function! s:groupJobStart(groupJobOption)
 
     call s:groupJobLog(groupJobStatus, 'start')
 
-    if !s:groupJobRunNext(groupJobStatus)
+    if s:groupJobRunNext(groupJobStatus) <= 0
         return -1
     endif
 
@@ -213,6 +213,10 @@ function! s:groupJobStart(groupJobOption)
     return groupJobId
 endfunction
 
+" return:
+"   0 : all child finished
+"   1 : wait for child finish
+"   -1 : failed or child failed
 function! s:groupJobRunNext(groupJobStatus)
     let a:groupJobStatus['jobIndex'] += 1
     let jobIndex = a:groupJobStatus['jobIndex']
@@ -245,6 +249,7 @@ function! s:groupJobRunNext(groupJobStatus)
         let jobOptionDefault['jobFallback'] = a:groupJobStatus['jobOption']['jobFallback']
     endif
 
+    let hasRunningChild = 0
     for jobOption in jobList
         let jobOptionTmp = extend(extend(copy(jobOptionDefault), jobOption), {
                     \   'onLog' : ZFJobFunc(function('s:onJobLog'), [a:groupJobStatus, get(jobOption, 'onLog', '')]),
@@ -269,8 +274,9 @@ function! s:groupJobRunNext(groupJobStatus)
             return -1
         endif
         call add(jobStatusList, jobStatus)
+        let hasRunningChild = 1
     endfor
-    return 1
+    return hasRunningChild
 endfunction
 
 function! s:groupJobStop(groupJobStatus, jobStatusFailed, exitCode)

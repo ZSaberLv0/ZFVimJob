@@ -125,7 +125,7 @@ function! ZFAsyncRun(param, ...)
                 \   'onExit' : ZFJobFunc(function('s:onExit'), [taskName, get(jobOption, 'onExit', '')]),
                 \ }))
     if jobId == -1
-        unlet s:taskMap[taskName]
+        " fail or finished sync
         return jobId
     endif
     if jobId == 0
