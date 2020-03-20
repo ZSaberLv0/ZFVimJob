@@ -18,9 +18,12 @@ endfunction
 function! s:outputInfoIntervalUpdate(outputStatus, jobStatus)
     if get(a:outputStatus['outputImplData'], 'outputInfoTaskId', -1) != -1
         call ZFJobTimerStop(a:outputStatus['outputImplData']['outputInfoTaskId'])
+        let a:outputStatus['outputImplData']['outputInfoTaskId'] = -1
     endif
-    let a:outputStatus['outputImplData']['outputInfoTaskId']
-                \ = ZFJobTimerStart(a:outputStatus['outputImplData']['outputInfoInterval'], ZFJobFunc(function('s:outputInfoTimer'), [a:outputStatus, a:jobStatus]))
+    if get(a:jobStatus['jobOption']['outputTo'], 'outputInfoInterval', 0) > 0 && has('timers')
+        let a:outputStatus['outputImplData']['outputInfoTaskId']
+                    \ = ZFJobTimerStart(a:jobStatus['jobOption']['outputTo']['outputInfoInterval'], ZFJobFunc(function('s:outputInfoTimer'), [a:outputStatus, a:jobStatus]))
+    endif
 endfunction
 
 function! s:init(outputStatus, jobStatus)
@@ -33,12 +36,7 @@ function! s:init(outputStatus, jobStatus)
         elseif ZFJobFuncCallable(T_outputInfo)
             let config = copy(config)
             let config['statusline'] = ZFJobFunc(function('s:outputInfoWrap'), [T_outputInfo])
-
-            let outputInfoInterval = get(a:jobStatus['jobOption']['outputTo'], 'outputInfoInterval', 0)
-            if outputInfoInterval > 0 && has('timers')
-                let a:outputStatus['outputImplData']['outputInfoInterval'] = outputInfoInterval
-                call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
-            endif
+            call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
         endif
     endif
     call ZFLogWinConfig(a:outputStatus['outputId'], config)
