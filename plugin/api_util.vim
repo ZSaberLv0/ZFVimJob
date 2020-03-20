@@ -120,6 +120,8 @@ function! s:funcFromString(funcString)
     return function(a:funcString)
 endfunction
 
+" ============================================================
+" timer
 if !exists('s:jobTimerMap')
     let s:jobTimerMap = {}
 endif
@@ -148,5 +150,17 @@ function! ZFJobTimerStop(timerId)
     endif
     call remove(s:jobTimerMap, a:timerId)
     call timer_stop(a:timerId)
+endfunction
+
+" ============================================================
+" running token
+function! ZFJobRunningToken(jobStatus, ...)
+    if len(get(a:jobStatus, 'exitCode', '')) != 0
+        return get(a:, 1, ' ')
+    endif
+    let token = get(a:, 2, '-\|/')
+    let a:jobStatus['jobImplData']['jobRunningTokenIndex']
+                \ = (get(a:jobStatus['jobImplData'], 'jobRunningTokenIndex', -1) + 1) % len(token)
+    return token[a:jobStatus['jobImplData']['jobRunningTokenIndex']]
 endfunction
 

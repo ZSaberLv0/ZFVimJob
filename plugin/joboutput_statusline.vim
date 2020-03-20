@@ -3,20 +3,20 @@ function! s:fallbackCheck()
     return ''
 endfunction
 
-function! s:init(outputId, outputStatus, jobStatus)
+function! s:init(outputStatus, jobStatus)
 endfunction
 
-function! s:cleanup(outputId, outputStatus, jobStatus)
+function! s:cleanup(outputStatus, jobStatus)
     call ZFStatuslineLogClear()
 endfunction
 
-function! s:attach(outputId, outputStatus, jobStatus)
+function! s:attach(outputStatus, jobStatus)
 endfunction
 
-function! s:detach(outputId, outputStatus, jobStatus)
+function! s:detach(outputStatus, jobStatus)
 endfunction
 
-function! s:output(outputId, outputStatus, jobStatus, text)
+function! s:output(outputStatus, jobStatus, text, type)
     call ZFStatuslineLog(a:text, 0)
 endfunction
 

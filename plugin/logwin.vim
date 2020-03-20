@@ -125,6 +125,24 @@ function! ZFLogWinRedraw(logId)
     endif
 endfunction
 
+function! ZFLogWinRedrawStatusline(logId)
+    if !exists('s:status[a:logId]')
+        return
+    endif
+    let statusline = s:logWinStatusline(a:logId, get(s:status[a:logId]['config'], 'statusline', ''))
+    if exists('*setbufvar')
+        let bufnr = bufnr(s:bufId(a:logId))
+        if bufnr != -1
+            call setbufvar(bufnr, '&statusline', statusline)
+        endif
+    else
+        let oldPos = s:logWinFocus(a:logId, 0)
+        if !empty(oldPos)
+            let &l:statusline = statusline
+        endif
+    endif
+endfunction
+
 function! ZFLogWinClose(logId)
     call ZFLogWinClear(a:logId, 1)
 endfunction
@@ -288,7 +306,7 @@ function! s:redraw(logId, moveTo)
     call winrestview(oldState)
     call setpos('.', cursor)
 
-    call s:logWinStatusline(a:logId, s:status[a:logId]['config']['statusline'])
+    let &l:statusline = s:logWinStatusline(a:logId, get(s:status[a:logId]['config'], 'statusline', ''))
     call ZFJobFuncCall(s:status[a:logId]['config']['updateCallback'], [a:logId])
 
     if s:status[a:logId]['config']['lazyUpdate'] > 0
@@ -341,22 +359,21 @@ endfunction
 
 function! s:logWinStatusline(logId, statusline)
     if empty(a:statusline)
-        return
+        return ''
     elseif type(a:statusline) == type('')
-        let value = a:statusline
+        return a:statusline
     elseif ZFJobFuncCallable(a:statusline)
-        let value = ZFJobFuncCall(a:statusline, [a:logId])
+        return ZFJobFuncCall(a:statusline, [a:logId])
     else
-        return
+        return ''
     endif
-    let &l:statusline = value
 endfunction
 
 function! s:logWinInit(logId)
     let config = s:status[a:logId]['config']
     setlocal buftype=nofile bufhidden=wipe noswapfile nomodifiable nobuflisted
     execute 'set filetype=' . config['filetype']
-    call s:logWinStatusline(a:logId, config['statusline'])
+    let &l:statusline = s:logWinStatusline(a:logId, get(config, 'statusline', ''))
     if config['makeDefaultKeymap']
         call ZF_LogWinMakeDefaultKeymap()
     endif

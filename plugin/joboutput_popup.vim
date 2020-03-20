@@ -7,28 +7,46 @@ function! s:fallbackCheck()
     endif
 endfunction
 
-function! s:init(outputId, outputStatus, jobStatus)
+function! s:init(outputStatus, jobStatus)
     let a:outputStatus['outputImplData']['popupid'] = ZFPopupCreate(get(a:jobStatus['jobOption']['outputTo'], 'popup', {}))
     let a:outputStatus['outputImplData']['popupContent'] = []
+    call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
 endfunction
 
-function! s:cleanup(outputId, outputStatus, jobStatus)
+function! s:cleanup(outputStatus, jobStatus)
+    if get(a:outputStatus['outputImplData'], 'outputInfoTaskId', -1) != -1
+        call ZFJobTimerStop(a:outputStatus['outputImplData']['outputInfoTaskId'])
+        unlet a:outputStatus['outputImplData']['outputInfoTaskId']
+    endif
     call ZFPopupClose(a:outputStatus['outputImplData']['popupid'])
 endfunction
 
-function! s:attach(outputId, outputStatus, jobStatus)
+function! s:attach(outputStatus, jobStatus)
 endfunction
 
-function! s:detach(outputId, outputStatus, jobStatus)
-    call s:updateOutputInfo(a:outputId, a:outputStatus, a:jobStatus)
+function! s:detach(outputStatus, jobStatus)
+    call s:updateOutputInfo(a:outputStatus, a:jobStatus)
 endfunction
 
-function! s:output(outputId, outputStatus, jobStatus, text)
+function! s:output(outputStatus, jobStatus, text, type)
     call add(a:outputStatus['outputImplData']['popupContent'], a:text)
-    call s:updateOutputInfo(a:outputId, a:outputStatus, a:jobStatus)
+    call s:updateOutputInfo(a:outputStatus, a:jobStatus)
+    call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
 endfunction
 
-function! s:updateOutputInfo(outputId, outputStatus, jobStatus)
+function! s:outputInfoTimer(outputStatus, jobStatus, ...)
+    call s:updateOutputInfo(a:outputStatus, a:jobStatus)
+    call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
+endfunction
+function! s:outputInfoIntervalUpdate(outputStatus, jobStatus)
+    if get(a:outputStatus['outputImplData'], 'outputInfoTaskId', -1) != -1
+        call ZFJobTimerStop(a:outputStatus['outputImplData']['outputInfoTaskId'])
+    endif
+    let a:outputStatus['outputImplData']['outputInfoTaskId']
+                \ = ZFJobTimerStart(a:outputStatus['outputImplData']['outputInfoInterval'], ZFJobFunc(function('s:outputInfoTimer'), [a:outputStatus, a:jobStatus]))
+endfunction
+
+function! s:updateOutputInfo(outputStatus, jobStatus)
     let popupid = a:outputStatus['outputImplData']['popupid']
     let popupContent = a:outputStatus['outputImplData']['popupContent']
     if empty(get(a:jobStatus['jobOption']['outputTo'], 'outputInfo', ''))

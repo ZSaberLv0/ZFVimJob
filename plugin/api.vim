@@ -268,7 +268,7 @@ function! s:onOutput(jobStatus, text, type)
     endif
 
     call ZFJobFuncCall(get(a:jobStatus['jobOption'], 'onOutput', ''), [a:jobStatus, text, a:type])
-    call ZFJobOutput(a:jobStatus, a:text)
+    call ZFJobOutput(a:jobStatus, a:text, a:type)
 endfunction
 function! s:onExit(jobStatus, exitCode)
     call s:jobStop(a:jobStatus, a:exitCode, 0)

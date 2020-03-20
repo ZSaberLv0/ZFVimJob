@@ -292,7 +292,7 @@ you may also supply your own `onOutput`, though
 
 functions:
 
-* `call ZFJobOutput(jobStatus, text [, outputId])`
+* `call ZFJobOutput(jobStatus, text [, type(stdout/stderr)])`
 
     output accorrding to job's output configs:
 
@@ -301,8 +301,9 @@ functions:
         'jobOption' : {
             'outputTo' : {
                 'outputType' : 'statusline/logwin',
-                'outputCallback' : 'function(jobStatus, text)',
                 'outputId' : 'if exists, use this fixed outputId',
+                'outputInfo' : 'optional, text or function(jobStatus) which return text',
+                'outputInfoInterval' : 'if greater than 0, notify impl to update outputInfo with this interval',
                 'outputAutoCleanup' : 10000,
                 'outputManualCleanup' : 3000,
 

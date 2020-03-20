@@ -1,15 +1,11 @@
 
 function! ZF_AsyncRunOutputInfo(jobStatus)
-    if len(get(a:jobStatus, 'exitCode', '')) == 0
-        let statusline = ' (running) '
-    else
-        let statusline = '(finished) '
-    endif
+    let statusline = ZFJobRunningToken(a:jobStatus, ':')
     let taskName = get(get(a:jobStatus, 'jobImplData', {}), 'ZFAsyncRun_taskName', s:taskNameDefault)
     if taskName == s:taskNameDefault
-        let statusline .= '[ZFAsyncRun]: ' . ZFGroupJobInfo(a:jobStatus)
+        let statusline .= 'ZFAsyncRun ' . ZFGroupJobInfo(a:jobStatus)
     else
-        let statusline .= taskName . ': ' . ZFGroupJobInfo(a:jobStatus)
+        let statusline .= '[' . taskName . '] ' . ZFGroupJobInfo(a:jobStatus)
     endif
     return statusline
 endfunction
@@ -46,6 +42,7 @@ if !exists('g:ZFAsyncRun_outputTo')
     let g:ZFAsyncRun_outputTo = {
                 \   'outputType' : 'logwin',
                 \   'outputInfo' : function('ZF_AsyncRunOutputInfo'),
+                \   'outputInfoInterval' : 1000,
                 \   'logwin' : {
                 \     'filetype' : 'ZFAsyncRunLog',
                 \     'autoShow' : 1,

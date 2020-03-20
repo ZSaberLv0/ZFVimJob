@@ -1,25 +1,27 @@
 
 " ============================================================
-" jobOption : {
-"   'outputTo' : {
-"     'outputType' : 'statusline/logwin/popup',
-"     'outputCallback' : 'optional, function(jobStatus, text), return text',
-"     'outputInfo' : 'optional, text or function(jobStatus) which return text',
-"     'outputId' : 'if exists, use this fixed outputId',
-"     'outputAutoCleanup' : 10000,
-"     'outputManualCleanup' : 3000,
+" ZFJobOutput(jobStatus, text [, type(stdout/stderr)])
+" jobStatus: {
+"   'jobOption' : {
+"     'outputTo' : {
+"       'outputType' : 'statusline/logwin/popup',
+"       'outputId' : 'if exists, use this fixed outputId',
+"       'outputInfo' : 'optional, text or function(jobStatus) which return text',
+"       'outputInfoInterval' : 'if greater than 0, notify impl to update outputInfo with this interval',
+"       'outputAutoCleanup' : 10000,
+"       'outputManualCleanup' : 3000,
 "
-"     // extra config for actual impl
-"     'statusline' : {...},
-"     'logwin' : {
-"       ...
-"       'logwinNoCloseWhenFocused' : 1,
-"       'logwinAutoClosePreferHide' : 0,
+"       // extra config for actual impl
+"       'statusline' : {...},
+"       'logwin' : {
+"         ...
+"         'logwinNoCloseWhenFocused' : 1,
+"         'logwinAutoClosePreferHide' : 0,
+"       },
+"       'popup' : {...},
 "     },
-"     'popup' : {...},
-"   },
+"   }
 " }
-
 function! ZFJobOutput(jobStatus, text, ...)
     if empty(a:jobStatus)
         return
@@ -33,16 +35,8 @@ function! ZFJobOutput(jobStatus, text, ...)
         return
     endif
     let outputTo = a:jobStatus['jobOption']['outputTo']
-    if empty(get(outputTo, 'outputCallback', ''))
-        let text = a:text
-    else
-        let text = ZFJobFuncCall(outputTo['outputCallback'], [a:jobStatus, a:text])
-    endif
 
     let outputId = get(outputTo, 'outputId', '')
-    if empty(outputId)
-        let outputId = get(a:, 1, '')
-    endif
     if empty(outputId)
         let outputId = 'ZFJobOutput:' . s:outputIdNext()
     endif
@@ -81,7 +75,7 @@ function! ZFJobOutput(jobStatus, text, ...)
                     \ }
         let Fn = get(impl, 'init', 0)
         if type(Fn) == type(function('function'))
-            call Fn(outputId, s:status[outputId], a:jobStatus)
+            call Fn(s:status[outputId], a:jobStatus)
         endif
     endif
 
@@ -89,7 +83,7 @@ function! ZFJobOutput(jobStatus, text, ...)
         call add(s:status[outputId]['jobList'], a:jobStatus)
         let Fn = get(impl, 'attach', 0)
         if type(Fn) == type(function('function'))
-            call Fn(outputId, s:status[outputId], a:jobStatus)
+            call Fn(s:status[outputId], a:jobStatus)
         endif
     endif
 
@@ -97,7 +91,7 @@ function! ZFJobOutput(jobStatus, text, ...)
 
     let Fn = get(impl, 'output', 0)
     if type(Fn) == type(function('function'))
-        call Fn(outputId, s:status[outputId], a:jobStatus, a:text)
+        call Fn(s:status[outputId], a:jobStatus, a:text, get(a:, 1, 'stdout'))
     endif
 
     if get(s:status[outputId]['outputTo'], 'outputAutoCleanup', 10000) > 0
@@ -118,7 +112,7 @@ function! ZFJobOutputCleanup(jobStatus)
 
     let Fn = get(g:ZFJobOutputImpl[s:status[outputId]['outputType']], 'detach', 0)
     if type(Fn) == type(function('function'))
-        call Fn(outputId, s:status[outputId], a:jobStatus)
+        call Fn(s:status[outputId], a:jobStatus)
     endif
 
     if !empty(s:status[outputId]['jobList'])
@@ -130,6 +124,10 @@ function! ZFJobOutputCleanup(jobStatus)
     endif
 endfunction
 
+function! ZFJobOutputStatus(outputId)
+    return get(s:status, a:outputId, {})
+endfunction
+
 function! ZFJobOutputTaskMap()
     return s:status
 endfunction
@@ -137,11 +135,11 @@ endfunction
 " {
 "   'outputType' : {
 "     'fallbackCheck' : 'optional, function() that return fallback outputType or empty to use current',
-"     'init' : 'optional, function(outputId, outputStatus, jobStatus)',
-"     'cleanup' : 'optional, function(outputId, outputStatus, jobStatus)',
-"     'attach' : 'optional, function(outputId, outputStatus, jobStatus)',
-"     'detach' : 'optional, function(outputId, outputStatus, jobStatus)',
-"     'output' : 'optional, function(outputId, outputStatus, jobStatus, text)',
+"     'init' : 'optional, function(outputStatus, jobStatus)',
+"     'cleanup' : 'optional, function(outputStatus, jobStatus)',
+"     'attach' : 'optional, function(outputStatus, jobStatus)',
+"     'detach' : 'optional, function(outputStatus, jobStatus)',
+"     'output' : 'optional, function(outputStatus, jobStatus, text, type)',
 "   },
 " }
 "
@@ -156,10 +154,8 @@ endif
 " {
 "   outputId : { // first output jobStatus decide actual outputType and param
 "     'outputTo' : {}, // jobStatus['jobOption']['outputTo']
-"     'outputType' : '',
+"     'outputType' : 'fixed type after fallback check',
 "     'outputId' : '',
-"     'logwinNoCloseWhenFocused' : 1,
-"     'logwinAutoClosePreferHide' : 0,
 "     'jobList' : [
 "       jobStatus,
 "     ],
@@ -217,14 +213,14 @@ function! s:autoCloseOnTimer(outputId, jobStatus, ...)
     if index >= 0
         let Fn = get(g:ZFJobOutputImpl[outputStatus['outputType']], 'detach', 0)
         if type(Fn) == type(function('function'))
-            call Fn(a:outputId, outputStatus, a:jobStatus)
+            call Fn(outputStatus, a:jobStatus)
         endif
     endif
 
     if empty(outputStatus['jobList'])
         let Fn = get(g:ZFJobOutputImpl[outputStatus['outputType']], 'cleanup', 0)
         if type(Fn) == type(function('function'))
-            call Fn(a:outputId, outputStatus, a:jobStatus)
+            call Fn(outputStatus, a:jobStatus)
         endif
     endif
 endfunction

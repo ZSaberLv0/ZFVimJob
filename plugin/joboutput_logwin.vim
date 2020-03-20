@@ -11,7 +11,19 @@ function! s:outputInfoWrap(outputInfo, logId)
     return ZFStatuslineLogValue(ZFJobFuncCall(a:outputInfo, [ZFLogWinJobStatusGet(a:logId)]))
 endfunction
 
-function! s:init(outputId, outputStatus, jobStatus)
+function! s:outputInfoTimer(outputStatus, jobStatus, ...)
+    call ZFLogWinRedrawStatusline(a:outputStatus['outputId'])
+    call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
+endfunction
+function! s:outputInfoIntervalUpdate(outputStatus, jobStatus)
+    if get(a:outputStatus['outputImplData'], 'outputInfoTaskId', -1) != -1
+        call ZFJobTimerStop(a:outputStatus['outputImplData']['outputInfoTaskId'])
+    endif
+    let a:outputStatus['outputImplData']['outputInfoTaskId']
+                \ = ZFJobTimerStart(a:outputStatus['outputImplData']['outputInfoInterval'], ZFJobFunc(function('s:outputInfoTimer'), [a:outputStatus, a:jobStatus]))
+endfunction
+
+function! s:init(outputStatus, jobStatus)
     let config = get(a:jobStatus['jobOption']['outputTo'], 'logwin', {})
     if empty(get(config, 'statusline', '')) && !empty(get(a:jobStatus['jobOption']['outputTo'], 'outputInfo', ''))
         let T_outputInfo = a:jobStatus['jobOption']['outputTo']['outputInfo']
@@ -21,32 +33,43 @@ function! s:init(outputId, outputStatus, jobStatus)
         elseif ZFJobFuncCallable(T_outputInfo)
             let config = copy(config)
             let config['statusline'] = ZFJobFunc(function('s:outputInfoWrap'), [T_outputInfo])
+
+            let outputInfoInterval = get(a:jobStatus['jobOption']['outputTo'], 'outputInfoInterval', 0)
+            if outputInfoInterval > 0 && has('timers')
+                let a:outputStatus['outputImplData']['outputInfoInterval'] = outputInfoInterval
+                call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
+            endif
         endif
     endif
-    call ZFLogWinConfig(a:outputId, config)
+    call ZFLogWinConfig(a:outputStatus['outputId'], config)
 endfunction
 
-function! s:cleanup(outputId, outputStatus, jobStatus)
-    if !get(get(a:outputStatus['outputTo'], 'logwin', {}), 'logwinNoCloseWhenFocused', 1) || !ZFLogWinIsFocused(a:outputId)
+function! s:cleanup(outputStatus, jobStatus)
+    if get(a:outputStatus['outputImplData'], 'outputInfoTaskId', -1) != -1
+        call ZFJobTimerStop(a:outputStatus['outputImplData']['outputInfoTaskId'])
+        unlet a:outputStatus['outputImplData']['outputInfoTaskId']
+    endif
+    if !get(get(a:outputStatus['outputTo'], 'logwin', {}), 'logwinNoCloseWhenFocused', 1) || !ZFLogWinIsFocused(a:outputStatus['outputId'])
         if get(get(a:outputStatus['outputTo'], 'logwin', {}), 'logwinAutoClosePreferHide', 0)
-            call ZFLogWinHide(a:outputId)
+            call ZFLogWinHide(a:outputStatus['outputId'])
         else
-            call ZFLogWinClose(a:outputId)
+            call ZFLogWinClose(a:outputStatus['outputId'])
         endif
-        call ZFLogWinJobStatusSet(a:outputId, {})
+        call ZFLogWinJobStatusSet(a:outputStatus['outputId'], {})
     endif
 endfunction
 
-function! s:attach(outputId, outputStatus, jobStatus)
-    call ZFLogWinJobStatusSet(a:outputId, a:jobStatus)
+function! s:attach(outputStatus, jobStatus)
+    call ZFLogWinJobStatusSet(a:outputStatus['outputId'], a:jobStatus)
 endfunction
 
-function! s:detach(outputId, outputStatus, jobStatus)
-    call ZFLogWinRedraw(a:outputId)
+function! s:detach(outputStatus, jobStatus)
+    call ZFLogWinRedrawStatusline(a:outputStatus['outputId'])
 endfunction
 
-function! s:output(outputId, outputStatus, jobStatus, text)
-    call ZFLogWinAdd(a:outputId, a:text)
+function! s:output(outputStatus, jobStatus, text, type)
+    call ZFLogWinAdd(a:outputStatus['outputId'], a:text)
+    call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
 endfunction
 
 if !exists('g:ZFJobOutputImpl')

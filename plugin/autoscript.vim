@@ -1,12 +1,7 @@
 
 function! ZF_AutoScriptOutputInfo(jobStatus)
-    if len(get(a:jobStatus, 'exitCode', '')) == 0
-        let statusline = ' (running) '
-    else
-        let statusline = '(finished) '
-    endif
     let projDir = s:projDir(get(get(a:jobStatus, 'jobImplData', {}), 'ZFAutoScript_projDir', ''))
-    return statusline . fnamemodify(projDir, ':~')
+    return ZFJobRunningToken(a:jobStatus, ':') . 'ZFAutoScriptRun ' . fnamemodify(projDir, ':~')
 endfunction
 
 " ============================================================
@@ -15,6 +10,7 @@ if !exists('g:ZFAutoScript_outputTo')
                 \   'outputType' : 'popup',
                 \   'outputId' : 'ZFAutoScript',
                 \   'outputInfo' : function('ZF_AutoScriptOutputInfo'),
+                \   'outputInfoInterval' : 1000,
                 \   'logwin' : {
                 \     'newWinCmd' : '99wincmd l | vertical rightbelow 20new',
                 \     'filetype' : 'ZFAutoScriptLog',
@@ -44,7 +40,6 @@ command! -nargs=0 ZFAutoScriptLogAll :call ZFAutoScriptLogAll()
 " param: { // jobOption passed to ZFAsyncRun
 "   'autoScriptCallback' : 'optional, vim callback to execute, func(jobStatus, projDir, file)',
 "   'autoScriptDelay' : 'optional, delay before run, 1 second by default',
-"   'autoScriptDelayTimerId' : 'internal use, the timer id',
 " }
 function! ZFAutoScript(projDir, param)
     let projDir = s:projDir(a:projDir)
@@ -112,6 +107,9 @@ endfunction
 
 function! ZFAutoScriptRun(...)
     let projDir = s:projDir(get(a:, 1, ''))
+    if empty(get(s:config, projDir, {}))
+        return
+    endif
     call s:run(projDir, get(a:, 2, ''))
 endfunction
 
@@ -177,15 +175,11 @@ endif
 
 function! s:projDir(projDir)
     if empty(a:projDir)
-        return fnamemodify(getcwd(), ':p')
+        let projDir = getcwd()
     else
         let projDir = a:projDir
-        " ^[ \t]*"
-        let projDir = substitute(projDir, '^[ \t]*"', '', '')
-        " "[ \t]*$
-        let projDir = substitute(projDir, '"[ \t]*$', '', '')
-        return fnamemodify(projDir, ':p')
     endif
+    return substitute(fnamemodify(projDir, ':p'), '\\', '/', 'g')
 endfunction
 
 function! s:taskName(projDir)

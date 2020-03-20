@@ -343,7 +343,7 @@ function! s:onJobOutput(groupJobStatus, onOutput, jobStatus, text, type)
     call ZFJobFuncCall(a:onOutput, [a:jobStatus, a:text, a:type])
     call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onJobOutput', ''), [a:groupJobStatus, a:jobStatus, a:text, a:type])
     call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onOutput', ''), [a:groupJobStatus, a:text, a:type])
-    call ZFJobOutput(a:groupJobStatus, a:text)
+    call ZFJobOutput(a:groupJobStatus, a:text, a:type)
 endfunction
 
 function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
