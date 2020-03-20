@@ -178,6 +178,8 @@ function! s:projDir(projDir)
         let projDir = getcwd()
     else
         let projDir = a:projDir
+        " ^[ \t]*"(.*)"[ \t]*$
+        let projDir = substitute(projDir, '^[ \t]*"\(.*\)"[ \t]*$', '\1', 'g')
     endif
     return substitute(fnamemodify(projDir, ':p'), '\\', '/', 'g')
 endfunction
