@@ -12,6 +12,7 @@ endfunction
 "   'jobCwd' : 'optional, cwd to run the job',
 "   'onLog' : 'optional, func(jobStatus, log)',
 "   'onOutput' : 'optional, func(jobStatus, text, type[stdout/stderr])',
+"   'onEnter' : 'optional, func(jobStatus)',
 "   'onExit' : 'optional, func(jobStatus, exitCode)',
 "   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is 2000',
 "   'jobLogEnable' : 'optional, jobLog would be recorded',
@@ -183,6 +184,8 @@ function! s:jobStart(param)
     let jobStatus['jobId'] = jobId
     call s:jobLog(jobStatus, 'start: `' . ZFJobInfo(jobStatus) . '`')
     let s:jobMap[jobId] = jobStatus
+
+    call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
     return jobId
 endfunction
 
@@ -313,6 +316,8 @@ function! ZFJobFallback(param)
 
     let T_jobCmd = get(jobOption, 'jobCmd', '')
     if type(T_jobCmd) == type('')
+        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
+
         let jobCmd = T_jobCmd
         if !empty(get(jobOption, 'jobCwd', ''))
             let jobCmd = 'cd "' . jobOption['jobCwd'] . '" && ' . jobCmd
@@ -320,6 +325,8 @@ function! ZFJobFallback(param)
         let result = system(jobCmd)
         let exitCode = '' . v:shell_error
     elseif ZFJobFuncCallable(T_jobCmd)
+        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
+
         let result = ''
         let exitCode = '0'
         redir => result

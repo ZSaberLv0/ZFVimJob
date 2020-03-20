@@ -187,6 +187,7 @@ and for timers:
     * `jobCwd` : cwd to run your job
     * `onLog` : `func(jobStatus, log)`
     * `onOutput` : `func(jobStatus, text, type[stdout/stderr])`
+    * `onEnter` : `func(jobStatus)`
     * `onExit` : `func(jobStatus, exitCode)`
     * `jobLogEnable` : optional, when on, jobLog would be recorded, for debug use only
     * `jobEncoding` : optional, if supplied, encoding conversion would be made before passing output text
@@ -235,6 +236,7 @@ and for timers:
       'jobCwd' : 'optional, if supplied, would use as default value for child ZFJobStart',
       'onLog' : 'optional, func(groupJobStatus, log)',
       'onOutput' : 'optional, func(groupJobStatus, text, type[stdout/stderr])',
+      'onEnter' : 'optional, func(groupJobStatus)',
       'onExit' : 'optional, func(groupJobStatus, exitCode)',
       'jobLogEnable' : 'optional, when on, jobLog would be recorded, for debug use only',
       'jobEncoding' : 'optional, if supplied, would use as default value for child ZFJobStart',

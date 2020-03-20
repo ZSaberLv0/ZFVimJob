@@ -16,6 +16,7 @@
 "   'jobCwd' : 'optional, if supplied, would use as default value for child ZFJobStart',
 "   'onLog' : 'optional, func(groupJobStatus, log)',
 "   'onOutput' : 'optional, func(groupJobStatus, text, type[stdout/stderr])',
+"   'onEnter' : 'optional, func(groupJobStatus)',
 "   'onExit' : 'optional, func(groupJobStatus, exitCode)',
 "   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in groupJobStatus, default is 2000',
 "   'jobLogEnable' : 'optional, jobLog would be recorded',
@@ -200,6 +201,7 @@ function! s:groupJobStart(groupJobOption)
 
     call s:groupJobLog(groupJobStatus, 'start')
 
+    call ZFJobFuncCall(get(groupJobStatus['jobOption'], 'onEnter', ''), [groupJobStatus])
     if s:groupJobRunNext(groupJobStatus) <= 0
         return -1
     endif

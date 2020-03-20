@@ -38,15 +38,14 @@ function! s:cleanup(outputId, outputStatus, jobStatus)
 endfunction
 
 function! s:attach(outputId, outputStatus, jobStatus)
+    call ZFLogWinJobStatusSet(a:outputId, a:jobStatus)
 endfunction
 
 function! s:detach(outputId, outputStatus, jobStatus)
-    call ZFLogWinJobStatusSet(a:outputId, a:jobStatus)
     call ZFLogWinRedraw(a:outputId)
 endfunction
 
 function! s:output(outputId, outputStatus, jobStatus, text)
-    call ZFLogWinJobStatusSet(a:outputId, a:jobStatus)
     call ZFLogWinAdd(a:outputId, a:text)
 endfunction
 
