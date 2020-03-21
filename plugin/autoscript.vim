@@ -38,7 +38,6 @@ command! -nargs=* -complete=dir ZFAutoScriptLog :call ZFAutoScriptLog(<q-args>)
 command! -nargs=0 ZFAutoScriptLogAll :call ZFAutoScriptLogAll()
 
 " param: { // jobOption passed to ZFAsyncRun
-"   'autoScriptCallback' : 'optional, vim callback to execute, func(jobStatus, projDir, file)',
 "   'autoScriptDelay' : 'optional, delay before run, 1 second by default',
 " }
 function! ZFAutoScript(projDir, param)
@@ -244,7 +243,6 @@ function! s:run(projDir, file)
     if jobId != -1
         let s:status[a:projDir] = ZFGroupJobStatus(jobId)
     endif
-    call ZFJobFuncCall(get(s:config[a:projDir], 'autoScriptCallback', ''), [s:status[a:projDir], a:projDir, a:file])
 endfunction
 
 " ============================================================

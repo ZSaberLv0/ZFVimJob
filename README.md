@@ -424,7 +424,7 @@ options:
 
     ```
     { // jobOption passed to ZFAsyncRun
-        'autoScriptCallback' : 'optional, vim callback to execute, func(jobStatus, projDir, file)',
+        'autoScriptDelay' : 'optional, delay before run, 1 second by default',
     }
     ```
 
