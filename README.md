@@ -175,6 +175,11 @@ and for timers:
 * `ZFJobTimerStart(delay, ZFJobFunc(...))`
 * `ZFJobTimerStop(timerId)`
 
+and for interval (require `has('timers')`):
+
+* `ZFJobIntervalStart(interval, ZFJobFunc(...))`
+* `ZFJobIntervalStop(intervalId)`
+
 
 # Jobs
 
