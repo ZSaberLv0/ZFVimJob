@@ -277,6 +277,12 @@ endfunction
 
 " moveTo: head/tail/none
 function! s:redraw(logId, moveTo)
+    " delay redraw may reenter, causing unexpected modifiable state
+    if exists('b:ZFLogWin_redrawing')
+        return
+    endif
+    let b:ZFLogWin_redrawing = 1
+
     let oldState = winsaveview()
 
     let cursor = getpos('.')
@@ -312,6 +318,8 @@ function! s:redraw(logId, moveTo)
     if s:status[a:logId]['config']['lazyUpdate'] > 0
         redraw
     endif
+
+    silent! unlet b:ZFLogWin_redrawing
 endfunction
 
 function! s:logWinFocus(logId, autoCreate)
