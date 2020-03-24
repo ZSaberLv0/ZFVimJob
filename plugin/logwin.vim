@@ -24,7 +24,8 @@ if !exists('g:ZFLogWin_defaultConfig')
 endif
 
 function! ZF_LogWinMakeDefaultKeymap()
-    nnoremap <silent><buffer> q :q<cr>
+    nnoremap <silent><buffer> q :call ZFLogWinClose(get(b:, 'ZFLogWin_logId', ''))<cr>
+    nnoremap <silent><buffer> x :call ZFLogWinHide(get(b:, 'ZFLogWin_logId', ''))<cr>
 endfunction
 
 function! ZFLogWinBufId(logId)
