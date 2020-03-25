@@ -50,7 +50,15 @@ function! s:jobStart(jobStatus, onOutput, onExit)
         let jobImplOption['cwd'] = a:jobStatus['jobOption']['jobCwd']
     endif
 
-    let jobImplId = job_start(a:jobStatus['jobOption']['jobCmd'], jobImplOption)
+    if v:version <= 800
+        " for some weird vim version,
+        " `python "a.py"` would fail because of double quotes
+        " causing `no such file "a.py"`
+        let jobCmd = ZFJobCmdToList(a:jobStatus['jobOption']['jobCmd'])
+    else
+        let jobCmd = a:jobStatus['jobOption']['jobCmd']
+    endif
+    let jobImplId = job_start(jobCmd, jobImplOption)
     if job_status(jobImplId) != 'run'
         return 0
     endif

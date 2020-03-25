@@ -1,7 +1,6 @@
 
 " ============================================================
-" utils to support low vim version
-
+" utils to support `function(xx, arglist)` low vim version
 function! s:ZFJobFuncWrap(cmd, ...)
     if type(a:cmd) == type('')
         execute a:cmd
@@ -118,6 +117,42 @@ function! s:funcFromString(funcString)
         throw '[ZFJobFunc] no `s:func` supported, use `function("s:func")` or put the func to global scopre instead, func: ' . a:funcString
     endif
     return function(a:funcString)
+endfunction
+
+" ============================================================
+" arg parse
+function! ZFJobCmdToList(jobCmd)
+    let jobCmd = substitute(a:jobCmd, '\\ ', '_ZF_SPACE_ZF_', 'g')
+    let jobCmd = substitute(jobCmd, '\\"', '_ZF_QUOTE_ZF_', 'g')
+    let prevQuote = -1
+    let i = len(jobCmd)
+    while i > 0
+        let i -= 1
+
+        if jobCmd[i] == '"'
+            if prevQuote == -1
+                let prevQuote = i
+            else
+                let prevQuote = -1
+            endif
+            let jobCmd = strpart(jobCmd, 0, i)
+                        \ . strpart(jobCmd, i + 1)
+            continue
+        endif
+
+        if jobCmd[i] == ' ' && prevQuote != -1
+            let jobCmd = strpart(jobCmd, 0, i)
+                        \ . '_ZF_SPACE_ZF_'
+                        \ . strpart(jobCmd, i + 1)
+        endif
+    endwhile
+    let ret = []
+    for item in split(jobCmd)
+        let t = substitute(item, '_ZF_SPACE_ZF_', ' ', 'g')
+        let t = substitute(t, '_ZF_QUOTE_ZF_', '"', 'g')
+        call add(ret, t)
+    endfor
+    return ret
 endfunction
 
 " ============================================================
