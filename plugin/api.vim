@@ -225,6 +225,13 @@ function! s:jobStop(jobStatus, exitCode, callImpl)
     return ret
 endfunction
 
+function! s:jobEncoding(jobStatus)
+    if !exists('*iconv')
+        return ''
+    endif
+    return get(a:jobStatus['jobOption'], 'jobEncoding', '')
+endfunction
+
 function! s:jobSend(jobId, text)
     let jobStatus = ZFJobStatus(a:jobId)
     if empty(jobStatus)
@@ -236,7 +243,7 @@ function! s:jobSend(jobId, text)
     endif
 
     call s:jobLog(jobStatus, 'send: ' . a:text)
-    let jobEncoding = get(jobStatus['jobOption'], 'jobEncoding', '')
+    let jobEncoding = s:jobEncoding(jobStatus)
     if empty(jobEncoding)
         let text = a:text
     else
@@ -260,7 +267,7 @@ function! s:onOutput(jobStatus, text, type)
         let text = substitute(text, "\x18", '', 'g')
     endif
 
-    let jobEncoding = get(a:jobStatus['jobOption'], 'jobEncoding', '')
+    let jobEncoding = s:jobEncoding(a:jobStatus)
     if empty(jobEncoding)
         let text = text
     else
@@ -341,7 +348,7 @@ function! ZFJobFallback(param)
         return -1
     endif
 
-    let jobEncoding = get(jobOption, 'jobEncoding', '')
+    let jobEncoding = s:jobEncoding(jobStatus)
     for output in split(result, "\n")
         if empty(jobEncoding)
             let text = output
