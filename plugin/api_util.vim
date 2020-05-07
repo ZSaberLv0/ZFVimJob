@@ -100,6 +100,14 @@ function! ZFJobFuncInfo(jobFunc)
     elseif type(a:jobFunc) == type({})
         silent let info = s:jobFuncInfo(a:jobFunc[s:jobFuncKey_func])
         return substitute(info, '\n', '', 'g')
+    elseif type(a:jobFunc) == type([])
+        if len(a:jobFunc) == 1
+            return string(a:jobFunc[0])
+        else
+            return string(a:jobFunc)
+        endif
+    else
+        return string(a:jobFunc)
     endif
 endfunction
 

@@ -104,7 +104,11 @@ function! ZFGroupJobInfo(groupJobStatus)
     endif
     let jobList = a:groupJobStatus['jobOption']['jobList']
     if !empty(jobList) && !empty(jobList[0])
-        return ZFJobInfo(jobList[0][0])
+        if type(jobList[0]) == type([])
+            return ZFJobInfo(jobList[0][0])
+        elseif type(jobList[0]) == type({})
+            return ZFJobInfo(jobList[0])
+        endif
     endif
     return ''
 endfunction
@@ -229,6 +233,9 @@ function! s:groupJobRunNext(groupJobStatus)
     let jobList = a:groupJobStatus['jobOption']['jobList'][jobIndex]
     if empty(jobList)
         return -1
+    endif
+    if type(jobList) == type({})
+        let jobList = [jobList]
     endif
 
     call s:groupJobLog(a:groupJobStatus, 'running group ' . jobIndex)
@@ -368,7 +375,6 @@ function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
     endif
 
     let jobIndex = a:groupJobStatus['jobIndex']
-    let jobList = a:groupJobStatus['jobOption']['jobList'][jobIndex]
     let jobStatusList = a:groupJobStatus['jobStatusList'][jobIndex]
     if a:jobStatus['jobId'] == 0
         call add(jobStatusList, a:jobStatus)
