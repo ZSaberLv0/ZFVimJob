@@ -372,11 +372,6 @@ function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
     let jobStatusList = a:groupJobStatus['jobStatusList'][jobIndex]
     if a:jobStatus['jobId'] == 0
         call add(jobStatusList, a:jobStatus)
-
-        if len(jobList) == len(jobStatusList)
-            call s:groupJobRunNext(a:groupJobStatus)
-        endif
-        return
     endif
 
     for jobStatus in jobStatusList
