@@ -112,9 +112,12 @@ function! ZFJobFuncInfo(jobFunc)
 endfunction
 
 function! s:jobFuncInfo(jobFunc)
-    redir => info
-    echo a:jobFunc
-    redir END
+    try
+        redir => info
+        echo a:jobFunc
+    finally
+        redir END
+    endtry
     return info
 endfunction
 function! s:funcScopeIsValid(funcString)

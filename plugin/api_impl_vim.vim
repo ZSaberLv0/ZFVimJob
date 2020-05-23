@@ -23,9 +23,12 @@ if !exists('s:jobImplChannelMap')
 endif
 
 function! s:toString(a)
-    redir => s
-    echo a:a
-    redir END
+    try
+        redir => s
+        echo a:a
+    finally
+        redir END
+    endtry
     return substitute(s, '\n', '', 'g')
 endfunction
 function! s:traitNumber(jobImplId)

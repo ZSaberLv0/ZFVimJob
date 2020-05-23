@@ -336,9 +336,12 @@ function! ZFJobFallback(param)
 
         let result = ''
         let exitCode = '0'
-        redir => result
-        let T_result = ZFJobFuncCall(T_jobCmd, [jobStatus])
-        redir END
+        try
+            redir => result
+            let T_result = ZFJobFuncCall(T_jobCmd, [jobStatus])
+        finally
+            redir END
+        endtry
         if type(T_result) == type({}) && exists("T_result['output']") && exists("T_result['exitCode']")
             let result = T_result['output']
             let exitCode = '' . T_result['exitCode']
