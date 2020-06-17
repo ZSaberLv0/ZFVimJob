@@ -2,6 +2,13 @@
 let g:ZFJOBSTOP = 'JOBSTOP'
 let g:ZFJOBTIMEOUT = 'JOBTIMEOUT'
 
+if !exists('g:ZFJobVerboseLog')
+    let g:ZFJobVerboseLog = []
+endif
+if !exists('g:ZFJobVerboseLogEnable')
+    let g:ZFJobVerboseLogEnable = exists('g:ZFJobVerboseLog')
+endif
+
 " ============================================================
 function! ZFJobAvailable()
     return !empty(g:ZFVimJobImpl)
@@ -112,6 +119,9 @@ else
     endfunction
 endif
 function! s:jobLog(jobStatus, log)
+    if g:ZFJobVerboseLogEnable
+        call add(g:ZFJobVerboseLog, s:jobLogFormat(a:jobStatus, a:log))
+    endif
     if get(a:jobStatus['jobOption'], 'jobLogEnable', 0)
         let log = s:jobLogFormat(a:jobStatus, a:log)
         call add(a:jobStatus['jobLog'], log)
@@ -254,6 +264,9 @@ function! s:jobSend(jobId, text)
 endfunction
 
 function! s:onOutput(jobStatus, text, type)
+    if g:ZFJobVerboseLogEnable
+        call add(g:ZFJobVerboseLog, s:jobLogFormat(a:jobStatus, a:text))
+    endif
     call s:jobLog(a:jobStatus, 'output [' . a:type . ']: ' . a:text)
     call add(a:jobStatus['jobOutput'], a:text)
     let jobOutputLimit = get(a:jobStatus['jobOption'], 'jobOutputLimit', 2000)

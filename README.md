@@ -14,6 +14,7 @@
         * [Popup](#popup)
     * [Async run](#async-run)
     * [Auto script](#auto-script)
+* [Trouble shooting](#trouble-shooting)
 
 <!-- vim-markdown-toc -->
 
@@ -483,4 +484,18 @@ options:
                 \   },
                 \ }
     ```
+
+# Trouble shooting
+
+if any werid things happen, you may enable verbose log by:
+
+```
+let g:ZFJobVerboseLogEnable = 1
+```
+
+and dump the log to file:
+
+```
+:call writefile(g:ZFJobVerboseLog, 'log.txt')
+```
 

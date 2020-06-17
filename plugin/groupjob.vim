@@ -166,6 +166,9 @@ else
     endfunction
 endif
 function! s:groupJobLog(groupJobStatus, log)
+    if g:ZFJobVerboseLogEnable
+        call add(g:ZFJobVerboseLog, s:groupJobLogFormat(a:groupJobStatus, a:log))
+    endif
     if get(a:groupJobStatus['jobOption'], 'jobLogEnable', 0)
         let log = s:groupJobLogFormat(a:groupJobStatus, a:log)
         call add(a:groupJobStatus['jobLog'], log)
