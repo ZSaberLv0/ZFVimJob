@@ -487,7 +487,7 @@ options:
 
 # Trouble shooting
 
-if any werid things happen, you may enable verbose log by:
+if any weird things happen, you may enable verbose log by:
 
 ```
 let g:ZFJobVerboseLogEnable = 1
