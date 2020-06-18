@@ -95,9 +95,11 @@ function! s:jobStop(jobStatus)
     let jobImplChannelNumber = s:jobImplChannelNumber(jobImplChannel)
     unlet s:jobImplIdMap[jobImplIdNumber]
     unlet s:jobImplChannelMap[jobImplChannelNumber]
-    try
-        silent! call ch_close(a:jobStatus['jobImplData']['jobImplChannel'])
-    endtry
+    if ch_status(a:jobStatus['jobImplData']['jobImplChannel']) == 'open'
+        try
+            silent! call ch_close(a:jobStatus['jobImplData']['jobImplChannel'])
+        endtry
+    endif
     call job_stop(a:jobStatus['jobImplData']['jobImplId'])
     return 1
 endfunction
@@ -134,9 +136,11 @@ function! s:vim_exit_cb(jobImplId, exitCode, ...)
     let jobImplState = remove(s:jobImplIdMap, jobImplIdNumber)
     call remove(s:jobImplChannelMap, jobImplState['jobImplChannelNumber'])
 
-    try
-        silent! call ch_close(jobImplState['jobImplChannel'])
-    endtry
+    if ch_status(jobImplState['jobImplChannel']) == 'open'
+        try
+            silent! call ch_close(jobImplState['jobImplChannel'])
+        endtry
+    endif
     call ZFJobFuncCall(jobImplState['onExit'], [a:exitCode])
 endfunction
 
