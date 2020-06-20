@@ -15,6 +15,7 @@
 "   'jobCmd' : 'optional, used only when jobList not supplied',
 "   'jobCwd' : 'optional, if supplied, would use as default value for child ZFJobStart',
 "   'onLog' : 'optional, func(groupJobStatus, log)',
+"   'onOutputFilter' : 'optional, func(groupJobStatus, text, type[stdout/stderr]), return modified text or empty to discard',
 "   'onOutput' : 'optional, func(groupJobStatus, text, type[stdout/stderr])',
 "   'onEnter' : 'optional, func(groupJobStatus)',
 "   'onExit' : 'optional, func(groupJobStatus, exitCode)',
@@ -344,16 +345,25 @@ function! s:onJobOutput(groupJobStatus, onOutput, jobStatus, text, type)
         return
     endif
 
-    call add(a:groupJobStatus['jobOutput'], a:text)
+    if !empty(get(a:groupJobStatus['jobOption'], 'onOutputFilter', ''))
+        let text = ZFJobFuncCall(a:groupJobStatus['jobOption']['onOutputFilter'], [a:groupJobStatus, a:text, a:type])
+        if empty(text)
+            return
+        endif
+    else
+        let text = a:text
+    endif
+
+    call add(a:groupJobStatus['jobOutput'], text)
     let jobOutputLimit = get(a:groupJobStatus['jobOption'], 'jobOutputLimit', 2000)
     if jobOutputLimit >= 0 && len(a:groupJobStatus['jobOutput']) > jobOutputLimit
         call remove(a:groupJobStatus['jobOutput'], jobOutputLimit)
     endif
 
-    call ZFJobFuncCall(a:onOutput, [a:jobStatus, a:text, a:type])
-    call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onJobOutput', ''), [a:groupJobStatus, a:jobStatus, a:text, a:type])
-    call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onOutput', ''), [a:groupJobStatus, a:text, a:type])
-    call ZFJobOutput(a:groupJobStatus, a:text, a:type)
+    call ZFJobFuncCall(a:onOutput, [a:jobStatus, text, a:type])
+    call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onJobOutput', ''), [a:groupJobStatus, a:jobStatus, text, a:type])
+    call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onOutput', ''), [a:groupJobStatus, text, a:type])
+    call ZFJobOutput(a:groupJobStatus, text, a:type)
 endfunction
 
 function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)

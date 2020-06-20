@@ -187,19 +187,23 @@ and for interval (require `has('timers')`):
 * `ZFJobAvailable()`
 * `ZFJobStart(jobCmd_or_jobOption)`
 
-    jobOption:
-
-    * `jobCmd` : your job cmd, or vim `func(jobStatus)`
-    * `jobCwd` : cwd to run your job
-    * `onLog` : `func(jobStatus, log)`
-    * `onOutput` : `func(jobStatus, text, type[stdout/stderr])`
-    * `onEnter` : `func(jobStatus)`
-    * `onExit` : `func(jobStatus, exitCode)`
-    * `jobLogEnable` : optional, when on, jobLog would be recorded, for debug use only
-    * `jobEncoding` : optional, if supplied, encoding conversion would be made before passing output text
-    * `jobTimeout` : optional, if supplied, ZFJobStop would be called with g:ZFJOBTIMEOUT
-    * `jobFallback` : optional, true by default, whether fallback to `system()` if no job impl available,
-    * `jobImplData` : {}, // optional, if supplied, merge to jobStatus['jobImplData']
+    ```
+    jobOption: {
+      'jobCmd' : 'job cmd, or vim `function(jobStatus)` that return {output:xxx, exitCode:0}',
+      'jobCwd' : 'optional, cwd to run the job',
+      'onLog' : 'optional, func(jobStatus, log)',
+      'onOutputFilter' : 'optional, func(jobStatus, text, type[stdout/stderr]), return modified text or empty to discard',
+      'onOutput' : 'optional, func(jobStatus, text, type[stdout/stderr])',
+      'onEnter' : 'optional, func(jobStatus)',
+      'onExit' : 'optional, func(jobStatus, exitCode)',
+      'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is 2000',
+      'jobLogEnable' : 'optional, jobLog would be recorded',
+      'jobEncoding' : 'optional, if supplied, encoding conversion would be made before passing output text',
+      'jobTimeout' : 'optional, if supplied, ZFJobStop would be called with g:ZFJOBTIMEOUT',
+      'jobFallback' : 'optional, true by default, whether fallback to `system()` if no job impl available',
+      'jobImplData' : {}, // optional, if supplied, merge to jobStatus['jobImplData']
+    }
+    ```
 
 * `ZFJobStop(jobId)`
 * `ZFJobSend(jobId, text)`
@@ -241,6 +245,7 @@ and for interval (require `has('timers')`):
       'jobCmd' : 'optional, used only when jobList not supplied',
       'jobCwd' : 'optional, if supplied, would use as default value for child ZFJobStart',
       'onLog' : 'optional, func(groupJobStatus, log)',
+      'onOutputFilter' : 'optional, func(groupJobStatus, text, type[stdout/stderr]), return modified text or empty to discard',
       'onOutput' : 'optional, func(groupJobStatus, text, type[stdout/stderr])',
       'onEnter' : 'optional, func(groupJobStatus)',
       'onExit' : 'optional, func(groupJobStatus, exitCode)',
