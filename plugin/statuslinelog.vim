@@ -1,8 +1,4 @@
 
-if !exists('g:ZFStatuslineLog_timeout')
-    let g:ZFStatuslineLog_timeout = 5000
-endif
-
 function! ZF_StatuslineLog_prefix(statuslineOld)
     return ''
 endfunction
@@ -15,45 +11,53 @@ function! ZF_StatuslineLog_postfix(statuslineOld)
     endif
 endfunction
 
-if !exists('g:ZFStatuslineLog_prefix')
-    let g:ZFStatuslineLog_prefix = function('ZF_StatuslineLog_prefix')
-endif
-if !exists('g:ZFStatuslineLog_postfix')
-    let g:ZFStatuslineLog_postfix = function('ZF_StatuslineLog_postfix')
+" {
+"   'timeout' : 'when set, auto hide after miliseconds, 5000 by default',
+"   'escape' : '0/1, whether escape the text, 1 by default',
+"   'prefixChecker' : 'string or function, when set, used as prefix, ZF_StatuslineLog_prefix by default',
+"   'postfixChecker' : 'string or function, when set, used as postfix, ZF_StatuslineLog_postfix by default',
+" }
+if !exists('g:ZFStatuslineLog_defaultConfig')
+    let g:ZFStatuslineLog_defaultConfig = {}
 endif
 
 " ============================================================
+" option: timeout or g:ZFStatuslineLog_defaultConfig
+function! ZFStatuslineLog(text, ...)
+    call s:log(a:text, get(a:, 1, {}))
+endfunction
+
+function! ZFStatuslineLogClear()
+    call s:cleanup()
+endfunction
+
 " option : {
-"   'statuslineOld' : '',
-"   'escape' : 1,
+"   'statuslineOld' : 'when set, use to apply text',
+"   ... // other option in g:ZFStatuslineLog_defaultConfig
 " }
 function! ZFStatuslineLogValue(text, ...)
     let option = get(a:, 1, {})
     let statuslineOld = get(option, 'statuslineOld', &g:statusline)
-    if ZFJobFuncCallable(g:ZFStatuslineLog_prefix)
-        let prefix = ZFJobFuncCall(g:ZFStatuslineLog_prefix, [statuslineOld])
+
+    let PrefixChecker = get(option, 'prefixChecker', function('ZF_StatuslineLog_prefix'))
+    if ZFJobFuncCallable(PrefixChecker)
+        let prefix = ZFJobFuncCall(PrefixChecker, [statuslineOld])
     else
-        let prefix = g:ZFStatuslineLog_prefix
+        let prefix = PrefixChecker
     endif
-    if ZFJobFuncCallable(g:ZFStatuslineLog_postfix)
-        let postfix = ZFJobFuncCall(g:ZFStatuslineLog_postfix, [statuslineOld])
+    let PostfixChecker = get(option, 'postfixChecker', function('ZF_StatuslineLog_postfix'))
+    if ZFJobFuncCallable(PostfixChecker)
+        let postfix = ZFJobFuncCall(PostfixChecker, [statuslineOld])
     else
-        let postfix = g:ZFStatuslineLog_postfix
+        let postfix = PostfixChecker
     endif
+
     if get(option, 'escape', 1)
         let text = substitute(a:text, '%', '%%', 'g')
     else
         let text = a:text
     endif
     return prefix . text . postfix
-endfunction
-
-function! ZFStatuslineLog(text, ...)
-    call s:log(a:text, get(a:, 1, g:ZFStatuslineLog_timeout))
-endfunction
-
-function! ZFStatuslineLogClear()
-    call s:cleanup()
 endfunction
 
 " ============================================================
@@ -67,14 +71,23 @@ if !exists('s:statuslineSaved')
     let s:statuslineSaved = ''
 endif
 
-function! s:log(text, timeout)
+function! s:log(text, option)
     call s:cleanup()
 
+    if type(a:option) == type(0)
+        let option = {
+                    \   'timeout' : a:option,
+                    \ }
+        let timeout = a:option
+    else
+        let option = copy(a:option)
+        let timeout = get(option, 'timeout', 5000)
+    endif
+
     let s:statuslineSaved = &g:statusline
-    let &g:statusline = ZFStatuslineLogValue(a:text, {
+    let &g:statusline = ZFStatuslineLogValue(a:text, extend(option, {
                 \   'statuslineOld' : s:statuslineSaved,
-                \   'escape' : 1,
-                \ })
+                \ }))
 
     augroup ZFStatuslineLog_observer_augroup
         autocmd!
@@ -83,9 +96,9 @@ function! s:log(text, timeout)
         endif
     augroup END
     let s:observerAttached = 1
-    if a:timeout > 0
+    if timeout > 0
         if has('timers')
-            let s:timeoutId = timer_start(a:timeout, function('s:statuslineTimeout'))
+            let s:timeoutId = timer_start(timeout, function('s:statuslineTimeout'))
         endif
     endif
 endfunction

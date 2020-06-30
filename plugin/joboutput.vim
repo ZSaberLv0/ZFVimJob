@@ -12,13 +12,13 @@
 "       'outputManualCleanup' : 3000,
 "
 "       // extra config for actual impl
-"       'statusline' : {...},
-"       'logwin' : {
+"       'statusline' : {...}, // see g:ZFStatuslineLog_defaultConfig
+"       'logwin' : { // see g:ZFLogWin_defaultConfig
 "         ...
 "         'logwinNoCloseWhenFocused' : 1,
 "         'logwinAutoClosePreferHide' : 0,
 "       },
-"       'popup' : {...},
+"       'popup' : {...}, // see g:ZFPopup_defaultConfig
 "     },
 "   }
 " }

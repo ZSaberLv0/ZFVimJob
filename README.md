@@ -2,19 +2,22 @@
 <!-- vim-markdown-toc GFM -->
 
 * [Intro](#intro)
+* [Workflow](#workflow)
 * [How to use](#how-to-use)
 * [API](#api)
-    * [Util functions](#util-functions)
-* [Jobs](#jobs)
-* [Group jobs](#group-jobs)
-* [Utils](#utils)
-    * [Job output](#job-output)
-        * [Statusline log](#statusline-log)
-        * [Log window](#log-window)
-        * [Popup](#popup)
-    * [Async run](#async-run)
-    * [Auto script](#auto-script)
-* [Trouble shooting](#trouble-shooting)
+    * [Jobs](#jobs)
+    * [Group jobs](#group-jobs)
+    * [Utils](#utils)
+        * [Util functions](#util-functions)
+        * [Job output](#job-output)
+            * [Statusline log](#statusline-log)
+            * [Log window](#log-window)
+            * [Popup](#popup)
+        * [Async run](#async-run)
+        * [Auto script](#auto-script)
+* [Other](#other)
+    * [verbose log](#verbose-log)
+    * [custom impl](#custom-impl)
 
 <!-- vim-markdown-toc -->
 
@@ -45,6 +48,27 @@ features / why another remake:
 
 
 if you like my work, [check here](https://github.com/ZSaberLv0?utf8=%E2%9C%93&tab=repositories&q=ZFVim) for a list of my vim plugins
+
+
+# Workflow
+
+```
+ZFAsyncRun        ZFJobStart                            ZFStatuslineLog
+ZFAutoScript  =>  ZFGroupJobStart  =>  ZFJobOutput  =>  ZFLogWin
+                                                        ZFPopup
+```
+
+the job control is fully modularized, and can be combined easily to achieve complex logic
+
+one typical example:
+
+```
+you saved a file
+    => auto build and deploy (ZFAutoScript)
+    => auto show build output as popup (ZFJobOutput)
+```
+
+it may hard to config for first time, but trust me, it changes the life
 
 
 # How to use
@@ -116,73 +140,20 @@ if you like my work, [check here](https://github.com/ZSaberLv0?utf8=%E2%9C%93&ta
     * any child failed with none `0` exitCode, group job's exitCode would be the child's exitCode
     * stopped manually by `ZFGroupJobStop(groupJobId)`, group job's exitCode would be `g:ZFJOBSTOP`
 
-1. by default, we support `vim8`'s `job_start()` and `neovim`'s `jobstart()`,
-    you may supply your own job impl by:
 
-    ```
-    function! s:jobStart(jobStatus, onOutput, onExit)
-        let jobImplId = yourJobStart(...)
-        " store impl data if necessary
-        let a:jobStatus['jobImplData']['yourJobImplId'] = jobImplId
-        " return 1 if success or 0 if failed
-        return 1
-    endfunction
-    function! s:jobStop(jobStatus)
-    endfunction
-    function! s:jobSend(extraArgs0, extraArgs1, jobStatus, text)
-    endfunction
-    let g:ZFVimJobImpl = {
-            \   'jobStart' : function('s:jobStart'),
-            \   'jobStop' : function('s:jobStop'),
-            \   'jobSend' : ZFJobFunc(function('s:jobSend'), [extraArgs0, extraArgs1]),
-            \ }
-    ```
+here's some plugins that used ZFVimJob to simplify complex job control:
+
+* [ZSaberLv0/ZFVimIM](https://github.com/ZSaberLv0/ZFVimIM) :
+    input method by pure vim script,
+    use ZFVimJob to achieve complex async db update and upload
+    (up to 30 chained jobs with dependency)
+* [ZSaberLv0/ZFVimTerminal](https://github.com/ZSaberLv0/ZFVimTerminal) :
+    terminal simulator by pure vim script
 
 
 # API
 
-## Util functions
-
-since low version vim doesn't support `function(func, argList)`,
-we supply a wrapper to simulate:
-
-* `ZFJobFunc(func[, argList])` : return a Dictionary that can be run by `ZFJobFuncCall(jobFunc, argList)`
-
-    func can be:
-
-    * vim `function('name')`
-        * for `vim 7.4` or above, `function('s:func')` can be used
-        * for `vim 7.3` or below, you must put it in global scope, like `function('Fn_func')`
-    * string or string list to `:execute`
-
-        function params can be accessed by `a:000` series, example:
-
-        ```
-        let Fn = ZFJobFunc([
-                \   'let ret = Wrap(a:1, a:2, a:3, a:4)',
-                \   'let ZFJobFuncRet = ret["xxx"]',
-                \ ], ['a', 'b'])
-        call ZFJobFuncCall(Fn, ['c', 'd'])
-        " Wrap() would be called as: Wrap('a', 'b', 'c', 'd')
-        ```
-
-        to return values within the strings to `:execute`, `let ZFJobFuncRet = yourValue`
-
-* `ZFJobFuncCall(jobFunc, argList)` : run the function of `ZFJobFunc()`
-* `ZFJobFuncInfo(jobFunc)` : return function info
-
-and for timers:
-
-* `ZFJobTimerStart(delay, ZFJobFunc(...))`
-* `ZFJobTimerStop(timerId)`
-
-and for interval (require `has('timers')`):
-
-* `ZFJobIntervalStart(interval, ZFJobFunc(...))`
-* `ZFJobIntervalStop(intervalId)`
-
-
-# Jobs
+## Jobs
 
 * `ZFJobAvailable()`
 * `ZFJobStart(jobCmd_or_jobOption)`
@@ -224,7 +195,7 @@ and for interval (require `has('timers')`):
 * `ZFJobLog(jobId, log)`
 
 
-# Group jobs
+## Group jobs
 
 * `ZFGroupJobStart(groupJobOption)`
 
@@ -290,9 +261,50 @@ and for interval (require `has('timers')`):
 * `ZFGroupJobLog(groupJobId, log)`
 
 
-# Utils
+## Utils
 
-## Job output
+### Util functions
+
+since low version vim doesn't support `function(func, argList)`,
+we supply a wrapper to simulate:
+
+* `ZFJobFunc(func[, argList])` : return a Dictionary that can be run by `ZFJobFuncCall(jobFunc, argList)`
+
+    func can be:
+
+    * vim `function('name')`
+        * for `vim 7.4` or above, `function('s:func')` can be used
+        * for `vim 7.3` or below, you must put it in global scope, like `function('Fn_func')`
+    * string or string list to `:execute`
+
+        function params can be accessed by `a:000` series, example:
+
+        ```
+        let Fn = ZFJobFunc([
+                \   'let ret = Wrap(a:1, a:2, a:3, a:4)',
+                \   'let ZFJobFuncRet = ret["xxx"]',
+                \ ], ['a', 'b'])
+        call ZFJobFuncCall(Fn, ['c', 'd'])
+        " Wrap() would be called as: Wrap('a', 'b', 'c', 'd')
+        ```
+
+        to return values within the strings to `:execute`, `let ZFJobFuncRet = yourValue`
+
+* `ZFJobFuncCall(jobFunc, argList)` : run the function of `ZFJobFunc()`
+* `ZFJobFuncInfo(jobFunc)` : return function info
+
+and for timers:
+
+* `ZFJobTimerStart(delay, ZFJobFunc(...))`
+* `ZFJobTimerStop(timerId)`
+
+and for interval (require `has('timers')`):
+
+* `ZFJobIntervalStart(interval, ZFJobFunc(...))`
+* `ZFJobIntervalStop(intervalId)`
+
+
+### Job output
 
 abstract job output is done by default
 
@@ -319,12 +331,13 @@ functions:
                 'outputManualCleanup' : 3000,
 
                 // extra config for actual impl
-                'statusline' : {...},
-                'logwin' : {
+                'statusline' : {...}, // see g:ZFStatuslineLog_defaultConfig
+                'logwin' : { // see g:ZFLogWin_defaultConfig
                     ...
                     'logwinNoCloseWhenFocused' : 1,
                     'logwinAutoClosePreferHide' : 0,
                 },
+                'popup' : {...}, // see g:ZFPopup_defaultConfig
             },
         },
     }
@@ -335,15 +348,15 @@ functions:
     manually cleanup output
 
 
-### Statusline log
+#### Statusline log
 
-* `call ZFStatuslineLog('your msg'[, timeout])`
+* `call ZFStatuslineLog('your msg'[, timeout/option])`
 
     output logs to statusline, restore statusline automatically if set by other code or timeout,
     or `call ZFStatuslineLogClear()` to restore manually
 
 
-### Log window
+#### Log window
 
 * `call ZFLogWinAdd(logId, content)`
 
@@ -383,13 +396,13 @@ functions:
     * `initCallback` / `cleanupCallback` / `updateCallback` : `function(logId)`
 
 
-### Popup
+#### Popup
 
 use [ZSaberLv0/ZFVimPopup](https://github.com/ZSaberLv0/ZFVimPopup) to show job output,
 see `g:ZFAutoScript_outputTo` for how to config
 
 
-## Async run
+### Async run
 
 * `:ZFAsyncRun your cmd` or `call ZFAsyncRun(jobCmd_or_jobOption[, taskNameOrJobId])`
 
@@ -425,7 +438,7 @@ options:
     ```
 
 
-## Auto script
+### Auto script
 
 * `call ZFAutoScript(projDir, jobOption)`
 
@@ -490,7 +503,9 @@ options:
                 \ }
     ```
 
-# Trouble shooting
+# Other
+
+## verbose log
 
 if any weird things happen, you may enable verbose log by:
 
@@ -502,5 +517,29 @@ and dump the log to file:
 
 ```
 :call writefile(g:ZFJobVerboseLog, 'log.txt')
+```
+
+## custom impl
+
+by default, we support `vim8`'s `job_start()` and `neovim`'s `jobstart()`,
+    you may supply your own job impl by:
+
+```
+function! s:jobStart(jobStatus, onOutput, onExit)
+    let jobImplId = yourJobStart(...)
+    " store impl data if necessary
+    let a:jobStatus['jobImplData']['yourJobImplId'] = jobImplId
+    " return 1 if success or 0 if failed
+    return 1
+endfunction
+function! s:jobStop(jobStatus)
+endfunction
+function! s:jobSend(extraArgs0, extraArgs1, jobStatus, text)
+endfunction
+let g:ZFVimJobImpl = {
+        \   'jobStart' : function('s:jobStart'),
+        \   'jobStop' : function('s:jobStop'),
+        \   'jobSend' : ZFJobFunc(function('s:jobSend'), [extraArgs0, extraArgs1]),
+        \ }
 ```
 
