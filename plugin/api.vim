@@ -6,7 +6,7 @@ if !exists('g:ZFJobVerboseLog')
     let g:ZFJobVerboseLog = []
 endif
 if !exists('g:ZFJobVerboseLogEnable')
-    let g:ZFJobVerboseLogEnable = exists('g:ZFJobVerboseLog')
+    let g:ZFJobVerboseLogEnable = 0
 endif
 
 " ============================================================
@@ -283,9 +283,6 @@ function! s:onOutput(jobStatus, text, type)
         endif
     endif
 
-    if g:ZFJobVerboseLogEnable
-        call add(g:ZFJobVerboseLog, s:jobLogFormat(a:jobStatus, text))
-    endif
     call s:jobLog(a:jobStatus, 'output [' . a:type . ']: ' . text)
     call add(a:jobStatus['jobOutput'], text)
     let jobOutputLimit = get(a:jobStatus['jobOption'], 'jobOutputLimit', 2000)
