@@ -22,15 +22,25 @@ if !exists('s:jobImplChannelMap')
     let s:jobImplChannelMap = {}
 endif
 
-function! s:toString(a)
-    try
-        redir => s
-        echo a:a
-    finally
-        redir END
-    endtry
-    return substitute(s, '\n', '', 'g')
-endfunction
+if exists('*string')
+    function! s:toString(a)
+        return substitute(string(a:a), '\n', '', 'g')
+    endfunction
+elseif exists('*execute')
+    function! s:toString(a)
+        return substitute(execute('echo a:a'), '\n', '', 'g')
+    endfunction
+else
+    function! s:toString(a)
+        try
+            redir => s
+            echo a:a
+        finally
+            redir END
+        endtry
+        return substitute(s, '\n', '', 'g')
+    endfunction
+endif
 function! s:traitNumber(jobImplId)
     silent! let s = s:toString(a:jobImplId)
     return substitute(s, '^.\{-}\([0-9]\+\).\{-}$', '\1', '')

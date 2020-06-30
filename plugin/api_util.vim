@@ -111,15 +111,25 @@ function! ZFJobFuncInfo(jobFunc)
     endif
 endfunction
 
-function! s:jobFuncInfo(jobFunc)
-    try
-        redir => info
-        echo a:jobFunc
-    finally
-        redir END
-    endtry
-    return info
-endfunction
+if exists('*string')
+    function! s:jobFuncInfo(jobFunc)
+        return string(a:jobFunc)
+    endfunction
+elseif exists('*execute')
+    function! s:jobFuncInfo(jobFunc)
+        return execute('echo a:jobFunc')
+    endfunction
+else
+    function! s:jobFuncInfo(jobFunc)
+        try
+            redir => info
+            echo a:jobFunc
+        finally
+            redir END
+        endtry
+        return info
+    endfunction
+endif
 function! s:funcScopeIsValid(funcString)
     return match(a:funcString, 's:\|w:\|t:\|b:') < 0
 endfunction
