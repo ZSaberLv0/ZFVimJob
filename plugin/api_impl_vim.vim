@@ -53,11 +53,13 @@ function! s:jobImplChannelNumber(jobImplChannel)
 endfunction
 
 function! s:jobStart(jobStatus, onOutput, onExit)
+    " use `mode=raw` seems to solve:
+    "   https://github.com/vim/vim/issues/1320
     let jobImplOption = {
                 \   'out_cb' : function('s:vim_out_cb'),
                 \   'err_cb' : function('s:vim_err_cb'),
                 \   'exit_cb' : function('s:vim_exit_cb'),
-                \   'mode' : 'nl',
+                \   'mode' : 'raw',
                 \ }
     if !empty(get(a:jobStatus['jobOption'], 'jobCwd', ''))
         let jobImplOption['cwd'] = a:jobStatus['jobOption']['jobCwd']
@@ -127,7 +129,9 @@ function! s:vim_out_cb(jobImplChannel, msg, ...)
         return
     endif
 
-    call ZFJobFuncCall(jobImplState['onOutput'], [a:msg, 'stdout'])
+    for msg in split(a:msg, "\n")
+        call ZFJobFuncCall(jobImplState['onOutput'], [msg, 'stdout'])
+    endfor
 endfunction
 function! s:vim_err_cb(jobImplChannel, msg, ...)
     let jobImplChannelNumber = s:jobImplChannelNumber(a:jobImplChannel)
@@ -136,7 +140,9 @@ function! s:vim_err_cb(jobImplChannel, msg, ...)
         return
     endif
 
-    call ZFJobFuncCall(jobImplState['onOutput'], [a:msg, 'stderr'])
+    for msg in split(a:msg, "\n")
+        call ZFJobFuncCall(jobImplState['onOutput'], [msg, 'stderr'])
+    endfor
 endfunction
 function! s:vim_exit_cb(jobImplId, exitCode, ...)
     let jobImplIdNumber = s:jobImplIdNumber(a:jobImplId)
