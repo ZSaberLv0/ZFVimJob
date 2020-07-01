@@ -363,6 +363,8 @@ function! ZFJobFallback(param)
             try
                 redir => result
                 let T_result = ZFJobFuncCall(T_jobCmd, [jobStatus])
+            catch
+                let result = v:exception
             finally
                 redir END
             endtry
