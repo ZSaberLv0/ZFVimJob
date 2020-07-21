@@ -53,9 +53,9 @@ if you like my work, [check here](https://github.com/ZSaberLv0?utf8=%E2%9C%93&ta
 # Workflow
 
 ```
-ZFAsyncRun        ZFJobStart                            ZFStatuslineLog
-ZFAutoScript  =>  ZFGroupJobStart  =>  ZFJobOutput  =>  ZFLogWin
-                                                        ZFPopup
+ZFAsyncRun          ZFJobStart                                ZFStatuslineLog
+ZFAutoScript   =>   ZFGroupJobStart   =>   ZFJobOutput   =>   ZFLogWin
+                                                              ZFPopup
 ```
 
 the job control is fully modularized, and can be combined easily to achieve complex logic
@@ -64,8 +64,66 @@ one typical example:
 
 ```
 you saved a file
-    => auto build and deploy (ZFAutoScript)
+    => auto build, auto deploy (ZFAutoScript)
+        => manage complex build workflow, with dependency logic and multithreaded (ZFGroupJobStart)
     => auto show build output as popup (ZFJobOutput)
+```
+
+and one typical config:
+
+```
+let g:ZFAutoScript = {
+        \   '/path/to/LibA' : {
+        \     'memo' : 'build LibA',
+        \     'jobCmd' : 'make',
+        \     'jobCwd' : '/path/to/LibA',
+        \   },
+        \   '/path/to/LibB' : {
+        \     'jobList' : [
+        \       [
+        \         {
+        \           'memo' : 'build LibB',
+        \           'jobCmd' : 'make',
+        \           'jobCwd' : '/path/to/LibB',
+        \         },
+        \       ],
+        \       [
+        \         {
+        \           'memo' : 'copy build result to Proj, this would run after build LibB',
+        \           'jobCmd' : 'cp "/path/to/LibB/libB.so" "/path/to/Proj/lib/libB.so"',
+        \         },
+        \       ],
+        \     ],
+        \   },
+        \   '/path/to/Proj' : {
+        \     'jobList' : [
+        \       [
+        \         {
+        \           'memo' : 'build LibA, multithreaded with build LibB',
+        \           'jobCmd' : ['ZFAutoScriptRun "/path/to/LibA"'],
+        \         },
+        \         {
+        \           'memo' : 'build LibB, multithreaded with build LibA',
+        \           'jobCmd' : ['ZFAutoScriptRun "/path/to/LibB"'],
+        \         },
+        \       ],
+        \       [
+        \         {
+        \           'memo' : 'after both LibA and LibB build successful, build the Proj',
+        \           'jobCmd' : 'make',
+        \           'jobCwd' : '/path/to/Proj',
+        \         },
+        \       ],
+        \       [
+        \         {
+        \           'memo' : 'automatically run Proj after build success',
+        \           'jobCmd' : './build/a.out',
+        \           'jobCwd' : '/path/to/Proj',
+        \         },
+        \       ],
+        \     ],
+        \   },
+        \ }
 ```
 
 it may hard to config for first time, but trust me, it changes the life
