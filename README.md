@@ -53,93 +53,95 @@ if you like my work, [check here](https://github.com/ZSaberLv0?utf8=%E2%9C%93&ta
 # Workflow
 
 ```
-ZFAsyncRun          ZFJobStart                                ZFStatuslineLog
-ZFAutoScript   =>   ZFGroupJobStart   =>   ZFJobOutput   =>   ZFLogWin
-                                                              ZFPopup
+                      ZFJobStart -
+                           ^       \
+ZFAsyncRun  -\             |        \                       / ZFStatuslineLog
+ZFAutoScript - => - ZFGroupJobStart - => - ZFJobOutput - => - ZFLogWin
+                                                            \ ZFPopup
 ```
 
 the job control is fully modularized, and can be combined easily to achieve complex logic
 
-one typical example:
+* one typical example:
 
-```
-you saved a file
-    => auto build, auto deploy (ZFAutoScript)
-        => manage complex build workflow, with dependency logic and multithreaded (ZFGroupJobStart)
-    => auto show build output as popup (ZFJobOutput)
-```
+    ```
+    you saved a file
+        => auto build, auto deploy (ZFAutoScript)
+            => manage complex build workflow, with dependency logic and multithreaded (ZFGroupJobStart)
+        => auto show build output as popup (ZFJobOutput)
+    ```
 
-and one typical config:
+* and one typical config:
 
-```
-" what this config do
+    ```
+    " what this config do
 
-" when you save files under `/path/to/LibA`:
-" * build LibA
-" when you save files under `/path/to/LibB`:
-" * build LibB, copy to Proj, and chain auto script to build Proj
-" when you save files under `/path/to/Proj`:
-" * build LibC and LibD concurrently, build Proj, and run
+    " when you save files under `/path/to/LibA`:
+    " * build LibA
+    " when you save files under `/path/to/LibB`:
+    " * build LibB, copy to Proj, and chain auto script to build Proj
+    " when you save files under `/path/to/Proj`:
+    " * build LibC and LibD concurrently, build Proj, and run
 
-let g:ZFAutoScript = {
-        \   '/path/to/LibA' : {
-        \     'memo' : 'build LibA',
-        \     'jobCmd' : 'make',
-        \     'jobCwd' : '/path/to/LibA',
-        \   },
-        \   '/path/to/LibB' : {
-        \     'jobList' : [
-        \       [
-        \         {
-        \           'memo' : 'build LibB',
-        \           'jobCmd' : 'make',
-        \           'jobCwd' : '/path/to/LibB',
-        \         },
-        \       ],
-        \       [
-        \         {
-        \           'memo' : 'copy build result to Proj, this would run after build LibB',
-        \           'jobCmd' : 'cp "/path/to/LibB/libB.so" "/path/to/Proj/lib/libB.so"',
-        \         },
-        \       ],
-        \       [
-        \         {
-        \           'memo' : 'chain auto script, build Proj automatically',
-        \           'jobCmd' : ['ZFAutoScriptRun "/path/to/Proj"'],
-        \         },
-        \       ],
-        \     ],
-        \   },
-        \   '/path/to/Proj' : {
-        \     'jobList' : [
-        \       [
-        \         {
-        \           'memo' : 'jobs within same group, can be run concurrently',
-        \           'jobCmd' : ['ZFAutoScriptRun "/path/to/LibC"'],
-        \         },
-        \         {
-        \           'memo' : 'jobs within same group, can be run concurrently',
-        \           'jobCmd' : ['ZFAutoScriptRun "/path/to/LibD"'],
-        \         },
-        \       ],
-        \       [
-        \         {
-        \           'memo' : 'jobs in different group, would wait for prev group finish',
-        \           'jobCmd' : 'make',
-        \           'jobCwd' : '/path/to/Proj',
-        \         },
-        \       ],
-        \       [
-        \         {
-        \           'memo' : 'automatically run Proj after build success',
-        \           'jobCmd' : './build/a.out',
-        \           'jobCwd' : '/path/to/Proj',
-        \         },
-        \       ],
-        \     ],
-        \   },
-        \ }
-```
+    let g:ZFAutoScript = {
+            \   '/path/to/LibA' : {
+            \     'memo' : 'build LibA',
+            \     'jobCmd' : 'make',
+            \     'jobCwd' : '/path/to/LibA',
+            \   },
+            \   '/path/to/LibB' : {
+            \     'jobList' : [
+            \       [
+            \         {
+            \           'memo' : 'build LibB',
+            \           'jobCmd' : 'make',
+            \           'jobCwd' : '/path/to/LibB',
+            \         },
+            \       ],
+            \       [
+            \         {
+            \           'memo' : 'copy build result to Proj, this would run after build LibB',
+            \           'jobCmd' : 'cp "/path/to/LibB/libB.so" "/path/to/Proj/lib/libB.so"',
+            \         },
+            \       ],
+            \       [
+            \         {
+            \           'memo' : 'chain auto script, build Proj automatically',
+            \           'jobCmd' : ['ZFAutoScriptRun "/path/to/Proj"'],
+            \         },
+            \       ],
+            \     ],
+            \   },
+            \   '/path/to/Proj' : {
+            \     'jobList' : [
+            \       [
+            \         {
+            \           'memo' : 'jobs within same group, can be run concurrently',
+            \           'jobCmd' : ['ZFAutoScriptRun "/path/to/LibC"'],
+            \         },
+            \         {
+            \           'memo' : 'jobs within same group, can be run concurrently',
+            \           'jobCmd' : ['ZFAutoScriptRun "/path/to/LibD"'],
+            \         },
+            \       ],
+            \       [
+            \         {
+            \           'memo' : 'jobs in different group, would wait for prev group finish',
+            \           'jobCmd' : 'make',
+            \           'jobCwd' : '/path/to/Proj',
+            \         },
+            \       ],
+            \       [
+            \         {
+            \           'memo' : 'automatically run Proj after build success',
+            \           'jobCmd' : './build/a.out',
+            \           'jobCwd' : '/path/to/Proj',
+            \         },
+            \       ],
+            \     ],
+            \   },
+            \ }
+    ```
 
 it may hard to config for first time, but trust me, it changes the life
 
