@@ -72,6 +72,15 @@ you saved a file
 and one typical config:
 
 ```
+" what this config do
+
+" when you save files under `/path/to/LibA`:
+" * build LibA
+" when you save files under `/path/to/LibB`:
+" * build LibB, copy to Proj, and chain auto script to build Proj
+" when you save files under `/path/to/Proj`:
+" * build LibC and LibD concurrently, build Proj, and run
+
 let g:ZFAutoScript = {
         \   '/path/to/LibA' : {
         \     'memo' : 'build LibA',
@@ -93,23 +102,29 @@ let g:ZFAutoScript = {
         \           'jobCmd' : 'cp "/path/to/LibB/libB.so" "/path/to/Proj/lib/libB.so"',
         \         },
         \       ],
+        \       [
+        \         {
+        \           'memo' : 'chain auto script, build Proj automatically',
+        \           'jobCmd' : ['ZFAutoScriptRun "/path/to/Proj"'],
+        \         },
+        \       ],
         \     ],
         \   },
         \   '/path/to/Proj' : {
         \     'jobList' : [
         \       [
         \         {
-        \           'memo' : 'build LibA, multithreaded with build LibB',
-        \           'jobCmd' : ['ZFAutoScriptRun "/path/to/LibA"'],
+        \           'memo' : 'jobs within same group, can be run concurrently',
+        \           'jobCmd' : ['ZFAutoScriptRun "/path/to/LibC"'],
         \         },
         \         {
-        \           'memo' : 'build LibB, multithreaded with build LibA',
-        \           'jobCmd' : ['ZFAutoScriptRun "/path/to/LibB"'],
+        \           'memo' : 'jobs within same group, can be run concurrently',
+        \           'jobCmd' : ['ZFAutoScriptRun "/path/to/LibD"'],
         \         },
         \       ],
         \       [
         \         {
-        \           'memo' : 'after both LibA and LibB build successful, build the Proj',
+        \           'memo' : 'jobs in different group, would wait for prev group finish',
         \           'jobCmd' : 'make',
         \           'jobCwd' : '/path/to/Proj',
         \         },
