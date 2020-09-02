@@ -158,7 +158,7 @@ it may hard to config for first time, but trust me, it changes the life
 1. start the job
 
     ```
-    function! s:onOutput(jobStatus, text, type)
+    function! s:onOutput(jobStatus, textList, type)
     endfunction
     function! s:onExit(jobStatus, exitCode)
     endfunction
@@ -238,13 +238,13 @@ here's some plugins that used ZFVimJob to simplify complex job control:
       'jobCmd' : 'job cmd, or vim `function(jobStatus)` that return {output:xxx, exitCode:0}',
       'jobCwd' : 'optional, cwd to run the job',
       'onLog' : 'optional, func(jobStatus, log)',
-      'onOutputFilter' : 'optional, func(jobStatus, text, type[stdout/stderr]), return modified text or empty to discard',
-      'onOutput' : 'optional, func(jobStatus, text, type[stdout/stderr])',
+      'onOutputFilter' : 'optional, func(jobStatus, textList, type[stdout/stderr]), modify textList or empty to discard',
+      'onOutput' : 'optional, func(jobStatus, textList, type[stdout/stderr])',
       'onEnter' : 'optional, func(jobStatus)',
       'onExit' : 'optional, func(jobStatus, exitCode)',
       'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is 2000',
       'jobLogEnable' : 'optional, jobLog would be recorded',
-      'jobEncoding' : 'optional, if supplied, encoding conversion would be made before passing output text',
+      'jobEncoding' : 'optional, if supplied, encoding conversion would be made before passing output textList',
       'jobTimeout' : 'optional, if supplied, ZFJobStop would be called with g:ZFJOBTIMEOUT',
       'jobFallback' : 'optional, true by default, whether fallback to `system()` if no job impl available',
       'jobImplData' : {}, // optional, if supplied, merge to jobStatus['jobImplData']
@@ -291,10 +291,11 @@ here's some plugins that used ZFVimJob to simplify complex job control:
       'jobCmd' : 'optional, used only when jobList not supplied',
       'jobCwd' : 'optional, if supplied, would use as default value for child ZFJobStart',
       'onLog' : 'optional, func(groupJobStatus, log)',
-      'onOutputFilter' : 'optional, func(groupJobStatus, text, type[stdout/stderr]), return modified text or empty to discard',
-      'onOutput' : 'optional, func(groupJobStatus, text, type[stdout/stderr])',
+      'onOutputFilter' : 'optional, func(groupJobStatus, textList, type[stdout/stderr]), modify textList or empty to discard',
+      'onOutput' : 'optional, func(groupJobStatus, textList, type[stdout/stderr])',
       'onEnter' : 'optional, func(groupJobStatus)',
       'onExit' : 'optional, func(groupJobStatus, exitCode)',
+      'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is 2000',
       'jobLogEnable' : 'optional, when on, jobLog would be recorded, for debug use only',
       'jobEncoding' : 'optional, if supplied, would use as default value for child ZFJobStart',
       'jobTimeout' : 'optional, if supplied, would use as default value for child ZFJobStart',
@@ -303,7 +304,7 @@ here's some plugins that used ZFVimJob to simplify complex job control:
 
       'groupJobTimeout' : 'optional, if supplied, ZFGroupJobStop would be called with g:ZFJOBTIMEOUT',
       'onJobLog' : 'optional, func(groupJobStatus, jobStatus, log)',
-      'onJobOutput' : 'optional, func(groupJobStatus, jobStatus, text, type[stdout/stderr])',
+      'onJobOutput' : 'optional, func(groupJobStatus, jobStatus, textList, type[stdout/stderr])',
       'onJobExit' : 'optional, func(groupJobStatus, jobStatus, exitCode)',
     }
     ```
@@ -390,7 +391,7 @@ you may also supply your own `onOutput`, though
 
 functions:
 
-* `call ZFJobOutput(jobStatus, text [, type(stdout/stderr)])`
+* `call ZFJobOutput(jobStatus, textList [, type(stdout/stderr)])`
 
     output accorrding to job's output configs:
 

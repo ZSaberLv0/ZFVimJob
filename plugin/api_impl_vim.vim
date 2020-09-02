@@ -129,9 +129,7 @@ function! s:vim_out_cb(jobImplChannel, msg, ...)
         return
     endif
 
-    for msg in split(a:msg, "\n")
-        call ZFJobFuncCall(jobImplState['onOutput'], [msg, 'stdout'])
-    endfor
+    call ZFJobFuncCall(jobImplState['onOutput'], [split(a:msg, "\n"), 'stdout'])
 endfunction
 function! s:vim_err_cb(jobImplChannel, msg, ...)
     let jobImplChannelNumber = s:jobImplChannelNumber(a:jobImplChannel)
@@ -140,9 +138,7 @@ function! s:vim_err_cb(jobImplChannel, msg, ...)
         return
     endif
 
-    for msg in split(a:msg, "\n")
-        call ZFJobFuncCall(jobImplState['onOutput'], [msg, 'stderr'])
-    endfor
+    call ZFJobFuncCall(jobImplState['onOutput'], [split(a:msg, "\n"), 'stderr'])
 endfunction
 function! s:vim_exit_cb(jobImplId, exitCode, ...)
     let jobImplIdNumber = s:jobImplIdNumber(a:jobImplId)

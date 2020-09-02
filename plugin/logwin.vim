@@ -17,7 +17,7 @@ if !exists('g:ZFLogWin_defaultConfig')
                 \   'cleanupCallback' : '',
                 \   'updateCallback' : '',
                 \   'lazyUpdate' : 100,
-                \   'maxLine' : '10000',
+                \   'maxLine' : 10000,
                 \   'revertLines' : 0,
                 \   'autoShow' : 1,
                 \ }
@@ -73,6 +73,11 @@ function! ZFLogWinAdd(logId, content)
         call extend(status['lines'], a:content)
     else
         call add(status['lines'], a:content)
+    endif
+
+    let maxLine = get(status['config'], 'maxLine', 10000)
+    if maxLine >= 0 && len(status['lines']) > maxLine
+        call remove(status['lines'], 0, len(status['lines']) - maxLine - 1)
     endif
 
     if status['lazyUpdate'] <= 0

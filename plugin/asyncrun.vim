@@ -222,8 +222,8 @@ function! s:logwinOnInit(taskName, logId)
     endif
 endfunction
 
-function! s:onOutput(taskName, onOutput, jobStatus, text, type)
-    call ZFJobFuncCall(a:onOutput, [a:jobStatus, a:text, a:type])
+function! s:onOutput(taskName, onOutput, jobStatus, textList, type)
+    call ZFJobFuncCall(a:onOutput, [a:jobStatus, a:textList, a:type])
 endfunction
 
 function! s:onExit(taskName, onExit, jobStatus, exitCode)

@@ -18,13 +18,13 @@ endfunction
 "   'jobCmd' : 'job cmd, or vim `function(jobStatus)` that return {output:xxx, exitCode:0}',
 "   'jobCwd' : 'optional, cwd to run the job',
 "   'onLog' : 'optional, func(jobStatus, log)',
-"   'onOutputFilter' : 'optional, func(jobStatus, text, type[stdout/stderr]), return modified text or empty to discard',
-"   'onOutput' : 'optional, func(jobStatus, text, type[stdout/stderr])',
+"   'onOutputFilter' : 'optional, func(jobStatus, textList, type[stdout/stderr]), modify textList or empty to discard',
+"   'onOutput' : 'optional, func(jobStatus, textList, type[stdout/stderr])',
 "   'onEnter' : 'optional, func(jobStatus)',
 "   'onExit' : 'optional, func(jobStatus, exitCode)',
 "   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is 2000',
 "   'jobLogEnable' : 'optional, jobLog would be recorded',
-"   'jobEncoding' : 'optional, if supplied, encoding conversion would be made before passing output text',
+"   'jobEncoding' : 'optional, if supplied, encoding conversion would be made before passing output textList',
 "   'jobTimeout' : 'optional, if supplied, ZFJobStop would be called with g:ZFJOBTIMEOUT',
 "   'jobFallback' : 'optional, true by default, whether fallback to `system()` if no job impl available',
 "   'jobImplData' : {}, // optional, if supplied, merge to jobStatus['jobImplData']
@@ -75,7 +75,7 @@ endfunction
 
 " ============================================================
 " {
-"   'jobStart' : 'func(jobStatus, onOutput(text, type[stdout/stderr]), onExit(exitCode)), return 0/1',
+"   'jobStart' : 'func(jobStatus, onOutput(textList, type[stdout/stderr]), onExit(exitCode)), return 0/1',
 "   'jobStop' : 'func(jobStatus), return 0/1',
 "   'jobSend' : 'optional, func(jobStatus, text), return 0/1',
 " }
@@ -264,34 +264,42 @@ function! s:jobSend(jobId, text)
     return ZFJobFuncCall(Fn_jobSend, [jobStatus, text])
 endfunction
 
-function! s:onOutput(jobStatus, text, type)
-    let text = a:text
-    if get(g:, 'ZFVimJobFixTermSpecialChar', 1)
-        let text = substitute(text, "\x1b\[[0-9;]*[a-zA-Z]", '', 'g')
-        let text = substitute(text, "\x18", '', 'g')
-    endif
-
+function! s:onOutput(jobStatus, textList, type)
     let jobEncoding = s:jobEncoding(a:jobStatus)
-    if !empty(jobEncoding)
-        let text = iconv(text, jobEncoding, &encoding)
-    endif
+
+    let textListLen = len(a:textList)
+    let iTextList = 0
+    while iTextList < textListLen
+        if get(g:, 'ZFVimJobFixTermSpecialChar', 1)
+            let a:textList[iTextList] = substitute(a:textList[iTextList], "\x1b\[[0-9;]*[a-zA-Z]", '', 'g')
+            let a:textList[iTextList] = substitute(a:textList[iTextList], "\x18", '', 'g')
+        endif
+
+        if !empty(jobEncoding)
+            let a:textList[iTextList] = iconv(a:textList[iTextList], jobEncoding, &encoding)
+        endif
+
+        let iTextList += 1
+    endwhile
 
     if !empty(get(a:jobStatus['jobOption'], 'onOutputFilter', ''))
-        let text = ZFJobFuncCall(a:jobStatus['jobOption']['onOutputFilter'], [a:jobStatus, text, a:type])
-        if empty(text)
+        call ZFJobFuncCall(a:jobStatus['jobOption']['onOutputFilter'], [a:jobStatus, a:textList, a:type])
+        if empty(a:textList)
             return
         endif
     endif
 
-    call s:jobLog(a:jobStatus, 'output [' . a:type . ']: ' . text)
-    call add(a:jobStatus['jobOutput'], text)
+    for text in a:textList
+        call s:jobLog(a:jobStatus, 'output [' . a:type . ']: ' . text)
+    endfor
+    call extend(a:jobStatus['jobOutput'], a:textList)
     let jobOutputLimit = get(a:jobStatus['jobOption'], 'jobOutputLimit', 2000)
     if jobOutputLimit >= 0 && len(a:jobStatus['jobOutput']) > jobOutputLimit
-        call remove(a:jobStatus['jobOutput'], jobOutputLimit)
+        call remove(a:jobStatus['jobOutput'], 0, len(a:jobStatus['jobOutput']) - jobOutputLimit - 1)
     endif
 
-    call ZFJobFuncCall(get(a:jobStatus['jobOption'], 'onOutput', ''), [a:jobStatus, text, a:type])
-    call ZFJobOutput(a:jobStatus, text, a:type)
+    call ZFJobFuncCall(get(a:jobStatus['jobOption'], 'onOutput', ''), [a:jobStatus, a:textList, a:type])
+    call ZFJobOutput(a:jobStatus, a:textList, a:type)
 endfunction
 function! s:onExit(jobStatus, exitCode)
     call s:jobStop(a:jobStatus, a:exitCode, 0)

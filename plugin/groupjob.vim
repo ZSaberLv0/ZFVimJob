@@ -15,8 +15,8 @@
 "   'jobCmd' : 'optional, used only when jobList not supplied',
 "   'jobCwd' : 'optional, if supplied, would use as default value for child ZFJobStart',
 "   'onLog' : 'optional, func(groupJobStatus, log)',
-"   'onOutputFilter' : 'optional, func(groupJobStatus, text, type[stdout/stderr]), return modified text or empty to discard',
-"   'onOutput' : 'optional, func(groupJobStatus, text, type[stdout/stderr])',
+"   'onOutputFilter' : 'optional, func(groupJobStatus, textList, type[stdout/stderr]), modify textList or empty to discard',
+"   'onOutput' : 'optional, func(groupJobStatus, textList, type[stdout/stderr])',
 "   'onEnter' : 'optional, func(groupJobStatus)',
 "   'onExit' : 'optional, func(groupJobStatus, exitCode)',
 "   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in groupJobStatus, default is 2000',
@@ -28,7 +28,7 @@
 "
 "   'groupJobTimeout' : 'optional, if supplied, ZFGroupJobStop would be called with g:ZFJOBTIMEOUT',
 "   'onJobLog' : 'optional, func(groupJobStatus, jobStatus, log)',
-"   'onJobOutput' : 'optional, func(groupJobStatus, jobStatus, text, type[stdout/stderr])',
+"   'onJobOutput' : 'optional, func(groupJobStatus, jobStatus, textList, type[stdout/stderr])',
 "   'onJobExit' : 'optional, func(groupJobStatus, jobStatus, exitCode)',
 " }
 "
@@ -340,30 +340,28 @@ function! s:onJobLog(groupJobStatus, onLog, jobStatus, log)
     call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onJobLog', ''), [a:groupJobStatus, a:jobStatus, a:log])
 endfunction
 
-function! s:onJobOutput(groupJobStatus, onOutput, jobStatus, text, type)
+function! s:onJobOutput(groupJobStatus, onOutput, jobStatus, textList, type)
     if !a:groupJobStatus['jobImplData']['groupJobRunning']
         return
     endif
 
     if !empty(get(a:groupJobStatus['jobOption'], 'onOutputFilter', ''))
-        let text = ZFJobFuncCall(a:groupJobStatus['jobOption']['onOutputFilter'], [a:groupJobStatus, a:text, a:type])
-        if empty(text)
+        call ZFJobFuncCall(a:groupJobStatus['jobOption']['onOutputFilter'], [a:groupJobStatus, a:textList, a:type])
+        if empty(a:textList)
             return
         endif
-    else
-        let text = a:text
     endif
 
-    call add(a:groupJobStatus['jobOutput'], text)
+    call extend(a:groupJobStatus['jobOutput'], a:textList)
     let jobOutputLimit = get(a:groupJobStatus['jobOption'], 'jobOutputLimit', 2000)
     if jobOutputLimit >= 0 && len(a:groupJobStatus['jobOutput']) > jobOutputLimit
-        call remove(a:groupJobStatus['jobOutput'], jobOutputLimit)
+        call remove(a:groupJobStatus['jobOutput'], 0, len(a:groupJobStatus['jobOutput']) - jobOutputLimit - 1)
     endif
 
-    call ZFJobFuncCall(a:onOutput, [a:jobStatus, text, a:type])
-    call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onJobOutput', ''), [a:groupJobStatus, a:jobStatus, text, a:type])
-    call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onOutput', ''), [a:groupJobStatus, text, a:type])
-    call ZFJobOutput(a:groupJobStatus, text, a:type)
+    call ZFJobFuncCall(a:onOutput, [a:jobStatus, a:textList, a:type])
+    call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onJobOutput', ''), [a:groupJobStatus, a:jobStatus, a:textList, a:type])
+    call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onOutput', ''), [a:groupJobStatus, a:textList, a:type])
+    call ZFJobOutput(a:groupJobStatus, a:textList, a:type)
 endfunction
 
 function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)

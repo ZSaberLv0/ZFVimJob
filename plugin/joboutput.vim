@@ -1,6 +1,6 @@
 
 " ============================================================
-" ZFJobOutput(jobStatus, text [, type(stdout/stderr)])
+" ZFJobOutput(jobStatus, textList [, type(stdout/stderr)])
 " jobStatus: {
 "   'jobOption' : {
 "     'outputTo' : {
@@ -22,7 +22,7 @@
 "     },
 "   }
 " }
-function! ZFJobOutput(jobStatus, text, ...)
+function! ZFJobOutput(jobStatus, content, ...)
     if empty(a:jobStatus)
         return
     endif
@@ -91,7 +91,11 @@ function! ZFJobOutput(jobStatus, text, ...)
 
     let Fn = get(impl, 'output', 0)
     if type(Fn) == type(function('function'))
-        call Fn(s:status[outputId], a:jobStatus, a:text, get(a:, 1, 'stdout'))
+        if type(a:content) == type([])
+            call Fn(s:status[outputId], a:jobStatus, a:content, get(a:, 1, 'stdout'))
+        else
+            call Fn(s:status[outputId], a:jobStatus, [a:content], get(a:, 1, 'stdout'))
+        endif
     endif
 
     if get(s:status[outputId]['outputTo'], 'outputAutoCleanup', 10000) > 0
@@ -139,7 +143,7 @@ endfunction
 "     'cleanup' : 'optional, function(outputStatus, jobStatus)',
 "     'attach' : 'optional, function(outputStatus, jobStatus)',
 "     'detach' : 'optional, function(outputStatus, jobStatus)',
-"     'output' : 'optional, function(outputStatus, jobStatus, text, type)',
+"     'output' : 'optional, function(outputStatus, jobStatus, textList, type)',
 "   },
 " }
 "

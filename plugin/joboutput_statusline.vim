@@ -16,13 +16,13 @@ endfunction
 function! s:detach(outputStatus, jobStatus)
 endfunction
 
-function! s:output(outputStatus, jobStatus, text, type)
+function! s:output(outputStatus, jobStatus, textList, type)
     let option = get(a:outputStatus['outputTo'], 'statusline', {})
     if !exists("option['timeout']")
         let option = copy(option)
         let option['timeout'] = 0
     endif
-    call ZFStatuslineLog(a:text, option)
+    call ZFStatuslineLog(a:textList[-1], option)
 endfunction
 
 if !exists('g:ZFJobOutputImpl')

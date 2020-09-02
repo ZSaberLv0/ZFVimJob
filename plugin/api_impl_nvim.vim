@@ -56,28 +56,16 @@ function! s:nvim_on_stdout(jobImplId, msgList, ...)
     if empty(jobImplState)
         return
     endif
-    let Fn_onOutput = jobImplState['onOutput']
-    if !empty(Fn_onOutput)
-        for msg in a:msgList
-            if msg != ''
-                call ZFJobFuncCall(Fn_onOutput, [msg, 'stdout'])
-            endif
-        endfor
-    endif
+
+    call ZFJobFuncCall(jobImplState['onOutput'], [a:msgList, 'stdout'])
 endfunction
 function! s:nvim_on_stderr(jobImplId, msgList, ...)
     let jobImplState = get(s:jobImplStateMap, a:jobImplId, {})
     if empty(jobImplState)
         return
     endif
-    let Fn_onOutput = jobImplState['onOutput']
-    if !empty(Fn_onOutput)
-        for msg in a:msgList
-            if msg != ''
-                call ZFJobFuncCall(Fn_onOutput, [msg, 'stderr'])
-            endif
-        endfor
-    endif
+
+    call ZFJobFuncCall(jobImplState['onOutput'], [a:msgList, 'stderr'])
 endfunction
 function! s:nvim_on_exit(jobImplId, exitCode, ...)
     if !exists('s:jobImplStateMap[a:jobImplId]')

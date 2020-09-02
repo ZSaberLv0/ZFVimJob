@@ -28,8 +28,14 @@ function! s:detach(outputStatus, jobStatus)
     call s:updateOutputInfo(a:outputStatus, a:jobStatus)
 endfunction
 
-function! s:output(outputStatus, jobStatus, text, type)
-    call add(a:outputStatus['outputImplData']['popupContent'], a:text)
+function! s:output(outputStatus, jobStatus, textList, type)
+    call extend(a:outputStatus['outputImplData']['popupContent'], a:textList)
+
+    let jobOutputLimit = get(a:jobStatus['jobOption'], 'jobOutputLimit', 2000)
+    if jobOutputLimit >= 0 && len(a:outputStatus['outputImplData']['popupContent']) > jobOutputLimit
+        call remove(a:outputStatus['outputImplData']['popupContent'], 0, len(a:outputStatus['outputImplData']['popupContent']) - jobOutputLimit - 1)
+    endif
+
     call s:updateOutputInfo(a:outputStatus, a:jobStatus)
     call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
 endfunction

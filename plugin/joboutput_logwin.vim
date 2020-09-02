@@ -65,8 +65,8 @@ function! s:detach(outputStatus, jobStatus)
     call ZFLogWinRedrawStatusline(a:outputStatus['outputId'])
 endfunction
 
-function! s:output(outputStatus, jobStatus, text, type)
-    call ZFLogWinAdd(a:outputStatus['outputId'], a:text)
+function! s:output(outputStatus, jobStatus, textList, type)
+    call ZFLogWinAdd(a:outputStatus['outputId'], a:textList)
     call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
 endfunction
 
