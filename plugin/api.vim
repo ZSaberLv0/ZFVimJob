@@ -9,6 +9,13 @@ if !exists('g:ZFJobVerboseLogEnable')
     let g:ZFJobVerboseLogEnable = 0
 endif
 
+" use timer to delay to invoke onOutput callback for job
+" mainly for https://github.com/vim/vim/issues/1320
+" can also be used to achieve buffered output for performance
+if !exists('g:ZFJobOutputDelay')
+    let g:ZFJobOutputDelay = 5
+endif
+
 " ============================================================
 function! ZFJobAvailable()
     return !empty(g:ZFVimJobImpl)
@@ -22,6 +29,7 @@ endfunction
 "   'onOutput' : 'optional, func(jobStatus, textList, type[stdout/stderr])',
 "   'onEnter' : 'optional, func(jobStatus)',
 "   'onExit' : 'optional, func(jobStatus, exitCode)',
+"   'jobOutputDelay' : 'optional, default is g:ZFJobOutputDelay',
 "   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is 2000',
 "   'jobLogEnable' : 'optional, jobLog would be recorded',
 "   'jobEncoding' : 'optional, if supplied, encoding conversion would be made before passing output textList',
@@ -205,6 +213,15 @@ function! s:jobStop(jobStatus, exitCode, callImpl)
         return 0
     endif
 
+    if get(a:jobStatus['jobImplData'], 'jobOutputDelayTaskId', -1) >= 0
+        call ZFJobTimerStop(a:jobStatus['jobImplData']['jobOutputDelayTaskId'])
+        unlet a:jobStatus['jobImplData']['jobOutputDelayTaskId']
+        call s:onOutputAction(a:jobStatus, a:jobStatus['jobImplData']['jobOutputDelayTextList'], a:jobStatus['jobImplData']['jobOutputDelayType'])
+        if exists("a:jobStatus['jobImplData']['jobOutputDelayExitCode']")
+            unlet a:jobStatus['jobImplData']['jobOutputDelayExitCode']
+        endif
+    endif
+
     call s:jobLog(a:jobStatus, 'stop with exitCode: ' . a:exitCode . ': `' . ZFJobInfo(a:jobStatus) . '`')
 
     if a:jobStatus['jobId'] == 0
@@ -289,6 +306,50 @@ function! s:onOutput(jobStatus, textList, type)
         endif
     endif
 
+    if has('timers') && get(a:jobStatus['jobOption'], 'jobOutputDelay', g:ZFJobOutputDelay) >= 0
+        let needDelay = 0
+        if get(a:jobStatus['jobImplData'], 'jobOutputDelayTaskId', -1) >= 0
+            if a:jobStatus['jobImplData']['jobOutputDelayType'] == a:type
+                call extend(a:jobStatus['jobImplData']['jobOutputDelayTextList'], a:textList)
+            else
+                call s:onOutputAction(a:jobStatus, a:jobStatus['jobImplData']['jobOutputDelayTextList'], a:jobStatus['jobImplData']['jobOutputDelayType'])
+                let needDelay = 1
+            endif
+        else
+            let needDelay = 1
+        endif
+        if needDelay
+            let a:jobStatus['jobImplData']['jobOutputDelayTextList'] = a:textList
+            let a:jobStatus['jobImplData']['jobOutputDelayType'] = a:type
+            let a:jobStatus['jobImplData']['jobOutputDelayTaskId'] = ZFJobTimerStart(
+                        \   get(a:jobStatus['jobImplData'], 'jobOutputDelay', g:ZFJobOutputDelay),
+                        \   ZFJobFunc(function('s:onOutputDelayCallback'), [a:jobStatus])
+                        \ )
+        endif
+    else
+        call s:onOutputAction(a:jobStatus, a:textList, a:type)
+    endif
+endfunction
+" jobImplData : {
+"   'jobOutputDelayTaskId' : '', // only exist when delaying
+"   'jobOutputDelayTextList' : '',
+"   'jobOutputDelayType' : '',
+"   'jobOutputDelayExitCode' : exitCode, // only exist when onExit during delaying
+" }
+function! s:onOutputDelayCallback(jobStatus, ...)
+    if get(a:jobStatus['jobImplData'], 'jobOutputDelayTaskId', -1) == -1
+        return
+    endif
+    unlet a:jobStatus['jobImplData']['jobOutputDelayTaskId']
+    call s:onOutputAction(a:jobStatus, a:jobStatus['jobImplData']['jobOutputDelayTextList'], a:jobStatus['jobImplData']['jobOutputDelayType'])
+
+    if exists("a:jobStatus['jobImplData']['jobOutputDelayExitCode']")
+        let exitCode = a:jobStatus['jobImplData']['jobOutputDelayExitCode']
+        unlet a:jobStatus['jobImplData']['jobOutputDelayExitCode']
+        call s:jobStop(a:jobStatus, exitCode, 0)
+    endif
+endfunction
+function! s:onOutputAction(jobStatus, textList, type)
     for text in a:textList
         call s:jobLog(a:jobStatus, 'output [' . a:type . ']: ' . text)
     endfor
@@ -301,9 +362,15 @@ function! s:onOutput(jobStatus, textList, type)
     call ZFJobFuncCall(get(a:jobStatus['jobOption'], 'onOutput', ''), [a:jobStatus, a:textList, a:type])
     call ZFJobOutput(a:jobStatus, a:textList, a:type)
 endfunction
+
 function! s:onExit(jobStatus, exitCode)
-    call s:jobStop(a:jobStatus, a:exitCode, 0)
+    if get(a:jobStatus['jobImplData'], 'jobOutputDelayTaskId', -1) == -1
+        call s:jobStop(a:jobStatus, a:exitCode, 0)
+    else
+        let a:jobStatus['jobImplData']['jobOutputDelayExitCode'] = a:exitCode
+    endif
 endfunction
+
 function! s:onTimeout(jobStatus, ...)
     if exists("jobStatus['jobImplData']['jobTimeoutId']")
         unlet jobStatus['jobImplData']['jobTimeoutId']

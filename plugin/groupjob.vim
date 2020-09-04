@@ -19,6 +19,7 @@
 "   'onOutput' : 'optional, func(groupJobStatus, textList, type[stdout/stderr])',
 "   'onEnter' : 'optional, func(groupJobStatus)',
 "   'onExit' : 'optional, func(groupJobStatus, exitCode)',
+"   'jobOutputDelay' : 'optional, default is g:ZFJobOutputDelay',
 "   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in groupJobStatus, default is 2000',
 "   'jobLogEnable' : 'optional, jobLog would be recorded',
 "   'jobEncoding' : 'optional, if supplied, would use as default value for child ZFJobStart',
