@@ -392,6 +392,10 @@ function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
         call add(jobStatusList, a:jobStatus)
     endif
 
+    if len(jobStatusList) < len(a:groupJobStatus['jobOption']['jobList'][jobIndex])
+        return
+    endif
+
     for jobStatus in jobStatusList
         if jobStatus['jobImplData']['groupJobChildState'] != 0
             return
