@@ -174,11 +174,16 @@ if !exists('s:outputIdCur')
     let s:outputIdCur = 0
 endif
 function! s:outputIdNext()
-    let s:outputIdCur += 1
-    while exists('s:status[s:outputIdCur]') || s:outputIdCur <= 0
+    while 1
         let s:outputIdCur += 1
+        if s:outputIdCur <= 0
+            let s:outputIdCur = 1
+        endif
+        if exists('s:status[s:outputIdCur]')
+            continue
+        endif
+        return s:outputIdCur
     endwhile
-    return s:outputIdCur
 endfunction
 
 function! s:autoCloseStart(outputId, jobStatus, timeout)

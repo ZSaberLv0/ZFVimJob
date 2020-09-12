@@ -136,14 +136,7 @@ function! s:groupJobIdNext()
         if s:groupJobIdCur <= 0
             let s:groupJobIdCur = 1
         endif
-        let exist = 0
-        for groupJobStatus in values(s:groupJobMap)
-            if groupJobStatus['jobId'] == s:groupJobIdCur
-                let exist = 1
-                break
-            endif
-        endfor
-        if exist
+        if exists('s:groupJobMap[s:groupJobIdCur]')
             continue
         endif
         return s:groupJobIdCur
