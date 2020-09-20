@@ -272,16 +272,29 @@ function! s:groupJobRunNext(groupJobStatus)
         let jobOptionTmp['jobImplData']['groupJobChildState'] = 1
         let jobOptionTmp['jobImplData']['groupJobChildIndex'] = jobIndex
         let jobOptionTmp['jobImplData']['groupJobChildSubIndex'] = len(jobStatusList)
-        let jobId = ZFJobStart(jobOptionTmp)
-        if jobId == 0
-            continue
+
+        if exists("jobOptionTmp['jobList']")
+            let jobId = ZFGroupJobStart(jobOptionTmp)
+            if jobId == 0
+                continue
+            endif
+            let jobStatus = ZFGroupJobStatus(jobId)
+            if empty(jobStatus)
+                call s:groupJobStop(a:groupJobStatus, {}, '-1')
+                return
+            endif
+        else
+            let jobId = ZFJobStart(jobOptionTmp)
+            if jobId == 0
+                continue
+            endif
+            let jobStatus = ZFJobStatus(jobId)
+            if empty(jobStatus)
+                call s:groupJobStop(a:groupJobStatus, {}, '-1')
+                return
+            endif
         endif
 
-        let jobStatus = ZFJobStatus(jobId)
-        if empty(jobStatus)
-            call s:groupJobStop(a:groupJobStatus, {}, '-1')
-            return
-        endif
         call add(jobStatusList, jobStatus)
     endfor
 endfunction
