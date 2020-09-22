@@ -235,7 +235,14 @@ here's some plugins that used ZFVimJob to simplify complex job control:
 
     ```
     jobOption: {
-      'jobCmd' : 'job cmd, or vim `function(jobStatus)` that return {output:xxx, exitCode:0}',
+      'jobCmd' : 'job cmd',
+                 // jobCmd can be:
+                 // * string, shell command to run as job
+                 // * vim `function(jobStatus)` or any callable object to `ZFJobFuncCall()`,
+                 //   return `{output:xxx, exitCode:0}` to indicate invoke result,
+                 //   if none, it's considered as success
+                 // * number, use `timer_start()` to delay,
+                 //   has better performance than starting a `sleep` job
       'jobCwd' : 'optional, cwd to run the job',
       'onLog' : 'optional, func(jobStatus, log)',
       'onOutputFilter' : 'optional, func(jobStatus, textList, type[stdout/stderr]), modify textList or empty to discard',
