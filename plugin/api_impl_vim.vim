@@ -105,8 +105,12 @@ function! s:jobStop(jobStatus)
     let jobImplChannel = a:jobStatus['jobImplData']['jobImplChannel']
     let jobImplIdNumber = s:jobImplIdNumber(jobImplId)
     let jobImplChannelNumber = s:jobImplChannelNumber(jobImplChannel)
-    unlet s:jobImplIdMap[jobImplIdNumber]
-    unlet s:jobImplChannelMap[jobImplChannelNumber]
+    if exists('s:jobImplIdMap[jobImplIdNumber]')
+        unlet s:jobImplIdMap[jobImplIdNumber]
+    endif
+    if exists('s:jobImplChannelMap[jobImplChannelNumber]')
+        unlet s:jobImplChannelMap[jobImplChannelNumber]
+    endif
     if ch_status(a:jobStatus['jobImplData']['jobImplChannel']) == 'open'
         try
             silent! call ch_close(a:jobStatus['jobImplData']['jobImplChannel'])
