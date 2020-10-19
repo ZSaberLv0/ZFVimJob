@@ -515,14 +515,12 @@ function! ZFJobFallback(param)
     endif
 
     let jobEncoding = s:jobEncoding(jobStatus)
-    for output in split(result, "\n")
-        if empty(jobEncoding)
-            let text = output
-        else
-            let text = iconv(output, jobEncoding, &encoding)
-        endif
-        call s:onOutput(jobStatus, text, 'stdout')
-    endfor
+    if empty(jobEncoding)
+        let jobOutput = result
+    else
+        let jobOutput = iconv(result, jobEncoding, &encoding)
+    endif
+    call s:onOutput(jobStatus, split(jobOutput, "\n"), 'stdout')
 
     call s:onExit(jobStatus, exitCode)
     if exitCode != '0'
