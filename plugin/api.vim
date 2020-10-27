@@ -490,7 +490,7 @@ function! ZFJobFallback(param)
         let exitCode = '0'
         if exists('*execute')
             try
-                let result = execute('let T_result = ZFJobFuncCall(T_jobCmd, [jobStatus])', '')
+                let result = execute('let T_result = ZFJobFuncCall(T_jobCmd, [jobStatus])', 'silent')
             catch
                 let result = v:exception
                 let exitCode = '-1'
@@ -498,7 +498,7 @@ function! ZFJobFallback(param)
         else
             try
                 redir => result
-                let T_result = ZFJobFuncCall(T_jobCmd, [jobStatus])
+                silent let T_result = ZFJobFuncCall(T_jobCmd, [jobStatus])
             catch
                 let result = v:exception
             finally
