@@ -123,7 +123,7 @@ else
     function! s:jobFuncInfo(jobFunc)
         try
             redir => info
-            echo a:jobFunc
+            silent echo a:jobFunc
         finally
             redir END
         endtry

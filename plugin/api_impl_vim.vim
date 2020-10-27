@@ -34,7 +34,7 @@ else
     function! s:toString(a)
         try
             redir => s
-            echo a:a
+            silent echo a:a
         finally
             redir END
         endtry
