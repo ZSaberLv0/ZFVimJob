@@ -180,7 +180,14 @@ function! s:projDir(projDir)
         " ^[ \t]*"(.*)"[ \t]*$
         let projDir = substitute(projDir, '^[ \t]*"\(.*\)"[ \t]*$', '\1', 'g')
     endif
-    return substitute(fnamemodify(projDir, ':p'), '\\', '/', 'g')
+    let projDir = substitute(fnamemodify(projDir, ':p'), '\\', '/', 'g')
+    if !exists('s:isCygwin')
+        let s:isCygwin = has('win32unix') && executable('cygpath')
+    endif
+    if s:isCygwin
+        let projDir = substitute(system('cygpath -m "' . projDir . '"'), '[\r\n]', '', 'g')
+    endif
+    return projDir
 endfunction
 
 function! s:taskName(projDir)
@@ -202,6 +209,10 @@ function! s:fileWrite()
         return
     endif
     let file = expand('<afile>:p')
+    if empty(file)
+        return
+    endif
+    let file = s:projDir(file)
     for projDir in keys(s:config)
         if strpart(file, 0, len(projDir)) != projDir
             continue
