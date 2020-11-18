@@ -26,7 +26,6 @@
 "   'onExit' : 'optional, func(groupJobStatus, exitCode)',
 "   'jobOutputDelay' : 'optional, default is g:ZFJobOutputDelay',
 "   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in groupJobStatus, default is 2000',
-"   'jobLogEnable' : 'optional, jobLog would be recorded',
 "   'jobEncoding' : 'optional, if supplied, would use as default value for child ZFJobStart',
 "   'jobTimeout' : 'optional, if supplied, would use as default value for child ZFJobStart',
 "   'jobFallback' : 'optional, if supplied, would use as default value for child ZFJobStart',
@@ -74,7 +73,6 @@ endfunction
 "   'jobId' : '',
 "   'jobOption' : {},
 "   'jobOutput' : [],
-"   'jobLog' : [],
 "   'exitCode' : 'ensured string type, empty if running, not empty when job finished',
 "   'jobStatusFailed' : {},
 "   'jobIndex' : 0,
@@ -162,16 +160,20 @@ else
     endfunction
 endif
 function! s:groupJobLog(groupJobStatus, log)
-    if g:ZFJobVerboseLogEnable
-        call add(g:ZFJobVerboseLog, s:groupJobLogFormat(a:groupJobStatus, a:log))
-    endif
-    if get(a:groupJobStatus['jobOption'], 'jobLogEnable', 0)
+    let Fn_onLog = get(a:groupJobStatus['jobOption'], 'onLog', '')
+    if g:ZFJobVerboseLogEnable || !empty(Fn_onLog)
         let log = s:groupJobLogFormat(a:groupJobStatus, a:log)
-        call add(a:groupJobStatus['jobLog'], log)
-        call ZFJobFuncCall(get(a:groupJobStatus['jobOption'], 'onLog', ''), [a:groupJobStatus, log])
+        if g:ZFJobVerboseLogEnable
+            call add(g:ZFJobVerboseLog, log)
+        endif
+        call ZFJobFuncCall(Fn_onLog, [a:groupJobStatus, log])
     endif
 endfunction
 
+augroup ZFVimJob_ZFGroupJobOptionSetup_augroup
+    autocmd!
+    autocmd User ZFGroupJobOptionSetup silent
+augroup END
 function! s:groupJobStart(groupJobOption)
     let groupJobOption = copy(a:groupJobOption)
     if empty(get(groupJobOption, 'jobList', []))
@@ -191,12 +193,16 @@ function! s:groupJobStart(groupJobOption)
             let jobIndex -= 1
         endwhile
     endif
+
+    let g:ZFGroupJobOptionSetup = groupJobOption
+    doautocmd User ZFGroupJobOptionSetup
+    unlet g:ZFGroupJobOptionSetup
+
     let groupJobId = s:groupJobIdNext()
     let groupJobStatus = {
                 \   'jobId' : groupJobId,
                 \   'jobOption' : groupJobOption,
                 \   'jobOutput' : [],
-                \   'jobLog' : [],
                 \   'exitCode' : '',
                 \   'jobStatusFailed' : {},
                 \   'jobIndex' : -1,
@@ -251,9 +257,6 @@ function! s:groupJobRunNext(groupJobStatus)
     let jobOptionDefault = {}
     if !empty(get(a:groupJobStatus['jobOption'], 'jobCwd', ''))
         let jobOptionDefault['jobCwd'] = a:groupJobStatus['jobOption']['jobCwd']
-    endif
-    if !empty(get(a:groupJobStatus['jobOption'], 'jobLogEnable', ''))
-        let jobOptionDefault['jobLogEnable'] = a:groupJobStatus['jobOption']['jobLogEnable']
     endif
     if !empty(get(a:groupJobStatus['jobOption'], 'jobEncoding', ''))
         let jobOptionDefault['jobEncoding'] = a:groupJobStatus['jobOption']['jobEncoding']

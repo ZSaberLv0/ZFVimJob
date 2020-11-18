@@ -252,7 +252,6 @@ here's some plugins that used ZFVimJob to simplify complex job control:
       'onExit' : 'optional, func(jobStatus, exitCode)',
       'jobOutputDelay' : 'optional, default is g:ZFJobOutputDelay',
       'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is 2000',
-      'jobLogEnable' : 'optional, jobLog would be recorded',
       'jobEncoding' : 'optional, if supplied, encoding conversion would be made before passing output textList',
       'jobTimeout' : 'optional, if supplied, ZFJobStop would be called with g:ZFJOBTIMEOUT',
       'jobFallback' : 'optional, true by default, whether fallback to `system()` if no job impl available',
@@ -269,7 +268,6 @@ here's some plugins that used ZFVimJob to simplify complex job control:
       'jobId' : -1,
       'jobOption' : {},
       'jobOutput' : [],
-      'jobLog' : [],
       'jobImplData' : {},
     }
     ```
@@ -311,7 +309,6 @@ here's some plugins that used ZFVimJob to simplify complex job control:
       'onExit' : 'optional, func(groupJobStatus, exitCode)',
       'jobOutputDelay' : 'optional, default is g:ZFJobOutputDelay',
       'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is 2000',
-      'jobLogEnable' : 'optional, when on, jobLog would be recorded, for debug use only',
       'jobEncoding' : 'optional, if supplied, would use as default value for child ZFJobStart',
       'jobTimeout' : 'optional, if supplied, would use as default value for child ZFJobStart',
       'jobFallback' : 'optional, if supplied, would use as default value for child ZFJobStart',
@@ -333,7 +330,6 @@ here's some plugins that used ZFVimJob to simplify complex job control:
       'jobId' : '',
       'jobOption' : {},
       'jobOutput' : [],
-      'jobLog' : [],
       'jobStatusFailed' : {},
       'jobIndex' : 0,
       'jobStatusList' : [[{jobStatus}], [{jobStatus}, {jobStatus}]],

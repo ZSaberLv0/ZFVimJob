@@ -38,7 +38,6 @@ endfunction
 "   'onExit' : 'optional, func(jobStatus, exitCode)',
 "   'jobOutputDelay' : 'optional, default is g:ZFJobOutputDelay',
 "   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is 2000',
-"   'jobLogEnable' : 'optional, jobLog would be recorded',
 "   'jobEncoding' : 'optional, if supplied, encoding conversion would be made before passing output textList',
 "   'jobTimeout' : 'optional, if supplied, ZFJobStop would be called with g:ZFJOBTIMEOUT',
 "   'jobFallback' : 'optional, true by default, whether fallback to `system()` if no job impl available',
@@ -64,7 +63,6 @@ endfunction
 "   'jobId' : -1,
 "   'jobOption' : {},
 "   'jobOutput' : [],
-"   'jobLog' : [],
 "   'exitCode' : 'ensured string type, empty if running, not empty when job finished',
 "   'jobImplData' : {},
 " }
@@ -133,13 +131,13 @@ else
     endfunction
 endif
 function! s:jobLog(jobStatus, log)
-    if g:ZFJobVerboseLogEnable
-        call add(g:ZFJobVerboseLog, s:jobLogFormat(a:jobStatus, a:log))
-    endif
-    if get(a:jobStatus['jobOption'], 'jobLogEnable', 0)
+    let Fn_onLog = get(a:jobStatus['jobOption'], 'onLog', '')
+    if g:ZFJobVerboseLogEnable || !empty(Fn_onLog)
         let log = s:jobLogFormat(a:jobStatus, a:log)
-        call add(a:jobStatus['jobLog'], log)
-        call ZFJobFuncCall(get(a:jobStatus['jobOption'], 'onLog', ''), [a:jobStatus, log])
+        if g:ZFJobVerboseLogEnable
+            call add(g:ZFJobVerboseLog, log)
+        endif
+        call ZFJobFuncCall(Fn_onLog, [a:jobStatus, log])
     endif
 endfunction
 
@@ -160,7 +158,6 @@ function! s:sleepJob_jobStart(jobOption)
                 \   'jobId' : jobId,
                 \   'jobOption' : a:jobOption,
                 \   'jobOutput' : [],
-                \   'jobLog' : [],
                 \   'exitCode' : '',
                 \   'jobImplData' : copy(get(a:jobOption, 'jobImplData', {})),
                 \ }
@@ -199,6 +196,10 @@ function! s:sleepJob_jobStop(jobStatus, exitCode)
     return ret
 endfunction
 
+augroup ZFVimJob_ZFJobOptionSetup_augroup
+    autocmd!
+    autocmd User ZFJobOptionSetup silent
+augroup END
 function! s:jobStart(param)
     if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
         let jobOption = {
@@ -210,6 +211,10 @@ function! s:jobStart(param)
         echo '[ZFVimJob] unsupported param type: ' . type(a:param)
         return -1
     endif
+
+    let g:ZFJobOptionSetup = jobOption
+    doautocmd User ZFJobOptionSetup
+    unlet g:ZFJobOptionSetup
 
     if type(get(jobOption, 'jobCmd', '')) == type(0)
         return s:sleepJob_jobStart(jobOption)
@@ -237,7 +242,6 @@ function! s:jobStart(param)
                 \   'jobId' : -1,
                 \   'jobOption' : jobOption,
                 \   'jobOutput' : [],
-                \   'jobLog' : [],
                 \   'exitCode' : '',
                 \   'jobImplData' : copy(get(jobOption, 'jobImplData', {})),
                 \ }
@@ -466,7 +470,6 @@ function! ZFJobFallback(param)
                 \   'jobId' : 0,
                 \   'jobOption' : jobOption,
                 \   'jobOutput' : [],
-                \   'jobLog' : [],
                 \   'exitCode' : '',
                 \   'jobImplData' : copy(get(jobOption, 'jobImplData', {})),
                 \ }
