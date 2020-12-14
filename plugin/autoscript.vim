@@ -172,6 +172,28 @@ if !exists('s:status')
     let s:status = {}
 endif
 
+function! CygpathFix_absPath(path)
+    if !exists('g:CygpathFix_isCygwin')
+        let g:CygpathFix_isCygwin = has('win32unix') && executable('cygpath')
+    endif
+    let path = fnamemodify(a:path, ':p')
+    if g:CygpathFix_isCygwin
+        if 0 " cygpath is really slow
+            let path = substitute(system('cygpath -m "' . path . '"'), '[\r\n]', '', 'g')
+        else
+            if match(path, '^/cygdrive/') >= 0
+                let path = toupper(strpart(path, len('/cygdrive/'), 1)) . ':' . strpart(path, len('/cygdrive/') + 1)
+            else
+                if !exists('g:CygpathFix_cygwinPrefix')
+                    let g:CygpathFix_cygwinPrefix = substitute(system('cygpath -m /'), '[\r\n]', '', 'g')
+                endif
+                let path = g:CygpathFix_cygwinPrefix . path
+            endif
+        endif
+    endif
+    return substitute(path, '\\', '/', 'g')
+endfunction
+
 function! s:projDir(projDir)
     if empty(a:projDir)
         let projDir = getcwd()
@@ -180,14 +202,7 @@ function! s:projDir(projDir)
         " ^[ \t]*"(.*)"[ \t]*$
         let projDir = substitute(projDir, '^[ \t]*"\(.*\)"[ \t]*$', '\1', 'g')
     endif
-    let projDir = substitute(fnamemodify(projDir, ':p'), '\\', '/', 'g')
-    if !exists('s:isCygwin')
-        let s:isCygwin = has('win32unix') && executable('cygpath')
-    endif
-    if s:isCygwin
-        let projDir = substitute(system('cygpath -m "' . projDir . '"'), '[\r\n]', '', 'g')
-    endif
-    return projDir
+    return CygpathFix_absPath(projDir)
 endfunction
 
 function! s:taskName(projDir)
