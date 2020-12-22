@@ -134,13 +134,13 @@ endfunction
 
 function! ZFAutoScriptLog(...)
     let projDir = s:projDir(get(a:, 1, ''))
-    call ZFAsyncRunLog(s:taskName(projDir))
+    return ZFAsyncRunLog(s:taskName(projDir))
 endfunction
 
 function! ZFAutoScriptLogAll()
     let ret = {}
     for projDir in keys(s:config)
-        let ret[projDir] = ZFAutoScriptLog(projDir)
+        let ret[projDir] = ZFAsyncRunLog(s:taskName(projDir))
     endfor
     return ret
 endfunction
