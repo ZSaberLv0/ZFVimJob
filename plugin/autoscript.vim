@@ -134,6 +134,15 @@ endfunction
 
 function! ZFAutoScriptLog(...)
     let projDir = s:projDir(get(a:, 1, ''))
+    let implStatus = ZFAsyncRunStatus(s:taskName(projDir))
+    while empty(implStatus)
+        let projDirPrev = projDir
+        let projDir = fnamemodify(projDir, ':h')
+        if projDir == projDirPrev
+            break
+        endif
+        let implStatus = ZFAsyncRunStatus(s:taskName(projDir))
+    endwhile
     return ZFAsyncRunLog(s:taskName(projDir))
 endfunction
 
@@ -202,7 +211,7 @@ function! s:projDir(projDir)
         " ^[ \t]*"(.*)"[ \t]*$
         let projDir = substitute(projDir, '^[ \t]*"\(.*\)"[ \t]*$', '\1', 'g')
     endif
-    return CygpathFix_absPath(projDir)
+    return substitute(CygpathFix_absPath(projDir), '\/\+$', '', 'g')
 endfunction
 
 function! s:taskName(projDir)
