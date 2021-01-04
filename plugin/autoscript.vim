@@ -41,6 +41,11 @@ command! -nargs=0 ZFAutoScriptLogAll :call ZFAutoScriptLogAll()
 "   'autoScriptDelay' : 'optional, delay before run, 1 second by default',
 " }
 function! ZFAutoScript(projDir, param)
+    call ZFAutoScriptRemove(a:projDir)
+    if empty(a:param)
+        return 0
+    endif
+
     let projDir = s:projDir(a:projDir)
     if type(a:param) == type('') || ZFJobFuncCallable(a:param)
         let jobOption = {
@@ -60,11 +65,11 @@ function! ZFAutoScript(projDir, param)
     let jobOption['jobImplData']['ZFAutoScript_projDir'] = projDir
 
     let s:config[projDir] = jobOption
-    call ZFAsyncRunStop(s:taskName(projDir))
 
     if len(s:config) == 1
         call s:start()
     endif
+    return 1
 endfunction
 
 if !exists('s:ZFAutoScriptIsEnable')
