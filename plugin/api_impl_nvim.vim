@@ -57,12 +57,20 @@ function! s:nvim_on_stdout(jobImplId, msgList, ...)
         return
     endif
 
+    if len(a:msgList) >= 2 && a:msgList[len(a:msgList) - 1] == ''
+        call remove(a:msgList, len(a:msgList) - 1)
+    endif
+
     call ZFJobFuncCall(jobImplState['onOutput'], [a:msgList, 'stdout'])
 endfunction
 function! s:nvim_on_stderr(jobImplId, msgList, ...)
     let jobImplState = get(s:jobImplStateMap, a:jobImplId, {})
     if empty(jobImplState)
         return
+    endif
+
+    if len(a:msgList) >= 2 && a:msgList[len(a:msgList) - 1] == ''
+        call remove(a:msgList, len(a:msgList) - 1)
     endif
 
     call ZFJobFuncCall(jobImplState['onOutput'], [a:msgList, 'stderr'])
