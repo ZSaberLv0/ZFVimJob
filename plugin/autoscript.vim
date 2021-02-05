@@ -205,7 +205,7 @@ function! CygpathFix_absPath(path)
             endif
         endif
     endif
-    return substitute(path, '\\', '/', 'g')
+    return substitute(substitute(path, '\\', '/', 'g'), '\%(\/\)\@<!\/\+$', '', '') " (?<!\/)\/+$
 endfunction
 
 function! s:projDir(projDir)
