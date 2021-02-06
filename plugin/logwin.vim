@@ -48,6 +48,9 @@ function! ZFLogWinUseCurWindow(logId)
 endfunction
 
 function! ZFLogWinConfig(logId, ...)
+    noautocmd return s:ZFLogWinConfig(a:logId, get(a:, 1, {}))
+endfunction
+function! s:ZFLogWinConfig(logId, ...)
     if a:0 == 0
         return get(get(s:status, a:logId, {}), 'config', {})
     endif
@@ -81,7 +84,7 @@ function! ZFLogWinAdd(logId, content)
     endif
 
     if status['lazyUpdate'] <= 0
-        call s:logWinOnAdd(a:logId)
+        noautocmd call s:logWinOnAdd(a:logId)
     else
         if status['lazyUpdateTimerId'] == -1
             let status['lazyUpdateTimerId'] = ZFJobTimerStart(status['lazyUpdate'], ZFJobFunc(function('s:logWinAddOnTimer'), [a:logId]))
@@ -98,6 +101,9 @@ function! ZFLogWinContent(logId)
 endfunction
 
 function! ZFLogWinClear(logId, ...)
+    noautocmd return s:ZFLogWinClear(a:logId, get(a:, 1, 0))
+endfunction
+function! s:ZFLogWinClear(logId, ...)
     if !exists('s:status[a:logId]')
         return
     endif
@@ -124,6 +130,9 @@ function! ZFLogWinClear(logId, ...)
 endfunction
 
 function! ZFLogWinRedraw(logId)
+    noautocmd return s:ZFLogWinRedraw(a:logId)
+endfunction
+function! s:ZFLogWinRedraw(logId)
     let oldPos = s:logWinFocus(a:logId, 0)
     if !empty(oldPos)
         call s:redraw(a:logId, 'none')
@@ -154,12 +163,18 @@ function! ZFLogWinClose(logId)
 endfunction
 
 function! ZFLogWinShow(logId)
+    noautocmd return s:ZFLogWinShow(a:logId)
+endfunction
+function! s:ZFLogWinShow(logId)
     let oldPos = s:logWinFocus(a:logId, 1)
     call s:redraw(a:logId, 'none')
     call s:logWinRestorePos(oldPos)
 endfunction
 
 function! ZFLogWinFocus(logId)
+    noautocmd return s:ZFLogWinFocus(a:logId)
+endfunction
+function! s:ZFLogWinFocus(logId)
     let oldPos = s:logWinFocus(a:logId, 1)
     call s:redraw(a:logId, 'none')
     return oldPos
@@ -246,7 +261,7 @@ function! s:logWinAddOnTimer(logId, ...)
     endif
     let status = s:status[a:logId]
     let status['lazyUpdateTimerId'] = -1
-    call s:logWinOnAdd(a:logId)
+    noautocmd call s:logWinOnAdd(a:logId)
 endfunction
 function! s:logWinOnAdd(logId)
     if !exists('s:status[a:logId]')
