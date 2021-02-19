@@ -47,6 +47,12 @@ features / why another remake:
     * observe file write event and run build script automatically (`ZFAutoScript`)
 
 
+plugins that based on this plugin:
+
+* [ZSaberLv0/ZFVimIM](https://github.com/ZSaberLv0/ZFVimIM) : input method by pure vim script
+* [ZSaberLv0/ZFVimTerminal](https://github.com/ZSaberLv0/ZFVimTerminal) : terminal simulator in vim with low dependency
+
+
 if you like my work, [check here](https://github.com/ZSaberLv0?utf8=%E2%9C%93&tab=repositories&q=ZFVim) for a list of my vim plugins,
 or [buy me a coffee](https://github.com/ZSaberLv0/ZSaberLv0)
 
