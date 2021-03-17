@@ -38,7 +38,7 @@ command! -nargs=* -complete=dir ZFAutoScriptLog :call ZFAutoScriptLog(<q-args>)
 command! -nargs=0 ZFAutoScriptLogAll :call ZFAutoScriptLogAll()
 
 " param: { // jobOption passed to ZFAsyncRun
-"   'autoScriptDelay' : 'optional, delay before run, 1 second by default',
+"   'autoScriptDelay' : 'optional, delay before run, 200ms by default',
 " }
 function! ZFAutoScript(projDir, param)
     call ZFAutoScriptRemove(a:projDir)
@@ -226,9 +226,10 @@ function! s:fileWrite()
         endif
         let jobOption = s:config[projDir]
         call ZFAutoScriptStop(projDir)
-        if get(jobOption, 'autoScriptDelay', 1) > 0
+        let autoScriptDelay = get(jobOption, 'autoScriptDelay', 200)
+        if autoScriptDelay > 0
             let jobOption['autoScriptDelayTimerId'] = ZFJobTimerStart(
-                        \ get(jobOption, 'autoScriptDelay', 1),
+                        \ autoScriptDelay,
                         \ ZFJobFunc(function('s:runDelay'), [projDir, file]))
         else
             call s:run(projDir, file)
