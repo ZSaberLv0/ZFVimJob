@@ -28,7 +28,7 @@ function! s:onEnter(onEnter, jobStatus)
                     \   'width' : function('s:popupWidth'),
                     \   'height' : 1,
                     \   'x' : 0,
-                    \   'y' : 0,
+                    \   'y' : 1,
                     \ }))
     endif
     call s:update()
