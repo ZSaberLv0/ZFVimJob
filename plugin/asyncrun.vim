@@ -52,7 +52,7 @@ if !exists('g:ZFAsyncRun_outputTo')
                 \     'width' : 1.0/3,
                 \     'height' : 1.0/4,
                 \     'x' : 1,
-                \     'y' : &cmdheight + 2,
+                \     'y' : 2,
                 \     'wrap' : 1,
                 \     'contentAlign' : 'bottom',
                 \   },

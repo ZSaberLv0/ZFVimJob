@@ -9,6 +9,7 @@ endif
 "   'jobImplId' : {
 "     'onOutput' : '',
 "     'onExit' : '',
+"     'outputFix' : '',
 "   }
 " }
 if !exists('s:jobImplStateMap')
@@ -33,6 +34,7 @@ function! s:jobStart(jobStatus, onOutput, onExit)
     let s:jobImplStateMap[jobImplId] = {
                 \   'onOutput' : a:onOutput,
                 \   'onExit' : a:onExit,
+                \   'outputFix' : '',
                 \ }
     return 1
 endfunction
@@ -52,28 +54,10 @@ function! s:jobSend(jobStatus, text)
 endfunction
 
 function! s:nvim_on_stdout(jobImplId, msgList, ...)
-    let jobImplState = get(s:jobImplStateMap, a:jobImplId, {})
-    if empty(jobImplState)
-        return
-    endif
-
-    if len(a:msgList) >= 2 && a:msgList[len(a:msgList) - 1] == ''
-        call remove(a:msgList, len(a:msgList) - 1)
-    endif
-
-    call ZFJobFuncCall(jobImplState['onOutput'], [a:msgList, 'stdout'])
+    call s:nvim_outputFix(a:jobImplId, a:msgList, 'stdout')
 endfunction
 function! s:nvim_on_stderr(jobImplId, msgList, ...)
-    let jobImplState = get(s:jobImplStateMap, a:jobImplId, {})
-    if empty(jobImplState)
-        return
-    endif
-
-    if len(a:msgList) >= 2 && a:msgList[len(a:msgList) - 1] == ''
-        call remove(a:msgList, len(a:msgList) - 1)
-    endif
-
-    call ZFJobFuncCall(jobImplState['onOutput'], [a:msgList, 'stderr'])
+    call s:nvim_outputFix(a:jobImplId, a:msgList, 'stderr')
 endfunction
 function! s:nvim_on_exit(jobImplId, exitCode, ...)
     if !exists('s:jobImplStateMap[a:jobImplId]')
@@ -88,4 +72,36 @@ let g:ZFVimJobImpl = {
             \   'jobStop' : function('s:jobStop'),
             \   'jobSend' : function('s:jobSend'),
             \ }
+
+" ============================================================
+" output end:
+"   ['aaa', 'bbb', '']
+" output truncated:
+"   ['aaa', 'bb']
+"   ['b', '']
+function! s:nvim_outputFix(jobImplId, msgList, type)
+    let jobImplState = get(s:jobImplStateMap, a:jobImplId, {})
+    if empty(jobImplState)
+        return
+    endif
+
+    if jobImplState['outputFix'] != ''
+        if len(a:msgList) > 0
+            let a:msgList[0] = jobImplState['outputFix'] . a:msgList[0]
+        else
+            call insert(a:msgList, jobImplState['outputFix'], 0)
+        endif
+        let jobImplState['outputFix'] = ''
+    endif
+
+    if len(a:msgList) >= 2
+        if a:msgList[len(a:msgList) - 1] == ''
+            call remove(a:msgList, len(a:msgList) - 1)
+        else
+            let jobImplState['outputFix'] = remove(a:msgList, len(a:msgList) - 1)
+        endif
+    endif
+
+    call ZFJobFuncCall(jobImplState['onOutput'], [a:msgList, 'stdout'])
+endfunction
 
