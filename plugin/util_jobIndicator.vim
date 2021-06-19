@@ -60,7 +60,7 @@ if !exists('s:jobCountUpdateTimerId')
     let s:jobCountUpdateTimerId = -1
 endif
 function! s:updateCallback(...)
-    let s:jobCountText = ' ' . s:jobCount . ' jobs running '
+    let s:jobCountText = printf(get(g:, 'ZFJobIndicatorFormat', ' %s jobs '), s:jobCount)
     call ZFPopupContent(s:popupId, [s:jobCountText])
     call ZFPopupUpdate(s:popupId)
     let s:jobCountUpdateTimerId = -1
