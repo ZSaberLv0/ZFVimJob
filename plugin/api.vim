@@ -74,6 +74,15 @@ endfunction
 function! ZFJobTaskMap()
     return s:jobMap
 endfunction
+function! ZFJobTaskMapInfo()
+    let ret = []
+    for jobStatus in values(s:jobMap)
+        let info = ZFJobInfo(jobStatus)
+        call add(ret, info)
+        echo info
+    endfor
+    return ret
+endfunction
 
 function! ZFJobInfo(jobStatus)
     let jobCmd = get(get(a:jobStatus, 'jobOption', {}), 'jobCmd', '')
