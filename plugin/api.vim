@@ -93,8 +93,12 @@ function! ZFJobInfo(jobStatus)
     endif
 endfunction
 
-function! ZFJobLog(jobId, log)
-    let jobStatus = ZFJobStatus(a:jobId)
+function! ZFJobLog(jobIdOrJobStatus, log)
+    if type(a:jobIdOrJobStatus) == type({})
+        let jobStatus = a:jobIdOrJobStatus
+    else
+        let jobStatus = ZFJobStatus(a:jobIdOrJobStatus)
+    endif
     if !empty(jobStatus)
         call s:jobLog(jobStatus, a:log)
     endif
@@ -495,6 +499,10 @@ function! ZFJobFallback(param)
         endif
         let result = system(jobCmd)
         let exitCode = '' . v:shell_error
+    elseif type(T_jobCmd) == type(0)
+        " for fallback, sleep job has nothing to do
+        let result = ''
+        let exitCode = '0'
     elseif ZFJobFuncCallable(T_jobCmd)
         call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
 

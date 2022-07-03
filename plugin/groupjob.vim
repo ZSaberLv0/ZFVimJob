@@ -1,5 +1,5 @@
 
-" groupJobOption: {
+" param can be any type that ZFJobStart supports, or groupJobOption: {
 "   'jobList' : [
 "     [
 "       {
@@ -46,8 +46,8 @@
 " * -1 if failed
 " * 0 if fallback to `system()`
 " * groupJobId if success (ensured greater than 0)
-function! ZFGroupJobStart(groupJobOption)
-    return s:groupJobStart(a:groupJobOption)
+function! ZFGroupJobStart(param)
+    return s:groupJobStart(a:param)
 endfunction
 
 function! ZFGroupJobStop(groupJobId, ...)
@@ -174,8 +174,18 @@ augroup ZFVimJob_ZFGroupJobOptionSetup_augroup
     autocmd!
     autocmd User ZFGroupJobOptionSetup silent
 augroup END
-function! s:groupJobStart(groupJobOption)
-    let groupJobOption = copy(a:groupJobOption)
+function! s:groupJobStart(param)
+    if type(a:param) == type('') || ZFJobFuncCallable(a:param)
+        let groupJobOption = {
+                    \   'jobCmd' : a:param,
+                    \ }
+    elseif type(a:param) == type({})
+        let groupJobOption = copy(a:param)
+    else
+        echo '[ZFVimJob] unsupported param type: ' . type(a:param)
+        return -1
+    endif
+
     if empty(get(groupJobOption, 'jobList', []))
         if empty(get(groupJobOption, 'jobCmd', ''))
             return -1
