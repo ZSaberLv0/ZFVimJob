@@ -500,6 +500,8 @@ function! ZFJobFallback(param)
         let result = system(jobCmd)
         let exitCode = '' . v:shell_error
     elseif type(T_jobCmd) == type(0)
+        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
+
         " for fallback, sleep job has nothing to do
         let result = ''
         let exitCode = '0'
