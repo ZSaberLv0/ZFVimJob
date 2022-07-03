@@ -114,8 +114,12 @@ function! ZFGroupJobInfo(groupJobStatus)
     return ''
 endfunction
 
-function! ZFGroupJobLog(groupJobId, log)
-    let groupJobStatus = ZFGroupJobStatus(a:groupJobId)
+function! ZFGroupJobLog(groupJobIdOrGroupJobStatus, log)
+    if type(a:groupJobIdOrGroupJobStatus) == type({})
+        let groupJobStatus = a:groupJobIdOrGroupJobStatus
+    else
+        let groupJobStatus = ZFGroupJobStatus(a:groupJobIdOrGroupJobStatus)
+    endif
     if !empty(groupJobStatus)
         call s:groupJobLog(groupJobStatus, a:log)
     endif

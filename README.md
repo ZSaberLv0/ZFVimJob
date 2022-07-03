@@ -7,6 +7,7 @@
 * [API](#api)
     * [Jobs](#jobs)
     * [Group jobs](#group-jobs)
+    * [Job Pool](#job-pool)
     * [Utils](#utils)
         * [Util functions](#util-functions)
         * [Job output](#job-output)
@@ -265,7 +266,7 @@ here's some plugins that used ZFVimJob to simplify complex job control:
     }
     ```
 
-* `ZFJobStop(jobId)`
+* `ZFJobStop(jobId [, exitCode])`
 * `ZFJobSend(jobId, text)`
 * `ZFJobStatus(jobId)`
 
@@ -280,7 +281,7 @@ here's some plugins that used ZFVimJob to simplify complex job control:
 
 * `ZFJobTaskMap()`
 * `ZFJobInfo(jobStatus)`
-* `ZFJobLog(jobId, log)`
+* `ZFJobLog(jobIdOrJobStatus, log)`
 
 
 ## Group jobs
@@ -327,7 +328,7 @@ here's some plugins that used ZFVimJob to simplify complex job control:
     }
     ```
 
-* `ZFGroupJobStop(groupJobId)`
+* `ZFGroupJobStop(groupJobId [, exitCode])`
 * `ZFGroupJobSend(groupJobId, text)`
 * `ZFGroupJobStatus(groupJobId)`
 
@@ -352,6 +353,25 @@ here's some plugins that used ZFVimJob to simplify complex job control:
 * `ZFGroupJobTaskMap()`
 * `ZFGroupJobInfo(groupJobStatus)`
 * `ZFGroupJobLog(groupJobId, log)`
+
+
+## Job Pool
+
+job pool is similar thread pool of other language,
+you can run as many jobs up to `g:ZFJobPoolSize`,
+when exceeds `g:ZFJobPoolSize`,
+new jobs would be put to wait until other jobs stopped
+
+job pool has same APIs as `ZFJobStart()` series,
+and all of the behaviors are ensured the same:
+
+* `ZFJobPoolStart(jobCmd_or_jobOption)`
+* `ZFJobPoolStop(jobId [, exitCode])`
+* `ZFJobPoolSend(jobId, text)`
+* `ZFJobPoolStatus(jobId)`
+* `ZFJobPoolTaskMap()`
+* `ZFJobPoolInfo(jobStatus)`
+* `ZFJobPoolLog(jobIdOrJobStatus, log)`
 
 
 ## Utils
