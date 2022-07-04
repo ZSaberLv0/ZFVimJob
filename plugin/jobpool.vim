@@ -230,7 +230,7 @@ function! s:jobOnExit(jobPoolStatus, onExit, jobStatus, exitCode)
     if !empty(a:onExit)
         call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])
     endif
-    let jobPoolStatus['jobId'] = -1
+    let a:jobPoolStatus['jobId'] = -1
     call s:jobPoolRunNext()
 endfunction
 
