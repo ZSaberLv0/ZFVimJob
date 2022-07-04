@@ -62,7 +62,7 @@ function! ZFGroupJobSend(groupJobId, text)
     let sendCount = 0
     for jobStatusList in groupJobStatus['jobStatusList']
         for jobStatus in jobStatusList
-            call ZFJobSend(jobStatus['jobId'], a:text)
+            call ZFJobPoolSend(jobStatus['jobId'], a:text)
             let sendCount += 1
         endfor
     endfor
@@ -95,21 +95,21 @@ endfunction
 
 function! ZFGroupJobInfo(groupJobStatus)
     if !exists("a:groupJobStatus['jobOption']['jobList']")
-        return ZFJobInfo(a:groupJobStatus)
+        return ZFJobPoolInfo(a:groupJobStatus)
     endif
     let jobStatusList = a:groupJobStatus['jobStatusList']
     if !empty(jobStatusList)
         let index = len(jobStatusList) - 1
         while index != -1
             if !empty(jobStatusList[index])
-                return ZFJobInfo(jobStatusList[index][-1])
+                return ZFJobPoolInfo(jobStatusList[index][-1])
             endif
             let index -= 1
         endwhile
     endif
     let jobList = a:groupJobStatus['jobOption']['jobList']
     if !empty(jobList) && !empty(jobList[0])
-        return ZFJobInfo(jobList[0][0])
+        return ZFJobPoolInfo(jobList[0][0])
     endif
     return ''
 endfunction
@@ -307,11 +307,11 @@ function! s:groupJobRunNext(groupJobStatus)
                 return
             endif
         else
-            let jobId = ZFJobStart(jobOptionTmp)
+            let jobId = ZFJobPoolStart(jobOptionTmp)
             if jobId == 0
                 continue
             endif
-            let jobStatus = ZFJobStatus(jobId)
+            let jobStatus = ZFJobPoolStatus(jobId)
             if empty(jobStatus)
                 call s:groupJobStop(a:groupJobStatus, {}, '-1')
                 return
@@ -345,7 +345,7 @@ function! s:groupJobStop(groupJobStatus, jobStatusFailed, exitCode)
         for jobStatus in jobStatusList
             if jobStatus['jobImplData']['groupJobChildState'] == 1
                 let jobStatus['jobImplData']['groupJobChildState'] = -1
-                call ZFJobStop(jobStatus['jobId'], a:exitCode)
+                call ZFJobPoolStop(jobStatus['jobId'], a:exitCode)
             endif
         endfor
     endfor
