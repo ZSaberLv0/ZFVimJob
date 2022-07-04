@@ -104,7 +104,6 @@ function! s:jobPoolRemove(jobPoolId)
         let i -= 1
     endwhile
 
-    let jobPoolStatus['jobId'] = -1
     return jobPoolStatus
 endfunction
 
@@ -159,12 +158,13 @@ function! s:jobPoolStop(jobPoolId, exitCode)
 
     let jobPoolStatus['exitCode'] = a:exitCode
 
-    if jobPoolStatus['jobImplData']['jobPool_jobId'] != -1
+    if jobPoolStatus['jobImplData']['jobPool_jobId'] > 0
         let jobId = jobPoolStatus['jobImplData']['jobPool_jobId']
         let jobPoolStatus['jobImplData']['jobPool_jobId'] = -1
         call ZFJobStop(jobId, a:exitCode)
     endif
 
+    let jobPoolStatus['jobId'] = -1
     call s:jobPoolRunNext()
     return 1
 endfunction
@@ -191,12 +191,16 @@ function! s:jobPoolRunNext()
 
     let jobId = ZFJobStart(jobPoolStatus['jobOption'])
     let jobPoolStatus['jobImplData']['jobPool_jobId'] = jobId
-    if jobId == -1
+    if jobId == -1 || jobId == 0
         let jobPoolStatus['jobImplData']['jobPool_sendQueue'] = []
     else
         for text in jobPoolStatus['jobImplData']['jobPool_sendQueue']
             call ZFJobSend(jobId, text)
         endfor
+    endif
+
+    if jobId == 0 && jobPoolStatus['jobId'] == -1
+        let jobPoolStatus['jobId'] = 0
     endif
 
     call s:jobPoolRunNext()
@@ -226,6 +230,7 @@ function! s:jobOnExit(jobPoolStatus, onExit, jobStatus, exitCode)
     if !empty(a:onExit)
         call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])
     endif
+    let jobPoolStatus['jobId'] = -1
     call s:jobPoolRunNext()
 endfunction
 
