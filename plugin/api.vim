@@ -188,7 +188,7 @@ function! s:sleepJob_jobStartDelay(jobId, ...)
     if empty(jobStatus)
         return
     endif
-    call s:sleepJob_jobStop(jobStatus, 0)
+    call s:sleepJob_jobStop(jobStatus, '0')
 endfunction
 function! s:sleepJob_jobStop(jobStatus, exitCode)
     call s:jobRemove(a:jobStatus['jobId'])

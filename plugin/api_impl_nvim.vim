@@ -68,7 +68,7 @@ function! s:nvim_on_exit(jobImplId, exitCode, ...)
         return
     endif
     let jobImplState = remove(s:jobImplStateMap, a:jobImplId)
-    call ZFJobFuncCall(jobImplState['onExit'], [a:exitCode])
+    call ZFJobFuncCall(jobImplState['onExit'], ['' . a:exitCode])
 endfunction
 
 let g:ZFVimJobImpl = {

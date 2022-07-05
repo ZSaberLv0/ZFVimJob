@@ -161,7 +161,7 @@ function! s:vim_exit_cb(jobImplId, exitCode, ...)
             silent! call ch_close(jobImplState['jobImplChannel'])
         endtry
     endif
-    call ZFJobFuncCall(jobImplState['onExit'], [a:exitCode])
+    call ZFJobFuncCall(jobImplState['onExit'], ['' . a:exitCode])
 endfunction
 
 let g:ZFVimJobImpl = {
