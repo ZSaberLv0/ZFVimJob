@@ -1,6 +1,7 @@
 
-let g:ZFJOBSTOP = 'JOBSTOP'
-let g:ZFJOBTIMEOUT = 'JOBTIMEOUT'
+let g:ZFJOBSTOP = 'ZFJOBSTOP'
+let g:ZFJOBERROR = 'ZFJOBERROR'
+let g:ZFJOBTIMEOUT = 'ZFJOBTIMEOUT'
 
 if !exists('g:ZFJobVerboseLog')
     let g:ZFJobVerboseLog = []
@@ -28,7 +29,7 @@ endfunction
 "            // * vim `function(jobStatus)` or any callable object to `ZFJobFuncCall()`,
 "            //   return `{output:xxx, exitCode:0}` to indicate invoke result,
 "            //   if none, it's considered as success
-"            // * number, use `timer_start()` to delay,
+"            // * number, use `ZFJobTimerStart()` to delay,
 "            //   has better performance than starting a `sleep` job
 "   'jobCwd' : 'optional, cwd to run the job',
 "   'onLog' : 'optional, func(jobStatus, log)',
@@ -267,10 +268,13 @@ function! s:jobStart(param)
         redraw!
         call s:jobLog(jobStatus, 'unable to start job: `' . ZFJobInfo(jobStatus) . '`')
         echomsg '[ZFVimJob] unable to start job: ' . ZFJobInfo(jobStatus)
+        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
+        let jobStatus['exitCode'] = g:ZFJOBERROR
+        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onExit', ''), [jobStatus, g:ZFJOBERROR])
         return -1
     endif
 
-    if get(jobOption, 'jobTimeout', 0) > 0 && has('timers')
+    if get(jobOption, 'jobTimeout', 0) > 0 && ZFJobTimerAvailable()
         let jobStatus['jobImplData']['jobTimeoutId'] = ZFJobTimerStart(jobOption['jobTimeout'], ZFJobFunc(function('s:onTimeout'), [jobStatus]))
     endif
 
@@ -385,7 +389,7 @@ function! s:onOutput(jobStatus, textList, type)
         endif
     endif
 
-    if has('timers') && get(a:jobStatus['jobOption'], 'jobOutputDelay', g:ZFJobOutputDelay) >= 0
+    if ZFJobTimerAvailable() && get(a:jobStatus['jobOption'], 'jobOutputDelay', g:ZFJobOutputDelay) >= 0
         let needDelay = 0
         if get(a:jobStatus['jobImplData'], 'jobOutputDelayTaskId', -1) >= 0
             if a:jobStatus['jobImplData']['jobOutputDelayType'] == a:type

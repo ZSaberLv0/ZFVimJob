@@ -68,7 +68,7 @@ endfunction
 function! s:update()
     if s:jobCountUpdateTimerId == -1
         call s:updateCallback()
-        if has('timers')
+        if ZFJobTimerAvailable()
             let s:jobCountUpdateTimerId = ZFJobTimerStart(500, function('s:updateCallback'))
         endif
     endif

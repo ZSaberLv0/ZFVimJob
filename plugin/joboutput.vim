@@ -188,7 +188,7 @@ endfunction
 
 function! s:autoCloseStart(outputId, jobStatus, timeout)
     call s:autoCloseStop(a:outputId)
-    if !has('timers') || a:timeout <= 0
+    if !ZFJobTimerAvailable() || a:timeout <= 0
         call s:autoCloseOnTimer(a:outputId, a:jobStatus)
         return
     endif

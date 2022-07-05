@@ -184,6 +184,7 @@ it may hard to config for first time, but trust me, it changes the life
     * job finished successfully, exitCode would be `0`
     * job failed, exitCode would be the job's exitCode (ensured string type)
     * stopped manually by `ZFJobStop(jobId)`, exitCode would be `g:ZFJOBSTOP`
+    * failed to start job, exitCode would be `g:ZFJOBERROR`
 
 1. start multiple jobs
 
@@ -249,7 +250,7 @@ here's some plugins that used ZFVimJob to simplify complex job control:
                  // * vim `function(jobStatus)` or any callable object to `ZFJobFuncCall()`,
                  //   return `{output:xxx, exitCode:0}` to indicate invoke result,
                  //   if none, it's considered as success
-                 // * number, use `timer_start()` to delay,
+                 // * number, use `ZFJobTimerStart()` to delay,
                  //   has better performance than starting a `sleep` job
       'jobCwd' : 'optional, cwd to run the job',
       'onLog' : 'optional, func(jobStatus, log)',
@@ -411,7 +412,7 @@ and for timers:
 * `ZFJobTimerStart(delay, ZFJobFunc(...))`
 * `ZFJobTimerStop(timerId)`
 
-and for interval (require `has('timers')`):
+and for interval (require `ZFJobTimerAvailable()`):
 
 * `ZFJobIntervalStart(interval, ZFJobFunc(...))`
 * `ZFJobIntervalStop(intervalId)`

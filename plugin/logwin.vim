@@ -240,7 +240,7 @@ function! s:statusInit(config)
                 \   'lazyUpdate' : get(a:config, 'lazyUpdate', 10),
                 \   'lazyUpdateTimerId' : -1,
                 \ }
-    if !has('timers')
+    if !ZFJobTimerAvailable()
         let status['lazyUpdate'] = 0
     endif
     return status

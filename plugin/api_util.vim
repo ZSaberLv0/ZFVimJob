@@ -189,6 +189,9 @@ function! s:jobTimerCallback(timerId)
     let Fn_callback = remove(s:jobTimerMap, a:timerId)
     call ZFJobFuncCall(Fn_callback, [a:timerId])
 endfunction
+function! ZFJobTimerAvailable()
+    return has('timers')
+endfunction
 function! ZFJobTimerStart(delay, jobFunc)
     if !has('timers')
         call ZFJobFuncCall(a:jobFunc, [-1])
@@ -242,7 +245,7 @@ endfunction
 "   'count' : 'invoke count, first invoke is 1',
 " })
 function! ZFJobIntervalStart(interval, jobFunc)
-    if !has('timers')
+    if !ZFJobTimerAvailable()
         echomsg 'ZFJobIntervalStart require has("timers")'
         return -1
     endif

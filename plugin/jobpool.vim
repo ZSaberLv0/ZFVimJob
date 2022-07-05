@@ -93,7 +93,9 @@ function! s:jobPoolRemove(jobPoolId)
     endif
 
     let jobPoolStatus = remove(s:jobPoolMap, a:jobPoolId)
-    call remove(s:jobPoolRunning, a:jobPoolId)
+    if exists('s:jobPoolRunning[a:jobPoolId]')
+        call remove(s:jobPoolRunning, a:jobPoolId)
+    endif
 
     let i = len(s:jobPoolQueue) - 1
     while i >= 0
@@ -124,10 +126,10 @@ function! s:jobPoolStart(param)
                 \   'jobOption' : jobOption,
                 \   'jobOutput' : [],
                 \   'exitCode' : '',
-                \   'jobImplData' : {
+                \   'jobImplData' : extend({
                 \     'jobPool_jobId' : -1,
                 \     'jobPool_sendQueue' : [],
-                \   },
+                \   }, get(jobOption, 'jobImplData', {})),
                 \ }
 
     let jobOption['onOutput'] = ZFJobFunc(function('s:jobOnOutput'), [
@@ -165,7 +167,11 @@ function! s:jobPoolStop(jobPoolId, exitCode)
     endif
 
     let jobPoolStatus['jobId'] = -1
-    call s:jobPoolRunNext()
+    if ZFJobTimerAvailable()
+        call s:jobPoolRunNextDelayed()
+    else
+        call s:jobPoolRunNext()
+    endif
     return 1
 endfunction
 
@@ -203,6 +209,21 @@ function! s:jobPoolRunNext()
         let jobPoolStatus['jobId'] = 0
     endif
 
+    if ZFJobTimerAvailable()
+        call s:jobPoolRunNextDelayed()
+    else
+        call s:jobPoolRunNext()
+    endif
+endfunction
+
+function! s:jobPoolRunNextDelayed()
+    if get(s:, 'jobPoolRunNextDelayedId', -1) != -1
+        return
+    endif
+    let s:jobPoolRunNextDelayedId = ZFJobTimerStart(0, ZFJobFunc(function('s:jobPoolRunNextDelayedAction')))
+endfunction
+function! s:jobPoolRunNextDelayedAction(...)
+    let s:jobPoolRunNextDelayedId = -1
     call s:jobPoolRunNext()
 endfunction
 
@@ -231,6 +252,10 @@ function! s:jobOnExit(jobPoolStatus, onExit, jobStatus, exitCode)
         call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])
     endif
     let a:jobPoolStatus['jobId'] = -1
-    call s:jobPoolRunNext()
+    if ZFJobTimerAvailable()
+        call s:jobPoolRunNextDelayed()
+    else
+        call s:jobPoolRunNext()
+    endif
 endfunction
 

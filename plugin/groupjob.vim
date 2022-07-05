@@ -239,7 +239,7 @@ function! s:groupJobStart(param)
         return groupJobStatus['jobId']
     endif
 
-    if get(groupJobOption, 'groupJobTimeout', 0) > 0 && has('timers')
+    if get(groupJobOption, 'groupJobTimeout', 0) > 0 && ZFJobTimerAvailable()
         let groupJobStatus['jobImplData']['groupJobTimeoutId'] = ZFJobTimerStart(
                     \ groupJobOption['groupJobTimeout'],
                     \ ZFJobFunc(function('s:onTimeout'), [groupJobStatus]))
@@ -323,9 +323,34 @@ function! s:groupJobRunNext(groupJobStatus)
     endfor
 endfunction
 
+function! s:groupJobRunNextDelayed(groupJobStatus)
+    if get(a:groupJobStatus['jobImplData'], 'groupJobRunNextDelayedId', -1) != -1
+        return
+    endif
+    if a:groupJobStatus['jobIndex'] + 1 >= len(a:groupJobStatus['jobOption']['jobList'])
+        call s:groupJobStop(a:groupJobStatus, {}, '0')
+        let a:groupJobStatus['jobId'] = 0
+        return
+    endif
+
+    let a:groupJobStatus['jobImplData']['groupJobRunNextDelayedId'] = ZFJobTimerStart(
+                \   0,
+                \   ZFJobFunc(function('s:groupJobRunNextDelayedAction'), [a:groupJobStatus])
+                \ )
+endfunction
+function! s:groupJobRunNextDelayedAction(groupJobStatus, ...)
+    let a:groupJobStatus['jobImplData']['groupJobRunNextDelayedId'] = -1
+    call s:groupJobRunNext(a:groupJobStatus)
+endfunction
+
 function! s:groupJobStop(groupJobStatus, jobStatusFailed, exitCode)
     if empty(a:groupJobStatus)
         return 0
+    endif
+
+    if get(a:groupJobStatus['jobImplData'], 'groupJobRunNextDelayedId', -1) != -1
+        call ZFJobTimerStop(a:groupJobStatus['jobImplData']['groupJobRunNextDelayedId'])
+        let a:groupJobStatus['jobImplData']['groupJobRunNextDelayedId'] = -1
     endif
 
     call s:groupJobLog(a:groupJobStatus, 'stop [' . a:exitCode . ']')
@@ -432,7 +457,11 @@ function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
         endif
     endfor
 
-    call s:groupJobRunNext(a:groupJobStatus)
+    if ZFJobTimerAvailable()
+        call s:groupJobRunNextDelayed(a:groupJobStatus)
+    else
+        call s:groupJobRunNext(a:groupJobStatus)
+    endif
 endfunction
 
 function! s:onTimeout(groupJobStatus, ...)

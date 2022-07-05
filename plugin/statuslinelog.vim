@@ -97,15 +97,15 @@ function! s:log(text, option)
     augroup END
     let s:observerAttached = 1
     if timeout > 0
-        if has('timers')
-            let s:timeoutId = timer_start(timeout, function('s:statuslineTimeout'))
+        if ZFJobTimerAvailable()
+            let s:timeoutId = ZFJobTimerStart(timeout, function('s:statuslineTimeout'))
         endif
     endif
 endfunction
 
 function! s:cleanup()
     if s:timeoutId != -1
-        call timer_stop(s:timeoutId)
+        call ZFJobTimerStop(s:timeoutId)
         let s:timeoutId = -1
     endif
     if s:observerAttached
@@ -127,7 +127,7 @@ function! s:statuslineSetByOther()
         return
     endif
     if s:timeoutId != -1
-        call timer_stop(s:timeoutId)
+        call ZFJobTimerStop(s:timeoutId)
         let s:timeoutId = -1
     endif
     if s:observerAttached
