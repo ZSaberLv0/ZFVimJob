@@ -28,6 +28,10 @@ endfunction
 "   'jobImplData' : {
 "     'jobPool_jobId' : -1, // it's jobId returned by ZFJobStart
 "     'jobPool_sendQueue' : [], // waiting queue of ZFJobPoolSend
+"
+"     // linked list, exists only when in pending queue s:jobPoolQueue
+"     'jobPool_qPrev' : {...},
+"     'jobPool_qNext' : {...},
 "   },
 " }
 function! ZFJobPoolStatus(jobPoolId)
@@ -71,7 +75,13 @@ if !exists('s:jobPoolRunning')
     let s:jobPoolRunning = {} " <jobPoolId, jobPoolStatus>
 endif
 if !exists('s:jobPoolQueue')
-    let s:jobPoolQueue = [] " [jobPoolStatus]
+    " dummy head as linked list
+    let s:jobPoolQueue = {
+                \   'jobImplData' : {
+                \     'jobPool_qNext' : {},
+                \   },
+                \ }
+    let s:jobPoolQueueTail = s:jobPoolQueue
 endif
 
 function! s:jobPoolIdNext()
@@ -93,20 +103,50 @@ function! s:jobPoolRemove(jobPoolId)
     endif
 
     let jobPoolStatus = remove(s:jobPoolMap, a:jobPoolId)
+
     if exists('s:jobPoolRunning[a:jobPoolId]')
         call remove(s:jobPoolRunning, a:jobPoolId)
+    else
+        call s:jobPoolQueueRemove(jobPoolStatus)
     endif
 
-    let i = len(s:jobPoolQueue) - 1
-    while i >= 0
-        if s:jobPoolQueue[i]['jobId'] == a:jobPoolId
-            call remove(s:jobPoolQueue, i)
-            break
-        endif
-        let i -= 1
-    endwhile
-
     return jobPoolStatus
+endfunction
+
+function! s:jobPoolQueueAdd(jobPoolStatus)
+    let s:jobPoolQueueTail['jobImplData']['jobPool_qNext'] = a:jobPoolStatus
+    let a:jobPoolStatus['jobImplData']['jobPool_qPrev'] = s:jobPoolQueueTail
+    let a:jobPoolStatus['jobImplData']['jobPool_qNext'] = {}
+    let s:jobPoolQueueTail = a:jobPoolStatus
+endfunction
+function! s:jobPoolQueueRemove(jobPoolStatus)
+    let qPrev = a:jobPoolStatus['jobImplData']['jobPool_qPrev']
+    let qNext = a:jobPoolStatus['jobImplData']['jobPool_qNext']
+    unlet a:jobPoolStatus['jobImplData']['jobPool_qPrev']
+    unlet a:jobPoolStatus['jobImplData']['jobPool_qNext']
+    let qPrev['jobImplData']['jobPool_qNext'] = qNext
+    if empty(qNext)
+        let s:jobPoolQueueTail = qPrev
+    else
+        let qNext['jobImplData']['jobPool_qPrev'] = qPrev
+    endif
+endfunction
+function! s:jobPoolQueueTake()
+    if empty(s:jobPoolQueue['jobImplData']['jobPool_qNext'])
+        return {}
+    else
+        let jobPoolStatus = s:jobPoolQueue['jobImplData']['jobPool_qNext']
+        let qNext = jobPoolStatus['jobImplData']['jobPool_qNext']
+        let s:jobPoolQueue['jobImplData']['jobPool_qNext'] = qNext
+        unlet jobPoolStatus['jobImplData']['jobPool_qPrev']
+        unlet jobPoolStatus['jobImplData']['jobPool_qNext']
+        if empty(qNext)
+            let s:jobPoolQueueTail = s:jobPoolQueue
+        else
+            let qNext['jobImplData']['jobPool_qPrev'] = s:jobPoolQueue
+        endif
+        return jobPoolStatus
+    endif
 endfunction
 
 function! s:jobPoolStart(param)
@@ -145,7 +185,7 @@ function! s:jobPoolStart(param)
                 \   get(jobOption, 'onExit', {})
                 \ ])
 
-    call add(s:jobPoolQueue, jobPoolStatus)
+    call s:jobPoolQueueAdd(jobPoolStatus)
     let s:jobPoolMap[jobPoolStatus['jobId']] = jobPoolStatus
 
     call s:jobPoolRunNext()
@@ -189,10 +229,12 @@ endfunction
 
 function! s:jobPoolRunNext()
     if len(s:jobPoolRunning) >= g:ZFJobPoolSize
-                \ || empty(s:jobPoolQueue)
         return
     endif
-    let jobPoolStatus = remove(s:jobPoolQueue, 0)
+    let jobPoolStatus = s:jobPoolQueueTake()
+    if empty(jobPoolStatus)
+        return
+    endif
     let s:jobPoolRunning[jobPoolStatus['jobId']] = jobPoolStatus
 
     let jobId = ZFJobStart(jobPoolStatus['jobOption'])
