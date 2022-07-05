@@ -221,7 +221,7 @@ function! s:jobStart(param)
     elseif type(a:param) == type({})
         let jobOption = copy(a:param)
     else
-        echo '[ZFVimJob] unsupported param type: ' . type(a:param)
+        echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
         return -1
     endif
 
@@ -234,7 +234,7 @@ function! s:jobStart(param)
     endif
 
     if empty(get(jobOption, 'jobCmd', ''))
-        echo '[ZFVimJob] empty jobCmd'
+        echomsg '[ZFVimJob] empty jobCmd'
         return -1
     endif
 
@@ -243,7 +243,7 @@ function! s:jobStart(param)
         if get(jobOption, 'jobFallback', 1)
             return ZFJobFallback(jobOption)
         endif
-        echo '[ZFVimJob] no job impl available'
+        echomsg '[ZFVimJob] no job impl available'
         return -1
     endif
 
@@ -265,6 +265,7 @@ function! s:jobStart(param)
                 \ ])
     if !success
         redraw!
+        call s:jobLog(jobStatus, 'unable to start job: `' . ZFJobInfo(jobStatus) . '`')
         echomsg '[ZFVimJob] unable to start job: ' . ZFJobInfo(jobStatus)
         return -1
     endif
@@ -475,7 +476,7 @@ function! ZFJobFallback(param)
     elseif type(a:param) == type({})
         let jobOption = copy(a:param)
     else
-        echo '[ZFVimJob] unsupported param type: ' . type(a:param)
+        echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
         return -1
     endif
 

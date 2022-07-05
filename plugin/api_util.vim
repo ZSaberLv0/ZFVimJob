@@ -243,11 +243,11 @@ endfunction
 " })
 function! ZFJobIntervalStart(interval, jobFunc)
     if !has('timers')
-        echo 'ZFJobIntervalStart require has("timers")'
+        echomsg 'ZFJobIntervalStart require has("timers")'
         return -1
     endif
     if a:interval <= 0
-        echo 'invalid interval: ' . a:interval
+        echomsg 'invalid interval: ' . a:interval
         return -1
     endif
     while s:jobIntervalId <= 0 || exists('s:jobIntervalMap[s:jobIntervalId]')

@@ -115,7 +115,7 @@ function! s:jobPoolStart(param)
     elseif type(a:param) == type({})
         let jobOption = copy(a:param)
     else
-        echo '[ZFVimJob] unsupported param type: ' . type(a:param)
+        echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
         return -1
     endif
 
