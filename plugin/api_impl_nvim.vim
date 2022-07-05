@@ -26,7 +26,11 @@ function! s:jobStart(jobStatus, onOutput, onExit)
         let jobImplOption['cwd'] = a:jobStatus['jobOption']['jobCwd']
     endif
 
-    let jobImplId = jobstart(a:jobStatus['jobOption']['jobCmd'], jobImplOption)
+    try
+        let jobImplId = jobstart(a:jobStatus['jobOption']['jobCmd'], jobImplOption)
+    catch
+        let jobImplId = -1
+    endtry
     if jobImplId == 0 || jobImplId == -1
         return 0
     endif

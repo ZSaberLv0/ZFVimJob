@@ -73,8 +73,12 @@ function! s:jobStart(jobStatus, onOutput, onExit)
     else
         let jobCmd = a:jobStatus['jobOption']['jobCmd']
     endif
-    let jobImplId = job_start(jobCmd, jobImplOption)
-    if job_status(jobImplId) != 'run'
+    try
+        let jobImplId = job_start(jobCmd, jobImplOption)
+    catch
+        let jobImplId = {}
+    endtry
+    if empty(jobImplId) || job_status(jobImplId) != 'run'
         return 0
     endif
     let jobImplChannel = job_getchannel(jobImplId)

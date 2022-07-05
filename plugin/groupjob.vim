@@ -197,6 +197,7 @@ function! s:groupJobStart(param)
             let groupJobOption['jobList'] = [[{
                         \   'jobCmd' : groupJobOption['jobCmd']
                         \ }]]
+            unlet groupJobOption['jobCmd']
         endif
     else
         let jobIndex = len(groupJobOption['jobList']) - 1

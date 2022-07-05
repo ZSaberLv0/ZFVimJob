@@ -265,7 +265,7 @@ function! s:jobStart(param)
                 \ ])
     if !success
         redraw!
-        echo '[ZFVimJob] unable to start job: ' . ZFJobInfo(jobStatus)
+        echomsg '[ZFVimJob] unable to start job: ' . ZFJobInfo(jobStatus)
         return -1
     endif
 
