@@ -4,6 +4,7 @@
 * [Intro](#intro)
 * [Workflow](#workflow)
 * [How to use](#how-to-use)
+    * [Fallback Limitations](#fallback-limitations)
 * [API](#api)
     * [Jobs](#jobs)
     * [Group jobs](#group-jobs)
@@ -19,6 +20,8 @@
 * [Other](#other)
     * [verbose log](#verbose-log)
     * [custom impl](#custom-impl)
+        * [job](#job)
+        * [timer](#timer)
 
 <!-- vim-markdown-toc -->
 
@@ -235,6 +238,24 @@ here's some plugins that used ZFVimJob to simplify complex job control:
     terminal simulator by pure vim script
 
 
+## Fallback Limitations
+
+by default, we would fallback to `system()` if not job impl available (`!ZFJobAvailable()`),
+but there are some limitations you should concern:
+
+* job send (`ZFJobSend()`, `ZFGroupJobSend()`, etc) not work,
+    all sended text would be ignored
+* if `!ZFJobTimerAvailable()`, while using `ZFGroupJobStart()` / `ZFJobPoolStart()`
+    with many child or queued jobs,
+    it's easy to cause vim call stack exceeds `maxfuncdepth`,
+    it's not recommended to increase `maxfuncdepth`,
+    you should think of:
+
+    * prevent many child jobs, by manually implementing job queue logic
+    * require `ZFJobTimerAvailable()` as dependency for your plugins or functions
+    * try manually implementing `ZFJobTimer`, see `custom impl` below
+
+
 # API
 
 ## Jobs
@@ -409,6 +430,7 @@ we supply a wrapper to simulate:
 
 and for timers:
 
+* `ZFJobTimerAvailable()`
 * `ZFJobTimerStart(delay, ZFJobFunc(...))`
 * `ZFJobTimerStop(timerId)`
 
@@ -635,6 +657,8 @@ and dump the log to file:
 
 ## custom impl
 
+### job
+
 by default, we support `vim8`'s `job_start()` and `neovim`'s `jobstart()`,
     you may supply your own job impl by:
 
@@ -656,4 +680,15 @@ let g:ZFVimJobImpl = {
         \   'jobSend' : ZFJobFunc(function('s:jobSend'), [extraArgs0, extraArgs1]),
         \ }
 ```
+
+### timer
+
+by default, we support by vim's `has('timers')`,
+there's some tricks to simulate timer by `CursorHold` (with some side effects, though)
+
+you may supply your own job impl by supply there functions:
+
+* ZFJobTimerAvailable()
+* ZFJobTimerStart(delay, jobFunc)
+* ZFJobTimerStop(timerId)
 

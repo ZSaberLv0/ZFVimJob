@@ -178,39 +178,41 @@ endfunction
 
 " ============================================================
 " timer
-if !exists('s:jobTimerMap')
-    " <jobTimerId, Fn_callback>
-    let s:jobTimerMap = {}
+if !exists('*ZFJobTimerAvailable')
+    if !exists('s:jobTimerMap')
+        " <jobTimerId, Fn_callback>
+        let s:jobTimerMap = {}
+    endif
+    function! s:jobTimerCallback(timerId)
+        if !exists('s:jobTimerMap[a:timerId]')
+            return
+        endif
+        let Fn_callback = remove(s:jobTimerMap, a:timerId)
+        call ZFJobFuncCall(Fn_callback, [a:timerId])
+    endfunction
+    function! ZFJobTimerAvailable()
+        return has('timers')
+    endfunction
+    function! ZFJobTimerStart(delay, jobFunc)
+        if !has('timers')
+            call ZFJobFuncCall(a:jobFunc, [-1])
+            return -1
+        endif
+        let timerId = timer_start(a:delay, function('s:jobTimerCallback'))
+        if timerId == -1
+            return -1
+        endif
+        let s:jobTimerMap[timerId] = a:jobFunc
+        return timerId
+    endfunction
+    function! ZFJobTimerStop(timerId)
+        if !exists('s:jobTimerMap[a:timerId]')
+            return
+        endif
+        call remove(s:jobTimerMap, a:timerId)
+        call timer_stop(a:timerId)
+    endfunction
 endif
-function! s:jobTimerCallback(timerId)
-    if !exists('s:jobTimerMap[a:timerId]')
-        return
-    endif
-    let Fn_callback = remove(s:jobTimerMap, a:timerId)
-    call ZFJobFuncCall(Fn_callback, [a:timerId])
-endfunction
-function! ZFJobTimerAvailable()
-    return has('timers')
-endfunction
-function! ZFJobTimerStart(delay, jobFunc)
-    if !has('timers')
-        call ZFJobFuncCall(a:jobFunc, [-1])
-        return -1
-    endif
-    let timerId = timer_start(a:delay, function('s:jobTimerCallback'))
-    if timerId == -1
-        return -1
-    endif
-    let s:jobTimerMap[timerId] = a:jobFunc
-    return timerId
-endfunction
-function! ZFJobTimerStop(timerId)
-    if !exists('s:jobTimerMap[a:timerId]')
-        return
-    endif
-    call remove(s:jobTimerMap, a:timerId)
-    call timer_stop(a:timerId)
-endfunction
 
 " ============================================================
 " interval
