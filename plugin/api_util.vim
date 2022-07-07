@@ -46,21 +46,21 @@ function! ZFJobFunc(func, ...)
     endif
 endfunction
 
-function! ZFJobFuncCall(func, argList)
+function! ZFJobFuncCall(func, ...)
+    let argList = get(a:, 1, [])
     if empty(a:func)
         return 0
     elseif type(a:func) == type(function('function'))
         let Fn = a:func
-        let argList = a:argList
-        return call(a:func, a:argList)
+        return call(a:func, argList)
     elseif type(a:func) == type('') || type(a:func) == type([])
-        return ZFJobFuncCall(ZFJobFunc(a:func), a:argList)
+        return ZFJobFuncCall(ZFJobFunc(a:func), argList)
     elseif type(a:func) == type({})
         if !exists("a:func[s:jobFuncKey_func]") || !exists("a:func[s:jobFuncKey_arglist]")
             throw '[ZFJobFunc] unsupported func value'
             return 0
         endif
-        return call(a:func[s:jobFuncKey_func], extend(copy(a:func[s:jobFuncKey_arglist]), a:argList))
+        return call(a:func[s:jobFuncKey_func], extend(copy(a:func[s:jobFuncKey_arglist]), argList))
     else
         throw '[ZFJobFunc] unsupported func type: ' . type(a:func)
         return 0
