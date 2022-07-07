@@ -344,6 +344,7 @@ but there are some limitations you should concern:
       'jobImplData' : {}, // optional, if supplied, merge to groupJobStatus['jobImplData']
 
       'groupJobTimeout' : 'optional, if supplied, ZFGroupJobStop would be called with g:ZFJOBTIMEOUT',
+      'groupJobStopOnChildError' : 'optional, 1 by default, whether stop group job when any of child has exitCode!=0',
       'onJobLog' : 'optional, func(groupJobStatus, jobStatus, log)',
       'onJobOutput' : 'optional, func(groupJobStatus, jobStatus, textList, type[stdout/stderr])',
       'onJobExit' : 'optional, func(groupJobStatus, jobStatus, exitCode)',

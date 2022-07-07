@@ -32,6 +32,7 @@
 "   'jobImplData' : {}, // optional, if supplied, merge to groupJobStatus['jobImplData']
 "
 "   'groupJobTimeout' : 'optional, if supplied, ZFGroupJobStop would be called with g:ZFJOBTIMEOUT',
+"   'groupJobStopOnChildError' : 'optional, 1 by default, whether stop group job when any of child has exitCode!=0',
 "   'onJobLog' : 'optional, func(groupJobStatus, jobStatus, log)',
 "   'onJobOutput' : 'optional, func(groupJobStatus, jobStatus, textList, type[stdout/stderr])',
 "   'onJobExit' : 'optional, func(groupJobStatus, jobStatus, exitCode)',
@@ -436,8 +437,12 @@ function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
         return
     endif
 
-    if a:exitCode != '0'
-        call s:groupJobStop(a:groupJobStatus, a:jobStatus, a:exitCode)
+    if a:exitCode != '0' && get(a:groupJobStatus['jobOption'], 'groupJobStopOnChildError', 1)
+        call s:groupJobLog(a:groupJobStatus, printf('stop by child job error: %s, job: %s'
+                    \   , a:exitCode
+                    \   , ZFGroupJobInfo(a:jobStatus)
+                    \ ))
+        call s:groupJobStop(a:groupJobStatus, a:jobStatus, g:ZFJOBERROR)
         return
     endif
 
