@@ -19,7 +19,12 @@ endif
 
 " ============================================================
 function! ZFJobAvailable()
-    return !empty(get(g:ZFVimJobImpl, 'jobStart', {}))
+    " g:ZFJobImpl : {
+    "   'jobStart' : 'func(jobStatus, onOutput(textList, type[stdout/stderr]), onExit(exitCode)), return 0/1',
+    "   'jobStop' : 'func(jobStatus), return 0/1',
+    "   'jobSend' : 'optional, func(jobStatus, text), return 0/1',
+    " }
+    return !empty(get(get(g:, 'ZFJobImpl', ), 'jobStart', {}))
 endfunction
 
 " param can be jobCmd or jobOption: {
@@ -106,15 +111,6 @@ function! ZFJobLog(jobIdOrJobStatus, log)
 endfunction
 
 " ============================================================
-" {
-"   'jobStart' : 'func(jobStatus, onOutput(textList, type[stdout/stderr]), onExit(exitCode)), return 0/1',
-"   'jobStop' : 'func(jobStatus), return 0/1',
-"   'jobSend' : 'optional, func(jobStatus, text), return 0/1',
-" }
-if !exists('g:ZFVimJobImpl')
-    let g:ZFVimJobImpl = {}
-endif
-
 if !exists('s:jobIdCur')
     let s:jobIdCur = 0
 endif
@@ -259,7 +255,7 @@ function! s:jobStart(param)
                 \   'exitCode' : '',
                 \   'jobImplData' : copy(get(jobOption, 'jobImplData', {})),
                 \ }
-    let success = ZFJobFuncCall(g:ZFVimJobImpl['jobStart'], [
+    let success = ZFJobFuncCall(g:ZFJobImpl['jobStart'], [
                 \   jobStatus
                 \ , ZFJobFunc(function('s:onOutput'), [jobStatus])
                 \ , ZFJobFunc(function('s:onExit'), [jobStatus])
@@ -324,7 +320,7 @@ function! s:jobStop(jobStatus, exitCode, callImpl)
     endif
 
     if a:callImpl
-        let ret = ZFJobFuncCall(g:ZFVimJobImpl['jobStop'], [jobStatus])
+        let ret = ZFJobFuncCall(g:ZFJobImpl['jobStop'], [jobStatus])
     else
         let ret = 1
     endif
@@ -348,7 +344,7 @@ function! s:jobSend(jobId, text)
     if empty(jobStatus)
         return 0
     endif
-    let Fn_jobSend = get(g:ZFVimJobImpl, 'jobSend', '')
+    let Fn_jobSend = get(g:ZFJobImpl, 'jobSend', '')
     if empty(Fn_jobSend)
         return 0
     endif

@@ -1,7 +1,7 @@
 if !exists('*jobstart')
     finish
 endif
-if !empty(get(g:, 'ZFVimJobImpl', {}))
+if !empty(get(g:, 'ZFJobImpl', {}))
     finish
 endif
 
@@ -73,7 +73,7 @@ function! s:nvim_on_exit(jobImplId, exitCode, ...)
     call ZFJobFuncCall(jobImplState['onExit'], ['' . a:exitCode])
 endfunction
 
-let g:ZFVimJobImpl = {
+let g:ZFJobImpl = {
             \   'jobStart' : function('s:jobStart'),
             \   'jobStop' : function('s:jobStop'),
             \   'jobSend' : function('s:jobSend'),

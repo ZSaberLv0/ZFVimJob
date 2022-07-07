@@ -38,7 +38,7 @@ features / why another remake:
 
         * job callback invoke normally, no job send support, though
 
-    * supply your own impl easily by setting `g:ZFVimJobImpl`
+    * supply your own impl easily by setting `g:ZFJobImpl`
 
 * many useful util functions
 
@@ -675,7 +675,7 @@ function! s:jobStop(jobStatus)
 endfunction
 function! s:jobSend(extraArgs0, extraArgs1, jobStatus, text)
 endfunction
-let g:ZFVimJobImpl = {
+let g:ZFJobImpl = {
         \   'jobStart' : function('s:jobStart'),
         \   'jobStop' : function('s:jobStop'),
         \   'jobSend' : ZFJobFunc(function('s:jobSend'), [extraArgs0, extraArgs1]),
@@ -687,9 +687,20 @@ let g:ZFVimJobImpl = {
 by default, we support by vim's `has('timers')`,
 there's some tricks to simulate timer by `CursorHold` (with some side effects, though)
 
-you may supply your own job impl by supply there functions:
+you may supply your own timer impl by:
 
-* ZFJobTimerAvailable()
-* ZFJobTimerStart(delay, jobFunc)
-* ZFJobTimerStop(timerId)
+```
+function! s:timerStart(delay, jobFunc)
+    let timerId = xxx
+    ...
+    return timerId
+endfunction
+function! s:timerStop(timerId)
+    ...
+endfunction
+let g:ZFJobTimerImpl = {
+        \   'timerStart' : function('s:timerStart'),
+        \   'timerStop' : function('s:timerStop'),
+        \ }
+```
 
