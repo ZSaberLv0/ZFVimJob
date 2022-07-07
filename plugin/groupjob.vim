@@ -422,8 +422,10 @@ function! s:onJobOutput(groupJobStatus, onOutput, jobStatus, textList, type)
 endfunction
 
 function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
+    let childError = a:exitCode != '0' && get(a:groupJobStatus['jobOption'], 'groupJobStopOnChildError', 1)
+
     if a:jobStatus['jobImplData']['groupJobChildState'] == 1
-        if a:exitCode != '0'
+        if childError
             let a:jobStatus['jobImplData']['groupJobChildState'] = -1
         else
             let a:jobStatus['jobImplData']['groupJobChildState'] = 0
@@ -437,7 +439,7 @@ function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
         return
     endif
 
-    if a:exitCode != '0' && get(a:groupJobStatus['jobOption'], 'groupJobStopOnChildError', 1)
+    if childError
         call s:groupJobLog(a:groupJobStatus, printf('stop by child job error: %s, job: %s'
                     \   , a:exitCode
                     \   , ZFGroupJobInfo(a:jobStatus)
