@@ -442,7 +442,7 @@ function! s:onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
                     \   , a:exitCode
                     \   , ZFGroupJobInfo(a:jobStatus)
                     \ ))
-        call s:groupJobStop(a:groupJobStatus, a:jobStatus, g:ZFJOBERROR)
+        call s:groupJobStop(a:groupJobStatus, a:jobStatus, g:ZFJOBSTOP)
         return
     endif
 
