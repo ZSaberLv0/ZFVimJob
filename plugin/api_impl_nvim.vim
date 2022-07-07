@@ -9,7 +9,8 @@ endif
 "   'jobImplId' : {
 "     'onOutput' : '',
 "     'onExit' : '',
-"     'outputFix' : '',
+"     'stdoutFix' : [],
+"     'stderrFix' : [],
 "   }
 " }
 if !exists('s:jobImplStateMap')
@@ -38,7 +39,8 @@ function! s:jobStart(jobStatus, onOutput, onExit)
     let s:jobImplStateMap[jobImplId] = {
                 \   'onOutput' : a:onOutput,
                 \   'onExit' : a:onExit,
-                \   'outputFix' : '',
+                \   'stdoutFix' : [],
+                \   'stderrFix' : [],
                 \ }
     return 1
 endfunction
@@ -83,29 +85,38 @@ let g:ZFVimJobImpl = {
 " output truncated:
 "   ['aaa', 'bb']
 "   ['b', '']
+" dummy end, no need to output:
+"   ['']
 function! s:nvim_outputFix(jobImplId, msgList, type)
     let jobImplState = get(s:jobImplStateMap, a:jobImplId, {})
     if empty(jobImplState)
         return
     endif
 
-    if jobImplState['outputFix'] != ''
-        if len(a:msgList) > 0
-            let a:msgList[0] = jobImplState['outputFix'] . a:msgList[0]
-        else
-            call insert(a:msgList, jobImplState['outputFix'], 0)
-        endif
-        let jobImplState['outputFix'] = ''
+    if a:type == 'stdout'
+        let fixKey = 'stdoutFix'
+    else
+        let fixKey = 'stderrFix'
     endif
 
-    if len(a:msgList) >= 2
-        if a:msgList[len(a:msgList) - 1] == ''
-            call remove(a:msgList, len(a:msgList) - 1)
-        else
-            let jobImplState['outputFix'] = remove(a:msgList, len(a:msgList) - 1)
+    if !empty(jobImplState[fixKey])
+                \ && jobImplState[fixKey][-1] != ''
+                \ && !empty(a:msgList)
+        let jobImplState[fixKey][-1] = jobImplState[fixKey][-1] . remove(a:msgList[0])
+    endif
+    call extend(jobImplState[fixKey], a:msgList)
+
+    if !empty(jobImplState[fixKey]) && jobImplState[fixKey][-1] == ''
+        let msgList = jobImplState[fixKey]
+        let jobImplState[fixKey] = []
+        call remove(msgList, -1)
+        if empty(msgList)
+            return
         endif
+    else
+        return
     endif
 
-    call ZFJobFuncCall(jobImplState['onOutput'], [a:msgList, 'stdout'])
+    call ZFJobFuncCall(jobImplState['onOutput'], [msgList, a:type])
 endfunction
 

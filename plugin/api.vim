@@ -19,7 +19,7 @@ endif
 
 " ============================================================
 function! ZFJobAvailable()
-    return !empty(g:ZFVimJobImpl)
+    return !empty(get(g:ZFVimJobImpl, 'jobStart', {}))
 endfunction
 
 " param can be jobCmd or jobOption: {
@@ -239,7 +239,7 @@ function! s:jobStart(param)
         return -1
     endif
 
-    if empty(g:ZFVimJobImpl)
+    if !ZFJobAvailable()
         redraw!
         if get(jobOption, 'jobFallback', 1)
             return ZFJobFallback(jobOption)
