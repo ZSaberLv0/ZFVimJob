@@ -24,7 +24,7 @@ function! ZFJobAvailable()
     "   'jobStop' : 'func(jobStatus), return 0/1',
     "   'jobSend' : 'optional, func(jobStatus, text), return 0/1',
     " }
-    return !empty(get(get(g:, 'ZFJobImpl', ), 'jobStart', {}))
+    return !empty(get(get(g:, 'ZFJobImpl', {}), 'jobStart', {}))
 endfunction
 
 " param can be jobCmd or jobOption: {
