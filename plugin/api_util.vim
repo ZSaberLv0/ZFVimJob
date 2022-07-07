@@ -16,6 +16,8 @@ endfunction
 
 let s:jobFuncKey_func = 'ZF_func'
 let s:jobFuncKey_arglist = 'ZF_arglist'
+
+" NOTE: if you want to support vim 7.3, func must be placed in global scope
 function! ZFJobFunc(func, ...)
     if empty(a:func)
         return {}
