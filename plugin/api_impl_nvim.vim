@@ -102,7 +102,7 @@ function! s:nvim_outputFix(jobImplId, msgList, type)
     if !empty(jobImplState[fixKey])
                 \ && jobImplState[fixKey][-1] != ''
                 \ && !empty(a:msgList)
-        let jobImplState[fixKey][-1] = jobImplState[fixKey][-1] . remove(a:msgList[0])
+        let jobImplState[fixKey][-1] = jobImplState[fixKey][-1] . remove(a:msgList, 0)
     endif
     call extend(jobImplState[fixKey], a:msgList)
 
