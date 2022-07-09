@@ -27,10 +27,12 @@ function! ZFJobTimerStart(delay, jobFunc)
     return timerId
 endfunction
 function! ZFJobTimerStop(timerId)
-    if !has('timers') && !empty(get(get(g:, 'ZFJobTimerImpl', {}), 'timerStart', {}))
-        let Fn_timerStop = g:ZFJobTimerImpl['timerStop']
-        Fn_timerStop(a:timerId)
-        return
+    if !has('timers')
+        if !empty(get(get(g:, 'ZFJobTimerImpl', {}), 'timerStart', {}))
+            let Fn_timerStop = g:ZFJobTimerImpl['timerStop']
+            Fn_timerStop(a:timerId)
+            return
+        endif
     endif
     " default impl
     if !exists('s:jobTimerMap[a:timerId]')

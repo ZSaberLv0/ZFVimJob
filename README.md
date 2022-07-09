@@ -34,21 +34,25 @@ features / why another remake:
 
 * more convenient for caller and impl
 
-    * fallback to `system()` if no job impl available
+    * tested on vim 7.3 or above, fallback to `system()` if no job impl available
 
         * job callback invoke normally, no job send support, though
+        * further more, we bundled a builtin timer fallback impl,
+            conplex group job also works well even if no timer support (`!has('timers')`)
 
     * supply your own impl easily by setting `g:ZFJobImpl`
 
 * many useful util functions
 
     * run multiple jobs or vim functions and manage them easily (`ZFGroupJobStart`)
+    * thread pool like job queue, prevent too many jobs running at same time (`ZFJobPoolStart`)
     * manage job with task name, auto output to a temp log window (`ZFAsyncRun`)
     * abstract job output (`ZFJobOutput`)
         * output to `statusline` async (`ZFStatuslineLog`)
         * output to temp log window (`ZFLogWinAdd`)
         * output to popup window (`ZFPopupCreate`)
     * observe file write event and run build script automatically (`ZFAutoScript`)
+    * timers and intervals, even for vim 7.3! (`ZFJobTimerStart` / `ZFJobIntervalStart`)
 
 
 plugins that based on this plugin:
@@ -247,13 +251,10 @@ but there are some limitations you should concern:
     all sended text would be ignored
 * if `!ZFJobTimerAvailable()`, while using `ZFGroupJobStart()` / `ZFJobPoolStart()`
     with many child or queued jobs,
-    it's easy to cause vim call stack exceeds `maxfuncdepth`,
-    it's not recommended to increase `maxfuncdepth`,
-    you should think of:
+    it's easy to cause vim call stack exceeds `maxfuncdepth`
 
-    * prevent many child jobs, by manually implementing job queue logic
-    * require `ZFJobTimerAvailable()` as dependency for your plugins or functions
-    * try manually implementing `ZFJobTimer`, see `custom impl` below
+    to solve this problem, we have bundled a default timer impl fallback (see `custom impl` below),
+    it should work well for most case
 
 
 # API
@@ -684,10 +685,18 @@ let g:ZFJobImpl = {
 
 ### timer
 
-by default, we support by vim's `has('timers')`,
-there's some tricks to simulate timer by `CursorHold` (with some side effects, though)
+by default, we support by vim's `has('timers')`
 
-you may supply your own timer impl by:
+also, we bundled a default fallback impl by `CursorHold`
+(which can be disabled by `let g:ZFJobTimerFallback = 1`),
+the fallback impl has these limitations:
+
+* it's simutated by `CursorHold/CursorHoldI` and `feedkeys("\<up>\<down\>", 'nt')`,
+    so the timer won't fired in modes except `Normal` and `Insert`,
+    and it may or may not breaks some actions depends on the cursor movement
+
+
+you may also supply your own timer impl by:
 
 ```
 function! s:timerStart(delay, jobFunc)
