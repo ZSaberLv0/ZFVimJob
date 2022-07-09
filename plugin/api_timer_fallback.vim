@@ -72,17 +72,17 @@ function! s:implCallback()
     let offset = float2nr(str2float(reltimestr(reltime(s:lastTime))) * 1000)
     let s:lastTime = reltime()
 
-    let toInvoke = []
+    let toInvokeList = []
     for timerId in keys(s:taskMap)
         let taskData = s:taskMap[timerId]
         let taskData['delay'] -= offset
         if taskData['delay'] <= 0
             unlet s:taskMap[timerId]
-            call add(toInvoke, taskData)
+            call add(toInvokeList, [timerId, taskData])
         endif
     endfor
-    for taskData in toInvoke
-        call ZFJobFuncCall(taskData['jobFunc'])
+    for toInvoke in toInvokeList
+        call ZFJobFuncCall(toInvoke[0], toInvoke[1]['jobFunc'])
     endfor
     if empty(s:taskMap)
         call s:implStop()
