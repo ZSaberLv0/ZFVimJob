@@ -1,5 +1,5 @@
 
-if has('timers') || !get(g:, 'ZFJobTimerFallback', 0)
+if has('timers') || !get(g:, 'ZFJobTimerFallback', 1)
     finish
 endif
 
@@ -38,6 +38,10 @@ function! ZFJobTimerFallbackStop(timerId)
     endif
 endfunction
 
+function! ZFZFZF()
+    return s:taskMap
+endfunction
+
 " {
 "   'timerId' : { // timerId ensured > 0
 "     'delay' : N, // dec offset time for each impl interval, when reached to 0, invoke the jobFunc
@@ -51,14 +55,10 @@ if !exists('s:timerIdCur')
     let s:timerIdCur = 0
 endif
 
-function! s:timestamp()
-    return float2nr(reltimefloat(reltime()) * 1000)
-endfunction
-
 function! s:implStart()
     let s:updatetimeSaved = &updatetime
     let &updatetime = g:ZFJobTimerFallbackInterval
-    let s:lastTime = s:timestamp()
+    let s:lastTime = reltime()
     augroup ZFJobTimerFallback_augroup
         autocmd!
         autocmd CursorHold,CursorHoldI * call s:implCallback()
@@ -73,18 +73,13 @@ function! s:implStop()
 endfunction
 
 function! s:implCallback()
-    let curTime = s:timestamp()
-    if curTime < s:lastTime
-        let s:lastTime = curTime
-        return
-    endif
-    let step = curTime - s:lastTime
-    let s:lastTime = curTime
+    let offset = float2nr(str2float(reltimestr(reltime(s:lastTime))) * 1000)
+    let s:lastTime = reltime()
 
     let toInvoke = []
     for timerId in keys(s:taskMap)
         let taskData = s:taskMap[timerId]
-        let taskData['delay'] -= step
+        let taskData['delay'] -= offset
         if taskData['delay'] <= 0
             unlet s:taskMap[timerId]
             call add(toInvoke, taskData)

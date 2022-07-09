@@ -30,7 +30,7 @@ function! ZFJobTimerStop(timerId)
     if !has('timers')
         if !empty(get(get(g:, 'ZFJobTimerImpl', {}), 'timerStart', {}))
             let Fn_timerStop = g:ZFJobTimerImpl['timerStop']
-            Fn_timerStop(a:timerId)
+            call Fn_timerStop(a:timerId)
             return
         endif
     endif
