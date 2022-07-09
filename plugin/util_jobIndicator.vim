@@ -16,11 +16,11 @@ function! s:setup(jobOption)
     if !exists('*ZFPopupAvailable') || !ZFPopupAvailable()
         return
     endif
-    let a:jobOption['onEnter'] = ZFJobFunc(function('s:onEnter'), [get(a:jobOption, 'onEnter', '')])
-    let a:jobOption['onExit'] = ZFJobFunc(function('s:onExit'), [get(a:jobOption, 'onExit', '')])
+    let a:jobOption['onEnter'] = ZFJobFunc(function('ZFJobIndicatorImpl_onEnter'), [get(a:jobOption, 'onEnter', '')])
+    let a:jobOption['onExit'] = ZFJobFunc(function('ZFJobIndicatorImpl_onExit'), [get(a:jobOption, 'onExit', '')])
 endfunction
 
-function! s:onEnter(onEnter, jobStatus)
+function! ZFJobIndicatorImpl_onEnter(onEnter, jobStatus)
     let s:jobCount += 1
     if s:jobCount == 1
         let s:popupId = ZFPopupCreate(get(g:, 'ZFJobIndicatorPopupConfig', {
@@ -35,7 +35,7 @@ function! s:onEnter(onEnter, jobStatus)
     call ZFJobFuncCall(a:onEnter, [a:jobStatus])
 endfunction
 
-function! s:onExit(onExit, jobStatus, exitCode)
+function! ZFJobIndicatorImpl_onExit(onExit, jobStatus, exitCode)
     let s:jobCount -= 1
     if s:jobCount == 0
         call s:updateCancel()

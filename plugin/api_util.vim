@@ -1,7 +1,7 @@
 
 " ============================================================
 " utils to support `function(xx, arglist)` low vim version
-function! s:ZFJobFuncWrap(cmd, ...)
+function! ZFJobFuncImpl_funcWrap(cmd, ...)
     if type(a:cmd) == type('')
         execute a:cmd
     elseif type(a:cmd) == type([])
@@ -30,7 +30,7 @@ function! ZFJobFunc(func, ...)
                 endif
             endfor
         endif
-        return ZFJobFunc(function('s:ZFJobFuncWrap'), extend([a:func], get(a:, 1, [])))
+        return ZFJobFunc(function('ZFJobFuncImpl_funcWrap'), extend([a:func], get(a:, 1, [])))
     elseif type(a:func) == type(function('function'))
         let argList = get(a:, 1, [])
         if empty(argList)

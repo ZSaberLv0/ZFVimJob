@@ -189,10 +189,10 @@ endfunction
 function! s:autoCloseStart(outputId, jobStatus, timeout)
     call s:autoCloseStop(a:outputId)
     if !ZFJobTimerAvailable() || a:timeout <= 0
-        call s:autoCloseOnTimer(a:outputId, a:jobStatus)
+        call ZFJobOutputImpl_autoCloseOnTimer(a:outputId, a:jobStatus)
         return
     endif
-    let s:status[a:outputId]['autoCloseTimerId'] = ZFJobTimerStart(a:timeout, ZFJobFunc(function('s:autoCloseOnTimer'), [a:outputId, a:jobStatus]))
+    let s:status[a:outputId]['autoCloseTimerId'] = ZFJobTimerStart(a:timeout, ZFJobFunc(function('ZFJobOutputImpl_autoCloseOnTimer'), [a:outputId, a:jobStatus]))
 endfunction
 
 function! s:autoCloseStop(outputId)
@@ -203,7 +203,7 @@ function! s:autoCloseStop(outputId)
     let s:status[a:outputId]['autoCloseTimerId'] = -1
 endfunction
 
-function! s:autoCloseOnTimer(outputId, jobStatus, ...)
+function! ZFJobOutputImpl_autoCloseOnTimer(outputId, jobStatus, ...)
     if !exists('s:status[a:outputId]')
         return
     endif

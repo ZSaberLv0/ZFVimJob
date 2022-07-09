@@ -230,7 +230,7 @@ function! s:fileWrite()
         if autoScriptDelay > 0
             let jobOption['autoScriptDelayTimerId'] = ZFJobTimerStart(
                         \ autoScriptDelay,
-                        \ ZFJobFunc(function('s:runDelay'), [projDir, file]))
+                        \ ZFJobFunc(function('ZFAutoScriptImpl_runDelay'), [projDir, file]))
         else
             call s:run(projDir, file)
         endif
@@ -248,7 +248,7 @@ function! s:runDelayStop(projDir)
         let jobOption['autoScriptDelayTimerId'] = -1
     endif
 endfunction
-function! s:runDelay(projDir, file, ...)
+function! ZFAutoScriptImpl_runDelay(projDir, file, ...)
     let jobOption = get(s:config, a:projDir, {})
     if empty(jobOption)
         return

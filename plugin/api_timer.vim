@@ -69,7 +69,7 @@ endif
 if !exists('s:jobIntervalId')
     let s:jobIntervalId = 0
 endif
-function! s:jobIntervalCallback(jobIntervalId, ...)
+function! ZFJobIntervalImpl_jobIntervalCallback(jobIntervalId, ...)
     if !exists('s:jobIntervalMap[a:jobIntervalId]')
         return
     endif
@@ -80,7 +80,7 @@ function! s:jobIntervalCallback(jobIntervalId, ...)
     if !exists('s:jobIntervalMap[a:jobIntervalId]')
         return
     endif
-    let jobIntervalTask['timerId'] = ZFJobTimerStart(jobIntervalTask['interval'], ZFJobFunc(function('s:jobIntervalCallback'), [a:jobIntervalId]))
+    let jobIntervalTask['timerId'] = ZFJobTimerStart(jobIntervalTask['interval'], ZFJobFunc(function('ZFJobIntervalImpl_jobIntervalCallback'), [a:jobIntervalId]))
 endfunction
 " jobFunc: func(jobIntervalId, {
 "   'count' : 'invoke count, first invoke is 1',
@@ -99,7 +99,7 @@ function! ZFJobIntervalStart(interval, jobFunc)
     endwhile
     let jobIntervalId = s:jobIntervalId
     let jobIntervalTask = {
-                \   'timerId' : ZFJobTimerStart(a:interval, ZFJobFunc(function('s:jobIntervalCallback'), [jobIntervalId])),
+                \   'timerId' : ZFJobTimerStart(a:interval, ZFJobFunc(function('ZFJobIntervalImpl_jobIntervalCallback'), [jobIntervalId])),
                 \   'interval' : a:interval,
                 \   'callback' : a:jobFunc,
                 \   'count' : 0,

@@ -93,7 +93,7 @@ function! ZFAsyncRun(param, ...)
     call ZFAsyncRunStop(taskName)
 
     let outputTo = extend(deepcopy(g:ZFAsyncRun_outputTo), {
-                \   'initCallback' : ZFJobFunc(function('s:logwinOnInit'), [taskName]),
+                \   'initCallback' : ZFJobFunc(function('ZFAsyncRunImpl_logwinOnInit'), [taskName]),
                 \ })
     if type(a:param) == type('') || ZFJobFuncCallable(a:param)
         let jobOption = {
@@ -118,15 +118,15 @@ function! ZFAsyncRun(param, ...)
     let jobOption['jobImplData']['ZFAsyncRun_taskName'] = taskName
 
     let jobId = ZFGroupJobStart(extend(deepcopy(jobOption), {
-                \   'onOutput' : ZFJobFunc(function('s:onOutput'), [taskName, get(jobOption, 'onOutput', '')]),
-                \   'onExit' : ZFJobFunc(function('s:onExit'), [taskName, get(jobOption, 'onExit', '')]),
+                \   'onOutput' : ZFJobFunc(function('ZFAsyncRunImpl_onOutput'), [taskName, get(jobOption, 'onOutput', '')]),
+                \   'onExit' : ZFJobFunc(function('ZFAsyncRunImpl_onExit'), [taskName, get(jobOption, 'onExit', '')]),
                 \ }))
     if jobId == -1
         " fail or finished sync
         return jobId
     endif
     if jobId == 0
-        " nothing to do, s:taskMap would be set during s:onExit
+        " nothing to do, s:taskMap would be set during ZFAsyncRunImpl_onExit
         return jobId
     endif
     let s:taskMap[taskName] = ZFGroupJobStatus(jobId)
@@ -215,18 +215,18 @@ if !exists('s:taskMap')
     let s:taskMap = {}
 endif
 
-function! s:logwinOnInit(taskName, logId)
+function! ZFAsyncRunImpl_logwinOnInit(taskName, logId)
     let b:ZFAsyncRun_taskName = a:taskName
     if get(get(ZFLogWinStatus(a:logId), 'config', {}), 'makeDefaultKeymap', 1)
         call ZF_AsyncRunMakeDefaultKeymap()
     endif
 endfunction
 
-function! s:onOutput(taskName, onOutput, jobStatus, textList, type)
+function! ZFAsyncRunImpl_onOutput(taskName, onOutput, jobStatus, textList, type)
     call ZFJobFuncCall(a:onOutput, [a:jobStatus, a:textList, a:type])
 endfunction
 
-function! s:onExit(taskName, onExit, jobStatus, exitCode)
+function! ZFAsyncRunImpl_onExit(taskName, onExit, jobStatus, exitCode)
     let s:taskMap[a:taskName] = a:jobStatus
     call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])
 endfunction

@@ -172,15 +172,15 @@ function! s:jobPoolStart(param)
                 \   }, get(jobOption, 'jobImplData', {})),
                 \ }
 
-    let jobOption['onOutput'] = ZFJobFunc(function('s:jobOnOutput'), [
+    let jobOption['onOutput'] = ZFJobFunc(function('ZFJobPoolImpl_jobOnOutput'), [
                 \   jobPoolStatus,
                 \   get(jobOption, 'onOutput', {})
                 \ ])
-    let jobOption['onEnter'] = ZFJobFunc(function('s:jobOnEnter'), [
+    let jobOption['onEnter'] = ZFJobFunc(function('ZFJobPoolImpl_jobOnEnter'), [
                 \   jobPoolStatus,
                 \   get(jobOption, 'onEnter', {})
                 \ ])
-    let jobOption['onExit'] = ZFJobFunc(function('s:jobOnExit'), [
+    let jobOption['onExit'] = ZFJobFunc(function('ZFJobPoolImpl_jobOnExit'), [
                 \   jobPoolStatus,
                 \   get(jobOption, 'onExit', {})
                 \ ])
@@ -262,23 +262,23 @@ function! s:jobPoolRunNextDelayed()
     if get(s:, 'jobPoolRunNextDelayedId', -1) != -1
         return
     endif
-    let s:jobPoolRunNextDelayedId = ZFJobTimerStart(0, ZFJobFunc(function('s:jobPoolRunNextDelayedAction')))
+    let s:jobPoolRunNextDelayedId = ZFJobTimerStart(0, ZFJobFunc(function('ZFJobPoolImpl_jobPoolRunNextDelayedAction')))
 endfunction
-function! s:jobPoolRunNextDelayedAction(...)
+function! ZFJobPoolImpl_jobPoolRunNextDelayedAction(...)
     let s:jobPoolRunNextDelayedId = -1
     call s:jobPoolRunNext()
 endfunction
 
 " ============================================================
 " job callback wrapper
-function! s:jobOnOutput(jobPoolStatus, onOutput, jobStatus, textList, type)
+function! ZFJobPoolImpl_jobOnOutput(jobPoolStatus, onOutput, jobStatus, textList, type)
     if !empty(a:onOutput)
         call ZFJobFuncCall(a:onOutput, [a:jobStatus, a:textList, a:type])
     endif
     let a:jobPoolStatus['jobOutput'] = a:jobStatus['jobOutput']
 endfunction
 
-function! s:jobOnEnter(jobPoolStatus, onEnter, jobStatus)
+function! ZFJobPoolImpl_jobOnEnter(jobPoolStatus, onEnter, jobStatus)
     " tricks to ensure the two job shares same jobImplData
     call extend(a:jobPoolStatus['jobImplData'], a:jobStatus['jobImplData'])
     let a:jobStatus['jobImplData'] = a:jobPoolStatus['jobImplData']
@@ -288,7 +288,7 @@ function! s:jobOnEnter(jobPoolStatus, onEnter, jobStatus)
     endif
 endfunction
 
-function! s:jobOnExit(jobPoolStatus, onExit, jobStatus, exitCode)
+function! ZFJobPoolImpl_jobOnExit(jobPoolStatus, onExit, jobStatus, exitCode)
     call s:jobPoolRemove(a:jobPoolStatus['jobId'])
     if !empty(a:onExit)
         call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])

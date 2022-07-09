@@ -87,7 +87,7 @@ function! ZFLogWinAdd(logId, content)
         noautocmd call s:logWinOnAdd(a:logId)
     else
         if status['lazyUpdateTimerId'] == -1
-            let status['lazyUpdateTimerId'] = ZFJobTimerStart(status['lazyUpdate'], ZFJobFunc(function('s:logWinAddOnTimer'), [a:logId]))
+            let status['lazyUpdateTimerId'] = ZFJobTimerStart(status['lazyUpdate'], ZFJobFunc(function('ZFLogWinImpl_logWinAddOnTimer'), [a:logId]))
         endif
     endif
 endfunction
@@ -255,7 +255,7 @@ function! s:bufId(logId)
     return substitute('ZFLogWin:' . a:logId, '[\[\]{}()\$\^%\\/]', '_', 'g')
 endfunction
 
-function! s:logWinAddOnTimer(logId, ...)
+function! ZFLogWinImpl_logWinAddOnTimer(logId, ...)
     if !exists('s:status[a:logId]')
         return
     endif
