@@ -59,7 +59,7 @@ endif
 if !exists('s:jobCountUpdateTimerId')
     let s:jobCountUpdateTimerId = -1
 endif
-function! s:updateCallback(...)
+function! ZFJobIndicatorImpl_updateCallback(...)
     let s:jobCountText = printf(get(g:, 'ZFJobIndicatorFormat', ' %s jobs '), s:jobCount)
     call ZFPopupContent(s:popupId, [s:jobCountText])
     call ZFPopupUpdate(s:popupId)
@@ -67,9 +67,9 @@ function! s:updateCallback(...)
 endfunction
 function! s:update()
     if s:jobCountUpdateTimerId == -1
-        call s:updateCallback()
+        call ZFJobIndicatorImpl_updateCallback()
         if ZFJobTimerAvailable()
-            let s:jobCountUpdateTimerId = ZFJobTimerStart(500, function('s:updateCallback'))
+            let s:jobCountUpdateTimerId = ZFJobTimerStart(500, ZFJobFunc(function('ZFJobIndicatorImpl_updateCallback')))
         endif
     endif
 endfunction

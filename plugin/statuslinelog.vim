@@ -98,7 +98,7 @@ function! s:log(text, option)
     let s:observerAttached = 1
     if timeout > 0
         if ZFJobTimerAvailable()
-            let s:timeoutId = ZFJobTimerStart(timeout, function('s:statuslineTimeout'))
+            let s:timeoutId = ZFJobTimerStart(timeout, ZFJobFunc(function('ZFStatuslineLogImpl_statuslineTimeout')))
         endif
     endif
 endfunction
@@ -117,7 +117,7 @@ function! s:cleanup()
     endif
 endfunction
 
-function! s:statuslineTimeout(...)
+function! ZFStatuslineLogImpl_statuslineTimeout(...)
     let s:timeoutId = -1
     call s:cleanup()
 endfunction
