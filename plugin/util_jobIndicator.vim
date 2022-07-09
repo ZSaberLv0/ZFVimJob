@@ -25,7 +25,7 @@ function! ZFJobIndicatorImpl_onEnter(onEnter, jobStatus)
     if s:jobCount == 1
         let s:popupId = ZFPopupCreate(get(g:, 'ZFJobIndicatorPopupConfig', {
                     \   'pos' : 'right|bottom',
-                    \   'width' : function('s:popupWidth'),
+                    \   'width' : function('ZFJobIndicatorImpl_popupWidth'),
                     \   'height' : 1,
                     \   'x' : 0,
                     \   'y' : 1,
@@ -46,7 +46,7 @@ function! ZFJobIndicatorImpl_onExit(onExit, jobStatus, exitCode)
     call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])
 endfunction
 
-function! s:popupWidth()
+function! ZFJobIndicatorImpl_popupWidth()
     return len(s:jobCountText)
 endfunction
 
