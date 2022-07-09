@@ -85,6 +85,9 @@ let g:ZFJobImpl = {
 " output truncated:
 "   ['aaa', 'bb']
 "   ['b', '']
+" output truncated:
+"   ['aaa', 'bb']
+"   ['']
 " dummy end, no need to output:
 "   ['']
 function! s:nvim_outputFix(jobImplId, msgList, type)
@@ -102,9 +105,12 @@ function! s:nvim_outputFix(jobImplId, msgList, type)
     if !empty(jobImplState[fixKey])
                 \ && jobImplState[fixKey][-1] != ''
                 \ && !empty(a:msgList)
-        let jobImplState[fixKey][-1] = jobImplState[fixKey][-1] . remove(a:msgList, 0)
+                \ && a:msgList[0] != ''
+        let jobImplState[fixKey][-1] = jobImplState[fixKey][-1] . a:msgList[0]
+        call extend(jobImplState[fixKey], a:msgList[1:-1])
+    else
+        call extend(jobImplState[fixKey], a:msgList)
     endif
-    call extend(jobImplState[fixKey], a:msgList)
 
     if !empty(jobImplState[fixKey]) && jobImplState[fixKey][-1] == ''
         let msgList = jobImplState[fixKey]
