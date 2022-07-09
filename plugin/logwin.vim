@@ -375,7 +375,7 @@ function! s:logWinFocus(logId, autoCreate)
         execute config['newWinCmd']
     endif
     if bn == -1
-        execute 'file ' . s:bufId(a:logId)
+        execute 'silent file ' . s:bufId(a:logId)
         call s:logWinInit(a:logId)
     else
         let bnDummy = bufnr('%')
