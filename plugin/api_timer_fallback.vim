@@ -38,10 +38,6 @@ function! ZFJobTimerFallbackStop(timerId)
     endif
 endfunction
 
-function! ZFZFZF()
-    return s:taskMap
-endfunction
-
 " {
 "   'timerId' : { // timerId ensured > 0
 "     'delay' : N, // dec offset time for each impl interval, when reached to 0, invoke the jobFunc
