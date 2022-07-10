@@ -82,7 +82,7 @@ function! s:implCallback()
         endif
     endfor
     for toInvoke in toInvokeList
-        call ZFJobFuncCall(toInvoke[0], toInvoke[1]['jobFunc'])
+        call ZFJobFuncCall(toInvoke[1]['jobFunc'], [toInvoke[0]])
     endfor
     if empty(s:taskMap)
         call s:implStop()
