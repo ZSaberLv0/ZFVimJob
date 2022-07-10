@@ -56,7 +56,7 @@ function! ZFJobCmdComplete_env(ArgLead, CmdLine, CursorPos)
     else
         let cmd = 'export'
         if has('windows')
-            if executable('sh')
+            if has('unix') && executable('sh')
                 let cmd = 'sh -c export'
             else
                 let cmd = 'set'
