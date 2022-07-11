@@ -240,7 +240,7 @@ but there are some limitations you should concern:
 
 * job send (`ZFJobSend()`, `ZFGroupJobSend()`, etc) not work,
     all sended text would be ignored
-* if `!ZFJobTimerAvailable()`, while using `ZFGroupJobStart()` / `ZFJobPoolStart()`
+* if no `job` support, while using `ZFGroupJobStart()` / `ZFJobPoolStart()`
     with many child or queued jobs,
     it's easy to cause vim call stack exceeds `maxfuncdepth`
 
