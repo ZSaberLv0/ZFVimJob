@@ -58,6 +58,7 @@ features / why another remake:
 plugins that based on this plugin:
 
 * [ZSaberLv0/ZFVimIM](https://github.com/ZSaberLv0/ZFVimIM) : input method by pure vim script
+* [ZSaberLv0/ZFVimDirDiff](https://github.com/ZSaberLv0/ZFVimDirDiff) : directory diff tool like BeyondCompare, fully async
 * [ZSaberLv0/ZFVimTerminal](https://github.com/ZSaberLv0/ZFVimTerminal) : terminal simulator in vim with low dependency
 
 
@@ -230,16 +231,6 @@ it may hard to config for first time, but trust me, it changes the life
     * all child job finished successfully, group job's exitCode would be `0`
     * any child failed with none `0` exitCode, group job's exitCode would be the child's exitCode
     * stopped manually by `ZFGroupJobStop(groupJobId)`, group job's exitCode would be `g:ZFJOBSTOP`
-
-
-here's some plugins that used ZFVimJob to simplify complex job control:
-
-* [ZSaberLv0/ZFVimIM](https://github.com/ZSaberLv0/ZFVimIM) :
-    input method by pure vim script,
-    use ZFVimJob to achieve complex async db update and upload
-    (up to 30 chained jobs with dependency)
-* [ZSaberLv0/ZFVimTerminal](https://github.com/ZSaberLv0/ZFVimTerminal) :
-    terminal simulator by pure vim script
 
 
 ## Fallback Limitations
