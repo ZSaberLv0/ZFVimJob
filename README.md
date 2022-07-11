@@ -69,11 +69,14 @@ or [buy me a coffee](https://github.com/ZSaberLv0/ZSaberLv0)
 # Workflow
 
 ```
-                      ZFJobStart -
-                           ^       \
-ZFAsyncRun  -\             |        \                       / ZFStatuslineLog
-ZFAutoScript - => - ZFGroupJobStart - => - ZFJobOutput - => - ZFLogWin
-                                                            \ ZFPopup
+                      ZFJobStart - \
+                           ^        \
+                           |         \
+                    ZFJobPoolStart    \
+                           ^           \
+ZFAsyncRun  \              |            \                       / ZFStatuslineLog
+ZFAutoScript - => - ZFGroupJobStart ----- => - ZFJobOutput - => - ZFLogWin
+                                                                \ ZFPopup
 ```
 
 the job control is fully modularized, and can be combined easily to achieve complex logic
