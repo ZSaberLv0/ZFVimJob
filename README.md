@@ -38,7 +38,7 @@ features / why another remake:
 
         * job callback invoke normally, no job send support, though
         * further more, we bundled a builtin timer fallback impl,
-            conplex group job also works well even if no timer support (`!has('timers')`)
+            complex group job also works well even if no timer support (`!has('timers')`)
 
     * supply your own impl easily by setting `g:ZFJobImpl`
 
