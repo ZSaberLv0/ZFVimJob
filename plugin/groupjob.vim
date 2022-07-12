@@ -1,4 +1,18 @@
 
+function! ZFGroupJobChildImpl()
+    if !exists('s:ZFGroupJobChildImpl')
+        let s:ZFGroupJobChildImpl = {
+                    \   'jobStart' : function('ZFJobPoolStart'),
+                    \   'jobStop' : function('ZFJobPoolStop'),
+                    \   'jobSend' : function('ZFJobPoolSend'),
+                    \   'jobStatus' : function('ZFJobPoolStatus'),
+                    \   'jobInfo' : function('ZFJobPoolInfo'),
+                    \   'jobLog' : function('ZFJobPoolLog'),
+                    \ }
+    endif
+    return s:ZFGroupJobChildImpl
+endfunction
+
 " param can be any type that ZFJobStart supports, or groupJobOption: {
 "   'jobList' : [
 "     [
@@ -63,7 +77,7 @@ function! ZFGroupJobSend(groupJobId, text)
     let sendCount = 0
     for jobStatusList in groupJobStatus['jobStatusList']
         for jobStatus in jobStatusList
-            call ZFJobPoolSend(jobStatus['jobId'], a:text)
+            call ZFGroupJobChildImpl()['jobSend'](jobStatus['jobId'], a:text)
             let sendCount += 1
         endfor
     endfor
@@ -96,21 +110,21 @@ endfunction
 
 function! ZFGroupJobInfo(groupJobStatus)
     if !exists("a:groupJobStatus['jobOption']['jobList']")
-        return ZFJobPoolInfo(a:groupJobStatus)
+        return ZFGroupJobChildImpl()['jobInfo'](a:groupJobStatus)
     endif
     let jobStatusList = a:groupJobStatus['jobStatusList']
     if !empty(jobStatusList)
         let index = len(jobStatusList) - 1
         while index != -1
             if !empty(jobStatusList[index])
-                return ZFJobPoolInfo(jobStatusList[index][-1])
+                return ZFGroupJobChildImpl()['jobInfo'](jobStatusList[index][-1])
             endif
             let index -= 1
         endwhile
     endif
     let jobList = a:groupJobStatus['jobOption']['jobList']
     if !empty(jobList) && !empty(jobList[0])
-        return ZFJobPoolInfo(jobList[0][0])
+        return ZFGroupJobChildImpl()['jobInfo'](jobList[0][0])
     endif
     return ''
 endfunction
@@ -309,11 +323,11 @@ function! s:groupJobRunNext(groupJobStatus)
                 return
             endif
         else
-            let jobId = ZFJobPoolStart(jobOptionTmp)
+            let jobId = ZFGroupJobChildImpl()['jobStart'](jobOptionTmp)
             if jobId == 0
                 continue
             endif
-            let jobStatus = ZFJobPoolStatus(jobId)
+            let jobStatus = ZFGroupJobChildImpl()['jobStatus'](jobId)
             if empty(jobStatus)
                 call s:groupJobStop(a:groupJobStatus, {}, '-1')
                 return
@@ -372,7 +386,7 @@ function! s:groupJobStop(groupJobStatus, jobStatusFailed, exitCode)
         for jobStatus in jobStatusList
             if jobStatus['jobImplData']['groupJobChildState'] == 1
                 let jobStatus['jobImplData']['groupJobChildState'] = -1
-                call ZFJobPoolStop(jobStatus['jobId'], a:exitCode)
+                call ZFGroupJobChildImpl()['jobStop'](jobStatus['jobId'], a:exitCode)
             endif
         endfor
     endfor
