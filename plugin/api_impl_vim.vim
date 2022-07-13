@@ -1,4 +1,4 @@
-if !exists('*job_start') || !has('channel') || !has('patch-7.4.1590')
+if !exists('*job_start') || !has('channel') || !has('patch-7.4.1590') || !has('timers')
     finish
 endif
 if !empty(get(g:, 'ZFJobImpl', {}))
@@ -55,6 +55,9 @@ endfunction
 function! s:jobStart(jobStatus, onOutput, onExit)
     " use `mode=raw` seems to solve:
     "   https://github.com/vim/vim/issues/1320
+    " also, search `queuedXxx` in this file,
+    " which use timer to queue and delay output and exit callback,
+    " to solve the above issue
     let jobImplOption = {
                 \   'out_cb' : function('s:vim_out_cb'),
                 \   'err_cb' : function('s:vim_err_cb'),
@@ -98,6 +101,10 @@ function! s:jobStart(jobStatus, onOutput, onExit)
                 \   'jobImplChannelNumber' : jobImplChannelNumber,
                 \   'onOutput' : a:onOutput,
                 \   'onExit' : a:onExit,
+                \   'queuedTimerId' : -1,
+                \   'queuedOutput' : [],
+                \   'queuedExitCode' : '',
+                \   'queuedExitFlag' : 0,
                 \ }
     let s:jobImplIdMap[jobImplIdNumber] = jobImplState
     let s:jobImplChannelMap[jobImplChannelNumber] = jobImplState
@@ -110,6 +117,11 @@ function! s:jobStop(jobStatus)
     let jobImplIdNumber = s:jobImplIdNumber(jobImplId)
     let jobImplChannelNumber = s:jobImplChannelNumber(jobImplChannel)
     if exists('s:jobImplIdMap[jobImplIdNumber]')
+        let jobImplState = s:jobImplIdMap[jobImplIdNumber]
+        if jobImplState['queuedTimerId'] != -1
+            call ZFJobTimerStop(jobImplState['queuedTimerId'])
+            let jobImplState['queuedTimerId'] = -1
+        endif
         unlet s:jobImplIdMap[jobImplIdNumber]
     endif
     if exists('s:jobImplChannelMap[jobImplChannelNumber]')
@@ -136,8 +148,8 @@ function! s:vim_out_cb(jobImplChannel, msg, ...)
     if empty(jobImplState)
         return
     endif
-
-    call ZFJobFuncCall(jobImplState['onOutput'], [split(a:msg, "\n"), 'stdout'])
+    call add(jobImplState['queuedOutput'], [a:msg, 'stdout'])
+    call s:queuedRun(jobImplState)
 endfunction
 function! s:vim_err_cb(jobImplChannel, msg, ...)
     let jobImplChannelNumber = s:jobImplChannelNumber(a:jobImplChannel)
@@ -145,23 +157,52 @@ function! s:vim_err_cb(jobImplChannel, msg, ...)
     if empty(jobImplState)
         return
     endif
-
-    call ZFJobFuncCall(jobImplState['onOutput'], [split(a:msg, "\n"), 'stderr'])
+    call add(jobImplState['queuedOutput'], [a:msg, 'stderr'])
+    call s:queuedRun(jobImplState)
 endfunction
 function! s:vim_exit_cb(jobImplId, exitCode, ...)
     let jobImplIdNumber = s:jobImplIdNumber(a:jobImplId)
-    if !exists('s:jobImplIdMap[jobImplIdNumber]')
+    let jobImplState = get(s:jobImplIdMap, jobImplIdNumber, {})
+    if empty(jobImplState)
         return
     endif
-    let jobImplState = remove(s:jobImplIdMap, jobImplIdNumber)
-    call remove(s:jobImplChannelMap, jobImplState['jobImplChannelNumber'])
+    let jobImplState['queuedExitCode'] = '' . a:exitCode
+    call s:queuedRun(jobImplState)
+endfunction
+function! s:queuedRun(jobImplState)
+    if a:jobImplState['queuedTimerId'] != -1
+        return
+    endif
+    let a:jobImplState['queuedTimerId'] = ZFJobTimerStart(10, ZFJobFunc(function('s:queuedRunCallback'), [a:jobImplState]))
+endfunction
+function! s:queuedRunCallback(jobImplState, ...)
+    let a:jobImplState['queuedTimerId'] = -1
+    while !empty(a:jobImplState['queuedOutput'])
+        let queuedOutput = a:jobImplState['queuedOutput']
+        let a:jobImplState['queuedOutput'] = []
+        for item in queuedOutput
+            call ZFJobFuncCall(a:jobImplState['onOutput'], [split(item[0], "\n"), item[1]])
+        endfor
+    endwhile
+    if !a:jobImplState['queuedExitFlag']
+        let a:jobImplState['queuedExitFlag'] = 1
+        if a:jobImplState['queuedExitCode'] != ''
+            call s:queuedRun(a:jobImplState)
+        endif
+        return
+    endif
 
-    if ch_status(jobImplState['jobImplChannel']) == 'open'
+    if empty(remove(s:jobImplIdMap, a:jobImplState['jobImplIdNumber']))
+        return
+    endif
+    call remove(s:jobImplChannelMap, a:jobImplState['jobImplChannelNumber'])
+
+    if ch_status(a:jobImplState['jobImplChannel']) == 'open'
         try
-            silent! call ch_close(jobImplState['jobImplChannel'])
+            silent! call ch_close(a:jobImplState['jobImplChannel'])
         endtry
     endif
-    call ZFJobFuncCall(jobImplState['onExit'], ['' . a:exitCode])
+    call ZFJobFuncCall(a:jobImplState['onExit'], [a:jobImplState['queuedExitCode']])
 endfunction
 
 let g:ZFJobImpl = {
