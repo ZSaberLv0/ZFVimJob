@@ -1,10 +1,15 @@
 
+let s:t_string = type('')
+let s:t_list = type([])
+let s:t_dict = type({})
+let s:t_func = type(function('function'))
+
 " ============================================================
 " utils to support `function(xx, arglist)` low vim version
 function! ZFJobFuncImpl_funcWrap(cmd, ...)
-    if type(a:cmd) == type('')
+    if type(a:cmd) == s:t_string
         execute a:cmd
-    elseif type(a:cmd) == type([])
+    elseif type(a:cmd) == s:t_list
         for cmd in a:cmd
             execute cmd
         endfor
@@ -19,19 +24,7 @@ let s:jobFuncKey_arglist = 'ZF_arglist'
 
 " NOTE: if you want to support vim 7.3, func must be placed in global scope
 function! ZFJobFunc(func, ...)
-    if empty(a:func)
-        return {}
-    elseif type(a:func) == type('') || type(a:func) == type([])
-        if type(a:func) == type([])
-            for line in a:func
-                if type(line) != type('')
-                    throw '[ZFJobFunc] unsupported func type: mixed array'
-                    return {}
-                endif
-            endfor
-        endif
-        return ZFJobFunc(function('ZFJobFuncImpl_funcWrap'), extend([a:func], get(a:, 1, [])))
-    elseif type(a:func) == type(function('function'))
+    if type(a:func) == s:t_func
         let argList = get(a:, 1, [])
         if empty(argList)
             return a:func
@@ -40,6 +33,18 @@ function! ZFJobFunc(func, ...)
                     \   s:jobFuncKey_func : a:func,
                     \   s:jobFuncKey_arglist : argList,
                     \ }
+    elseif type(a:func) == s:t_string || type(a:func) == s:t_list
+        if type(a:func) == s:t_list
+            for line in a:func
+                if type(line) != s:t_string
+                    throw '[ZFJobFunc] unsupported func type: mixed array'
+                    return {}
+                endif
+            endfor
+        endif
+        return ZFJobFunc(function('ZFJobFuncImpl_funcWrap'), extend([a:func], get(a:, 1, [])))
+    elseif empty(a:func)
+        return {}
     else
         throw '[ZFJobFunc] unsupported func type: ' . type(a:func)
         return {}
@@ -47,20 +52,19 @@ function! ZFJobFunc(func, ...)
 endfunction
 
 function! ZFJobFuncCall(func, ...)
-    let argList = get(a:, 1, [])
-    if empty(a:func)
-        return 0
-    elseif type(a:func) == type(function('function'))
+    if type(a:func) == s:t_func
         let Fn = a:func
-        return call(a:func, argList)
-    elseif type(a:func) == type('') || type(a:func) == type([])
-        return ZFJobFuncCall(ZFJobFunc(a:func), argList)
-    elseif type(a:func) == type({})
+        return call(a:func, get(a:, 1, []))
+    elseif type(a:func) == s:t_dict
         if !exists("a:func[s:jobFuncKey_func]") || !exists("a:func[s:jobFuncKey_arglist]")
             throw '[ZFJobFunc] unsupported func value'
             return 0
         endif
-        return call(a:func[s:jobFuncKey_func], extend(copy(a:func[s:jobFuncKey_arglist]), argList))
+        return call(a:func[s:jobFuncKey_func], extend(copy(a:func[s:jobFuncKey_arglist]), get(a:, 1, [])))
+    elseif type(a:func) == s:t_string || type(a:func) == s:t_list
+        return ZFJobFuncCall(ZFJobFunc(a:func), get(a:, 1, []))
+    elseif empty(a:func)
+        return 0
     else
         throw '[ZFJobFunc] unsupported func type: ' . type(a:func)
         return 0
@@ -70,23 +74,23 @@ endfunction
 function! ZFJobFuncCallable(func)
     if empty(a:func)
         return 0
-    elseif type(a:func) == type(function('function'))
+    elseif type(a:func) == s:t_func
         return 1
-    elseif type(a:func) == type('')
-        " for logical safe, string is not treated as callable
-        " wrap as ZFJobFunc should do the work
-        return 0
-    elseif type(a:func) == type([])
-        for line in a:func
-            if type(line) != type('')
-                return 0
-            endif
-        endfor
-        return 1
-    elseif type(a:func) == type({})
+    elseif type(a:func) == s:t_dict
         if !exists("a:func[s:jobFuncKey_func]") || !exists("a:func[s:jobFuncKey_arglist]")
             return 0
         endif
+        return 1
+    elseif type(a:func) == s:t_string
+        " for logical safe, string is not treated as callable
+        " wrap as ZFJobFunc should do the work
+        return 0
+    elseif type(a:func) == s:t_list
+        for line in a:func
+            if type(line) != s:t_string
+                return 0
+            endif
+        endfor
         return 1
     else
         return 0
@@ -94,15 +98,15 @@ function! ZFJobFuncCallable(func)
 endfunction
 
 function! ZFJobFuncInfo(jobFunc)
-    if type(a:jobFunc) == type('')
+    if type(a:jobFunc) == s:t_string
         return a:jobFunc
-    elseif type(a:jobFunc) == type(function('function'))
+    elseif type(a:jobFunc) == s:t_func
         silent let info = s:jobFuncInfo(a:jobFunc)
         return substitute(info, '\n', '', 'g')
-    elseif type(a:jobFunc) == type({})
+    elseif type(a:jobFunc) == s:t_dict
         silent let info = s:jobFuncInfo(a:jobFunc[s:jobFuncKey_func])
         return substitute(info, '\n', '', 'g')
-    elseif type(a:jobFunc) == type([])
+    elseif type(a:jobFunc) == s:t_list
         if len(a:jobFunc) == 1
             return string(a:jobFunc[0])
         else
