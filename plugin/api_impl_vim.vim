@@ -167,6 +167,7 @@ function! s:vim_exit_cb(jobImplId, exitCode, ...)
         return
     endif
     let jobImplState['queuedExitCode'] = '' . a:exitCode
+    let jobImplState['queuedExitFlag'] = 1
     call s:queuedRun(jobImplState)
 endfunction
 function! s:queuedRun(jobImplState)
@@ -184,12 +185,15 @@ function! s:queuedRunCallback(jobImplState, ...)
             call ZFJobFuncCall(a:jobImplState['onOutput'], [split(item[0], "\n"), item[1]])
         endfor
     endwhile
-    if !a:jobImplState['queuedExitFlag']
-        let a:jobImplState['queuedExitFlag'] = 1
-        if a:jobImplState['queuedExitCode'] != ''
-            call s:queuedRun(a:jobImplState)
-        endif
+    if a:jobImplState['queuedExitFlag'] == 0
         return
+    elseif a:jobImplState['queuedExitFlag'] == 1
+        " wait again to wait for unfinished out_cb
+        let a:jobImplState['queuedExitFlag'] = 2
+        call s:queuedRun(a:jobImplState)
+        return
+    else
+        " job really finished
     endif
 
     if empty(remove(s:jobImplIdMap, a:jobImplState['jobImplIdNumber']))
