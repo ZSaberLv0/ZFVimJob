@@ -24,7 +24,9 @@ let s:jobFuncKey_arglist = 'ZF_arglist'
 
 " NOTE: if you want to support vim 7.3, func must be placed in global scope
 function! ZFJobFunc(func, ...)
-    if type(a:func) == s:t_func
+    if empty(a:func)
+        return {}
+    elseif type(a:func) == s:t_func
         let argList = get(a:, 1, [])
         if empty(argList)
             return a:func
@@ -43,8 +45,6 @@ function! ZFJobFunc(func, ...)
             endfor
         endif
         return ZFJobFunc(function('ZFJobFuncImpl_funcWrap'), extend([a:func], get(a:, 1, [])))
-    elseif empty(a:func)
-        return {}
     else
         throw '[ZFJobFunc] unsupported func type: ' . type(a:func)
         return {}
@@ -52,7 +52,9 @@ function! ZFJobFunc(func, ...)
 endfunction
 
 function! ZFJobFuncCall(func, ...)
-    if type(a:func) == s:t_func
+    if empty(a:func)
+        return 0
+    elseif type(a:func) == s:t_func
         let Fn = a:func
         return call(a:func, get(a:, 1, []))
     elseif type(a:func) == s:t_dict
@@ -63,8 +65,6 @@ function! ZFJobFuncCall(func, ...)
         return call(a:func[s:jobFuncKey_func], extend(copy(a:func[s:jobFuncKey_arglist]), get(a:, 1, [])))
     elseif type(a:func) == s:t_string || type(a:func) == s:t_list
         return ZFJobFuncCall(ZFJobFunc(a:func), get(a:, 1, []))
-    elseif empty(a:func)
-        return 0
     else
         throw '[ZFJobFunc] unsupported func type: ' . type(a:func)
         return 0
