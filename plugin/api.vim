@@ -375,7 +375,7 @@ function! ZFJobImpl_onOutput(jobStatus, textList, type)
             let a:textList[iTextList] = iconv(a:textList[iTextList], jobEncoding, &encoding)
         endif
 
-        if get(g:, 'ZFVimJobFixTermCR', 1) && has('windows')
+        if get(g:, 'ZFVimJobFixTermCR', 1) && (has('win32') || has('win64'))
             let a:textList[iTextList] = substitute(a:textList[iTextList], "\x0d", '', 'g')
         endif
 
