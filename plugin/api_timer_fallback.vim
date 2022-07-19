@@ -93,7 +93,8 @@ function! s:implCallback()
 endfunction
 
 function! s:implPostUpdate()
-    if mode() != 'n' && mode() != 'i'
+    if (mode() != 'n' && mode() != 'i')
+                \ || getpos('.')[0] <= 0
         return
     endif
     if line('.') > 1
