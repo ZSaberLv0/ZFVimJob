@@ -50,8 +50,14 @@ endif
 if !exists('s:timerIdCur')
     let s:timerIdCur = 0
 endif
+if !exists('s:updatetimeSaved')
+    let s:updatetimeSaved = -1
+endif
 
 function! s:implStart()
+    if s:updatetimeSaved != -1
+        return
+    endif
     let s:updatetimeSaved = &updatetime
     let &updatetime = g:ZFJobTimerFallbackInterval
     let s:lastTime = reltime()
@@ -62,10 +68,14 @@ function! s:implStart()
 endfunction
 
 function! s:implStop()
+    if s:updatetimeSaved == -1
+        return
+    endif
     augroup ZFJobTimerFallback_augroup
         autocmd!
     augroup END
     let &updatetime = s:updatetimeSaved
+    let s:updatetimeSaved = -1
 endfunction
 
 function! s:implCallback()
