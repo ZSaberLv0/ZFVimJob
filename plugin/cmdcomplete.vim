@@ -46,7 +46,7 @@ function! ZFJobCmdComplete_env(ArgLead, CmdLine, CursorPos)
     endif
     let pos += 1
 
-    if exists('*getcompletion')
+    if exists('*getcompletion') && !get(g:, 'ZFJobCmdComplete_preferBuiltin', 0)
         let m = {}
         for item in getcompletion('', 'environment')
             " [:\\\(\[\{].*
@@ -86,18 +86,36 @@ function! ZFJobCmdComplete_env(ArgLead, CmdLine, CursorPos)
 endfunction
 
 function! ZFJobCmdComplete_shellcmd(ArgLead, CmdLine, CursorPos)
-    if exists('*getcompletion')
+    if exists('*getcompletion') && !get(g:, 'ZFJobCmdComplete_preferBuiltin', 0)
         return s:fixPath(getcompletion(a:ArgLead, 'shellcmd'))
-    else
-        return []
     endif
+    if match(a:ArgLead, '[/\\]') >= 0
+        return s:fixPath(split(glob(a:ArgLead . '*', 1), "\n"))
+    endif
+
+    let map = {}
+    if (has('win32') || has('win64')) && !has('unix')
+        let pathList = split($PATH, ';')
+    else
+        let pathList = split($PATH, ':')
+    endif
+    for path in pathList
+        let pattern = substitute(path, '\\', '/', 'g') . '/' . a:ArgLead . '*'
+        let files = split(glob(pattern, 1), "\n")
+        for file in files
+            if !isdirectory(file)
+                let map[fnamemodify(file, ':t')] = 1
+            endif
+        endfor
+    endfor
+    return keys(map)
 endfunction
 
 function! ZFJobCmdComplete_file(ArgLead, CmdLine, CursorPos)
-    if exists('*getcompletion')
+    if exists('*getcompletion') && !get(g:, 'ZFJobCmdComplete_preferBuiltin', 0)
         return s:fixPath(getcompletion(a:ArgLead, 'file'))
     else
-        return []
+        return s:fixPath(split(glob(a:ArgLead . '*', 1), "\n"))
     endif
 endfunction
 
@@ -106,6 +124,9 @@ function! s:fixPath(list)
     for item in a:list
         let t = substitute(item, '\\', '/', 'g')
         let t = substitute(t, ' ', '\\ ', 'g')
+        if isdirectory(t)
+            let t .= '/'
+        endif
         call add(ret, t)
     endfor
     return ret
