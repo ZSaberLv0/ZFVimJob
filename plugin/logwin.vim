@@ -156,6 +156,7 @@ function! ZFLogWinRedrawStatusline(logId)
             let &l:statusline = statusline
         endif
     endif
+    redraw
 endfunction
 
 function! ZFLogWinClose(logId)
