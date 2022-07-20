@@ -92,9 +92,7 @@ function! ZFAsyncRun(param, ...)
     endif
     call ZFAsyncRunStop(taskName)
 
-    let outputTo = extend(deepcopy(g:ZFAsyncRun_outputTo), {
-                \   'initCallback' : ZFJobFunc(function('ZFAsyncRunImpl_logwinOnInit'), [taskName]),
-                \ })
+    let outputTo = deepcopy(g:ZFAsyncRun_outputTo)
     if type(a:param) == type('') || ZFJobFuncCallable(a:param)
         let jobOption = {
                     \   'jobCmd' : a:param,
@@ -107,6 +105,7 @@ function! ZFAsyncRun(param, ...)
         echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
         return -1
     endif
+    let outputTo['initCallback'] = ZFJobFunc(function('ZFAsyncRunImpl_logwinOnInit'), [taskName, get(outputTo, 'initCallback', '')])
 
     if empty(get(jobOption['outputTo'], 'outputId', ''))
         let jobOption['outputTo']['outputId'] = 'ZFAsyncRun:' . taskName
@@ -118,7 +117,6 @@ function! ZFAsyncRun(param, ...)
     let jobOption['jobImplData']['ZFAsyncRun_taskName'] = taskName
 
     let jobId = ZFGroupJobStart(extend(deepcopy(jobOption), {
-                \   'onOutput' : ZFJobFunc(function('ZFAsyncRunImpl_onOutput'), [taskName, get(jobOption, 'onOutput', '')]),
                 \   'onExit' : ZFJobFunc(function('ZFAsyncRunImpl_onExit'), [taskName, get(jobOption, 'onExit', '')]),
                 \ }))
     if jobId == -1
@@ -215,15 +213,12 @@ if !exists('s:taskMap')
     let s:taskMap = {}
 endif
 
-function! ZFAsyncRunImpl_logwinOnInit(taskName, logId)
+function! ZFAsyncRunImpl_logwinOnInit(taskName, initCallback, logId)
     let b:ZFAsyncRun_taskName = a:taskName
     if get(get(ZFLogWinStatus(a:logId), 'config', {}), 'makeDefaultKeymap', 1)
         call ZF_AsyncRunMakeDefaultKeymap()
     endif
-endfunction
-
-function! ZFAsyncRunImpl_onOutput(taskName, onOutput, jobStatus, textList, type)
-    call ZFJobFuncCall(a:onOutput, [a:jobStatus, a:textList, a:type])
+    call ZFJobFuncCall(a:initCallback, [a:logId])
 endfunction
 
 function! ZFAsyncRunImpl_onExit(taskName, onExit, jobStatus, exitCode)
