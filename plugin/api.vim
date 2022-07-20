@@ -513,6 +513,18 @@ function! ZFJobFallback(param)
     elseif ZFJobFuncCallable(T_jobCmd)
         call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
 
+        if !empty(get(jobOption, 'jobCwd', ''))
+            let cwdSaved = CygpathFix_absPath(getcwd())
+            let jobCwd = CygpathFix_absPath(jobOption['jobCwd'])
+            if cwdSaved != jobCwd
+                execute 'cd ' . fnameescape(jobCwd)
+            else
+                let cwdSaved = ''
+            endif
+        else
+            let cwdSaved = ''
+        endif
+
         let result = ''
         let exitCode = '0'
         if exists('*execute')
@@ -532,6 +544,11 @@ function! ZFJobFallback(param)
                 redir END
             endtry
         endif
+
+        if !empty(cwdSaved)
+            execute 'cd ' . fnameescape(cwdSaved)
+        endif
+
         if exists('T_result') && type(T_result) == type({}) && exists("T_result['output']") && exists("T_result['exitCode']")
             let result = T_result['output']
             let exitCode = '' . T_result['exitCode']
