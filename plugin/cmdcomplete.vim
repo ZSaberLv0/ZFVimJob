@@ -86,11 +86,13 @@ function! ZFJobCmdComplete_env(ArgLead, CmdLine, CursorPos)
 endfunction
 
 function! ZFJobCmdComplete_shellcmd(ArgLead, CmdLine, CursorPos)
+    let ArgLead = s:fixArgLead(a:ArgLead)
+
     if exists('*getcompletion') && !get(g:, 'ZFJobCmdComplete_preferBuiltin', 0)
-        return s:fixPath(getcompletion(a:ArgLead, 'shellcmd'))
+        return s:fixPath(getcompletion(ArgLead, 'shellcmd'))
     endif
-    if match(a:ArgLead, '[/\\]') >= 0
-        return s:fixPath(split(glob(a:ArgLead . '*', 1), "\n"))
+    if match(ArgLead, '[/\\]') >= 0
+        return s:fixPath(split(glob(ArgLead . '*', 1), "\n"))
     endif
 
     let map = {}
@@ -100,7 +102,7 @@ function! ZFJobCmdComplete_shellcmd(ArgLead, CmdLine, CursorPos)
         let pathList = split($PATH, ':')
     endif
     for path in pathList
-        let pattern = substitute(path, '\\', '/', 'g') . '/' . a:ArgLead . '*'
+        let pattern = substitute(path, '\\', '/', 'g') . '/' . ArgLead . '*'
         let files = split(glob(pattern, 1), "\n")
         for file in files
             if !isdirectory(file)
@@ -112,10 +114,12 @@ function! ZFJobCmdComplete_shellcmd(ArgLead, CmdLine, CursorPos)
 endfunction
 
 function! ZFJobCmdComplete_file(ArgLead, CmdLine, CursorPos)
+    let ArgLead = s:fixArgLead(a:ArgLead)
+
     if exists('*getcompletion') && !get(g:, 'ZFJobCmdComplete_preferBuiltin', 0)
-        return s:fixPath(getcompletion(a:ArgLead, 'file'))
+        return s:fixPath(getcompletion(ArgLead, 'file'))
     else
-        return s:fixPath(split(glob(a:ArgLead . '*', 1), "\n"))
+        return s:fixPath(split(glob(ArgLead . '*', 1), "\n"))
     endif
 endfunction
 
@@ -123,12 +127,26 @@ function! s:fixPath(list)
     let ret = []
     for item in a:list
         let t = substitute(item, '\\', '/', 'g')
-        let t = substitute(t, ' ', '\\ ', 'g')
+        " ([^\/])\/+$
+        let t = substitute(t, '\([^\/]\)\/\+$', '\1', '')
         if isdirectory(t)
             let t .= '/'
         endif
+        let t = substitute(t, ' ', '\\ ', 'g')
         call add(ret, t)
     endfor
     return ret
+endfunction
+
+function! s:fixArgLead(ArgLead)
+    if (has('win32') || has('win64'))
+        if match(a:ArgLead, '^[a-z]:$') >= 0
+            return a:ArgLead . '/'
+        else
+            return a:ArgLead
+        endif
+    else
+        return a:ArgLead
+    endif
 endfunction
 

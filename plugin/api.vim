@@ -336,7 +336,12 @@ function! s:jobEncoding(jobStatus)
     if !exists('*iconv')
         return ''
     endif
-    return get(a:jobStatus['jobOption'], 'jobEncoding', '')
+    let ret = get(a:jobStatus['jobOption'], 'jobEncoding', '')
+    if ret == &encoding
+        return ''
+    else
+        return ret
+    endif
 endfunction
 
 function! s:jobSend(jobId, text)
