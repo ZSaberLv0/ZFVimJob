@@ -129,7 +129,7 @@ function! s:fixPath(list)
         let t = substitute(item, '\\', '/', 'g')
         " ([^\/])\/+$
         let t = substitute(t, '\([^\/]\)\/\+$', '\1', '')
-        if isdirectory(t)
+        if isdirectory(CygpathFix_absPath(t))
             let t .= '/'
         endif
         let t = substitute(t, ' ', '\\ ', 'g')
