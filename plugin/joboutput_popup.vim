@@ -31,7 +31,7 @@ endfunction
 function! s:output(outputStatus, jobStatus, textList, type)
     call extend(a:outputStatus['outputImplData']['popupContent'], a:textList)
 
-    let jobOutputLimit = get(a:jobStatus['jobOption'], 'jobOutputLimit', 2000)
+    let jobOutputLimit = get(a:jobStatus['jobOption'], 'jobOutputLimit', g:ZFJobOutputLimit)
     if jobOutputLimit >= 0 && len(a:outputStatus['outputImplData']['popupContent']) > jobOutputLimit
         call remove(a:outputStatus['outputImplData']['popupContent'], 0, len(a:outputStatus['outputImplData']['popupContent']) - jobOutputLimit - 1)
     endif

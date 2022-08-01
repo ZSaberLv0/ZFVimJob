@@ -17,6 +17,14 @@ if !exists('g:ZFJobOutputDelay')
     let g:ZFJobOutputDelay = 5
 endif
 
+if !exists('g:ZFJobOutputLimit')
+    let g:ZFJobOutputLimit = 2000
+endif
+
+if !exists('g:ZFJobOutputCRFix')
+    let g:ZFJobOutputCRFix = 1
+endif
+
 " ============================================================
 function! ZFJobAvailable()
     " g:ZFJobImpl : {
@@ -43,7 +51,8 @@ endfunction
 "   'onEnter' : 'optional, func(jobStatus)',
 "   'onExit' : 'optional, func(jobStatus, exitCode)',
 "   'jobOutputDelay' : 'optional, default is g:ZFJobOutputDelay',
-"   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is 2000',
+"   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is g:ZFJobOutputLimit',
+"   'jobOutputCRFix' : 'optional, whether try to replace `\r\n` to `\n`, default is g:ZFJobOutputCRFix',
 "   'jobEncoding' : 'optional, if supplied, encoding conversion would be made before passing output textList',
 "   'jobTimeout' : 'optional, if supplied, ZFJobStop would be called with g:ZFJOBTIMEOUT',
 "   'jobFallback' : 'optional, true by default, whether fallback to `system()` if no job impl available',
@@ -438,11 +447,19 @@ function! ZFJobImpl_onOutputDelayCallback(jobStatus, ...)
     endif
 endfunction
 function! s:onOutputAction(jobStatus, textList, type)
+    if get(a:jobStatus['jobOption'], 'jobOutputCRFix', g:ZFJobOutputCRFix)
+        let i = len(a:textList) - 1
+        while i >= 0
+            let a:textList[i] = substitute(a:textList[i], '\r', '', 'g')
+            let i -= 1
+        endwhile
+    endif
+
     for text in a:textList
         call s:jobLog(a:jobStatus, 'output [' . a:type . ']: ' . text)
     endfor
     call extend(a:jobStatus['jobOutput'], a:textList)
-    let jobOutputLimit = get(a:jobStatus['jobOption'], 'jobOutputLimit', 2000)
+    let jobOutputLimit = get(a:jobStatus['jobOption'], 'jobOutputLimit', g:ZFJobOutputLimit)
     if jobOutputLimit >= 0 && len(a:jobStatus['jobOutput']) > jobOutputLimit
         call remove(a:jobStatus['jobOutput'], 0, len(a:jobStatus['jobOutput']) - jobOutputLimit - 1)
     endif

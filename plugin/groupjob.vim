@@ -39,7 +39,8 @@ endfunction
 "   'onEnter' : 'optional, func(groupJobStatus)',
 "   'onExit' : 'optional, func(groupJobStatus, exitCode)',
 "   'jobOutputDelay' : 'optional, default is g:ZFJobOutputDelay',
-"   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in groupJobStatus, default is 2000',
+"   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in groupJobStatus, default is g:ZFJobOutputLimit',
+"   'jobOutputCRFix' : 'optional, whether try to replace `\r\n` to `\n`, default is g:ZFJobOutputCRFix',
 "   'jobEncoding' : 'optional, if supplied, would use as default value for child ZFJobStart',
 "   'jobTimeout' : 'optional, if supplied, would use as default value for child ZFJobStart',
 "   'jobFallback' : 'optional, if supplied, would use as default value for child ZFJobStart',
@@ -311,6 +312,9 @@ function! s:groupJobRunNext(groupJobStatus)
         let jobOptionTmp['jobImplData']['groupJobChildState'] = 1
         let jobOptionTmp['jobImplData']['groupJobChildIndex'] = jobIndex
         let jobOptionTmp['jobImplData']['groupJobChildSubIndex'] = len(jobStatusList)
+        if !exists("jobOptionTmp['jobOutputCRFix']") && exists("a:groupJobStatus['jobOption']['jobOutputCRFix']")
+            let jobOptionTmp['jobOutputCRFix'] = a:groupJobStatus['jobOption']['jobOutputCRFix']
+        endif
 
         if exists("jobOptionTmp['jobList']")
             let jobId = ZFGroupJobStart(jobOptionTmp)
@@ -424,7 +428,7 @@ function! ZFGroupJobImpl_onJobOutput(groupJobStatus, onOutput, jobStatus, textLi
     endif
 
     call extend(a:groupJobStatus['jobOutput'], a:textList)
-    let jobOutputLimit = get(a:groupJobStatus['jobOption'], 'jobOutputLimit', 2000)
+    let jobOutputLimit = get(a:groupJobStatus['jobOption'], 'jobOutputLimit', g:ZFJobOutputLimit)
     if jobOutputLimit >= 0 && len(a:groupJobStatus['jobOutput']) > jobOutputLimit
         call remove(a:groupJobStatus['jobOutput'], 0, len(a:groupJobStatus['jobOutput']) - jobOutputLimit - 1)
     endif
