@@ -70,6 +70,9 @@ endif
 if !exists('s:statuslineSaved')
     let s:statuslineSaved = ''
 endif
+if !exists('s:statuslineOverrideFlag')
+    let s:statuslineOverrideFlag = 0
+endif
 
 function! s:log(text, option)
     call s:cleanup()
@@ -85,9 +88,11 @@ function! s:log(text, option)
     endif
 
     let s:statuslineSaved = &g:statusline
+    let s:statuslineOverrideFlag += 1
     let &g:statusline = ZFStatuslineLogValue(a:text, extend(option, {
                 \   'statuslineOld' : s:statuslineSaved,
                 \ }))
+    let s:statuslineOverrideFlag -= 1
 
     augroup ZFStatuslineLog_observer_augroup
         autocmd!
@@ -113,7 +118,9 @@ function! s:cleanup()
         augroup ZFStatuslineLog_observer_augroup
             autocmd!
         augroup END
+        let s:statuslineOverrideFlag += 1
         let &g:statusline = s:statuslineSaved
+        let s:statuslineOverrideFlag -= 1
     endif
 endfunction
 
@@ -123,7 +130,7 @@ function! ZFStatuslineLogImpl_statuslineTimeout(...)
 endfunction
 
 function! s:statuslineSetByOther()
-    if !exists('v:option_type') || v:option_type != 'global'
+    if !exists('v:option_type') || v:option_type != 'global' || s:statuslineOverrideFlag > 0
         return
     endif
     if s:timeoutId != -1
