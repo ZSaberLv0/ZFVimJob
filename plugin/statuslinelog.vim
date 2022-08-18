@@ -67,12 +67,6 @@ endif
 if !exists('s:observerAttached')
     let s:observerAttached = 0
 endif
-if !exists('s:statuslineSaved')
-    let s:statuslineSaved = ''
-endif
-if !exists('s:statuslineOverrideFlag')
-    let s:statuslineOverrideFlag = 0
-endif
 
 function! s:log(text, option)
     call s:cleanup()
@@ -88,11 +82,10 @@ function! s:log(text, option)
     endif
 
     let s:statuslineSaved = &g:statusline
-    let s:statuslineOverrideFlag += 1
-    let &g:statusline = ZFStatuslineLogValue(a:text, extend(option, {
+    let s:statuslineModified = ZFStatuslineLogValue(a:text, extend(option, {
                 \   'statuslineOld' : s:statuslineSaved,
                 \ }))
-    let s:statuslineOverrideFlag -= 1
+    let &g:statusline = s:statuslineModified
 
     augroup ZFStatuslineLog_observer_augroup
         autocmd!
@@ -108,7 +101,9 @@ function! s:log(text, option)
     endif
 endfunction
 
-function! s:cleanup()
+function! s:cleanup(...)
+    let autoRestore = get(a:, 1, 1)
+
     if s:timeoutId != -1
         call ZFJobTimerStop(s:timeoutId)
         let s:timeoutId = -1
@@ -118,9 +113,16 @@ function! s:cleanup()
         augroup ZFStatuslineLog_observer_augroup
             autocmd!
         augroup END
-        let s:statuslineOverrideFlag += 1
-        let &g:statusline = s:statuslineSaved
-        let s:statuslineOverrideFlag -= 1
+        if autoRestore && exists('s:statuslineSaved')
+            let &g:statusline = s:statuslineSaved
+        endif
+    endif
+
+    if exists('s:statuslineSaved')
+        unlet s:statuslineSaved
+    endif
+    if exists('s:statuslineModified')
+        unlet s:statuslineModified
     endif
 endfunction
 
@@ -130,18 +132,9 @@ function! ZFStatuslineLogImpl_statuslineTimeout(...)
 endfunction
 
 function! s:statuslineSetByOther()
-    if !exists('v:option_type') || v:option_type != 'global' || s:statuslineOverrideFlag > 0
+    if !exists('v:option_type') || v:option_type != 'global'
         return
     endif
-    if s:timeoutId != -1
-        call ZFJobTimerStop(s:timeoutId)
-        let s:timeoutId = -1
-    endif
-    if s:observerAttached
-        let s:observerAttached = 0
-        augroup ZFStatuslineLog_observer_augroup
-            autocmd!
-        augroup END
-    endif
+    call s:cleanup(exists('s:statuslineModified') && &g:statusline == s:statuslineModified ? 1 : 0)
 endfunction
 
