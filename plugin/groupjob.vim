@@ -113,21 +113,35 @@ function! ZFGroupJobInfo(groupJobStatus)
     if !exists("a:groupJobStatus['jobOption']['jobList']")
         return ZFGroupJobChildImpl()['jobInfo'](a:groupJobStatus)
     endif
-    let jobStatusList = a:groupJobStatus['jobStatusList']
-    if !empty(jobStatusList)
-        let index = len(jobStatusList) - 1
-        while index != -1
-            if !empty(jobStatusList[index])
-                return ZFGroupJobChildImpl()['jobInfo'](jobStatusList[index][-1])
+    let ret = []
+    for jobGroup in a:groupJobStatus['jobOption']['jobList']
+        if type(jobGroup) == type([])
+            let retTmp = []
+            for jobOption in jobGroup
+                let info = ZFGroupJobChildImpl()['jobInfo']({
+                            \   'jobOption' : jobOption,
+                            \ })
+                if !empty(info)
+                    call add(retTmp, info)
+                endif
+            endfor
+            if !empty(retTmp)
+                if len(retTmp) == 1
+                    call add(ret, retTmp[0])
+                else
+                    call add(ret, '[' . join(retTmp, ', ') . ']')
+                endif
             endif
-            let index -= 1
-        endwhile
-    endif
-    let jobList = a:groupJobStatus['jobOption']['jobList']
-    if !empty(jobList) && !empty(jobList[0])
-        return ZFGroupJobChildImpl()['jobInfo'](jobList[0][0])
-    endif
-    return ''
+        elseif type(jobGroup) == type({})
+            let info = ZFGroupJobChildImpl()['jobInfo']({
+                        \   'jobOption' : jobGroup,
+                        \ })
+            if !empty(info)
+                call add(ret, info)
+            endif
+        endif
+    endfor
+    return '[' . join(ret, ', ') . ']'
 endfunction
 
 function! ZFGroupJobLog(groupJobIdOrGroupJobStatus, log)

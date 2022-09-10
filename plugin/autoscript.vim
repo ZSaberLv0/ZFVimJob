@@ -64,7 +64,7 @@ function! ZFAutoScript(projDir, param)
     endif
     let jobOption['jobImplData']['ZFAutoScript_projDir'] = projDir
 
-    let s:config[projDir] = jobOption
+    let s:config[projDir] = s:fixJobOption(jobOption)
 
     if len(s:config) == 1
         call s:start()
@@ -262,6 +262,33 @@ function! s:run(projDir, file)
     if jobId != -1
         let s:status[a:projDir] = ZFGroupJobStatus(jobId)
     endif
+endfunction
+
+" ============================================================
+function! s:fixJobOption(jobOption)
+    let a:jobOption['onEnter'] = ZFJobFunc(function('ZFAutoScriptImpl_onEnter'), [get(a:jobOption, 'onEnter', '')])
+    let a:jobOption['onExit'] = ZFJobFunc(function('ZFAutoScriptImpl_onExit'), [get(a:jobOption, 'onExit', '')])
+    return a:jobOption
+endfunction
+
+function! ZFAutoScriptImpl_onEnter(onEnter, jobStatus)
+    if get(a:jobStatus['jobOption'], 'appendJobEnterInfo', get(g:, 'ZFAutoScript_appendJobEnterInfo', 1))
+        call s:appendJobInfo(a:jobStatus, printf('JOB ENTER : %s', ZFGroupJobInfo(a:jobStatus)))
+        call s:appendJobInfo(a:jobStatus, '============================================================')
+    endif
+    call ZFJobFuncCall(a:onEnter, [a:jobStatus])
+endfunction
+function! ZFAutoScriptImpl_onExit(onExit, jobStatus, exitCode)
+    if get(a:jobStatus['jobOption'], 'appendJobExitInfo', get(g:, 'ZFAutoScript_appendJobExitInfo', 1))
+        call s:appendJobInfo(a:jobStatus, '------------------------------------------------------------')
+        call s:appendJobInfo(a:jobStatus, printf('JOB EXIT : %s : %s', a:exitCode, ZFGroupJobInfo(a:jobStatus)))
+    endif
+    call ZFJobFuncCall(a:onExit, [a:jobStatus, a:exitCode])
+endfunction
+function! s:appendJobInfo(jobStatus, text)
+    call ZFGroupJobLog(a:jobStatus, a:text)
+    call add(a:jobStatus['jobOutput'], a:text)
+    call ZFJobOutput(a:jobStatus, a:text)
 endfunction
 
 " ============================================================
