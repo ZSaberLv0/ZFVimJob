@@ -408,6 +408,10 @@ we supply a wrapper to simulate:
     * vim `function('func_name')` or `'func_name'`
         * for `vim 7.4` or above, `function('s:func')` can be used
         * for `vim 7.3` or below, you must put it in global scope, like `function('Fn_func')`
+        * NOTE: since `s:func` would be checked inside of the `ZFJobFunc(...)` scope,
+            it's not supported to `ZFJobFunc('s:func')`,
+            use `ZFJobFunc(function('s:func'))` instead
+
     * string list to `:execute`
 
         function params can be accessed by `a:000` series, example:
@@ -675,7 +679,7 @@ endfunction
 let g:ZFJobImpl = {
         \   'jobStart' : function('s:jobStart'),
         \   'jobStop' : function('s:jobStop'),
-        \   'jobSend' : ZFJobFunc('s:jobSend', [extraArgs0, extraArgs1]),
+        \   'jobSend' : ZFJobFunc(function('s:jobSend'), [extraArgs0, extraArgs1]),
         \ }
 ```
 
