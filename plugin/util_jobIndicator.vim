@@ -16,8 +16,8 @@ function! s:setup(jobOption)
     if !exists('*ZFPopupAvailable') || !ZFPopupAvailable()
         return
     endif
-    let a:jobOption['onEnter'] = ZFJobFunc(function('ZFJobIndicatorImpl_onEnter'), [get(a:jobOption, 'onEnter', '')])
-    let a:jobOption['onExit'] = ZFJobFunc(function('ZFJobIndicatorImpl_onExit'), [get(a:jobOption, 'onExit', '')])
+    let a:jobOption['onEnter'] = ZFJobFunc('ZFJobIndicatorImpl_onEnter', [get(a:jobOption, 'onEnter', '')])
+    let a:jobOption['onExit'] = ZFJobFunc('ZFJobIndicatorImpl_onExit', [get(a:jobOption, 'onExit', '')])
 endfunction
 
 function! ZFJobIndicatorImpl_onEnter(onEnter, jobStatus)
@@ -69,7 +69,7 @@ function! s:update()
     if s:jobCountUpdateTimerId == -1
         call ZFJobIndicatorImpl_updateCallback()
         if ZFJobTimerAvailable()
-            let s:jobCountUpdateTimerId = ZFJobTimerStart(500, ZFJobFunc(function('ZFJobIndicatorImpl_updateCallback')))
+            let s:jobCountUpdateTimerId = ZFJobTimerStart(500, ZFJobFunc('ZFJobIndicatorImpl_updateCallback'))
         endif
     endif
 endfunction

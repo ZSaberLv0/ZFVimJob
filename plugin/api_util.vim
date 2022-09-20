@@ -26,6 +26,21 @@ let s:jobFuncKey_arglist = 'ZF_arglist'
 function! ZFJobFunc(func, ...)
     if empty(a:func)
         return {}
+    elseif type(a:func) == s:t_string
+        try
+            let Fn_func = function(a:func)
+        catch
+            throw '[ZFJobFunc] no func named: ' . a:func
+            return {}
+        endtry
+        let argList = get(a:, 1, [])
+        if empty(argList)
+            return Fn_func
+        endif
+        return {
+                    \   s:jobFuncKey_func : Fn_func,
+                    \   s:jobFuncKey_arglist : argList,
+                    \ }
     elseif type(a:func) == s:t_func
         let argList = get(a:, 1, [])
         if empty(argList)
@@ -35,16 +50,14 @@ function! ZFJobFunc(func, ...)
                     \   s:jobFuncKey_func : a:func,
                     \   s:jobFuncKey_arglist : argList,
                     \ }
-    elseif type(a:func) == s:t_string || type(a:func) == s:t_list
-        if type(a:func) == s:t_list
-            for line in a:func
-                if type(line) != s:t_string
-                    throw '[ZFJobFunc] unsupported func type: mixed array'
-                    return {}
-                endif
-            endfor
-        endif
-        return ZFJobFunc(function('ZFJobFuncImpl_funcWrap'), extend([a:func], get(a:, 1, [])))
+    elseif type(a:func) == s:t_list
+        for line in a:func
+            if type(line) != s:t_string
+                throw '[ZFJobFunc] unsupported func type: mixed array'
+                return {}
+            endif
+        endfor
+        return ZFJobFunc('ZFJobFuncImpl_funcWrap', extend([a:func], get(a:, 1, [])))
     else
         throw '[ZFJobFunc] unsupported func type: ' . type(a:func)
         return {}
@@ -54,6 +67,14 @@ endfunction
 function! ZFJobFuncCall(func, ...)
     if empty(a:func)
         return 0
+    elseif type(a:func) == s:t_string
+        try
+            let Fn = function(a:func)
+        catch
+            throw '[ZFJobFunc] no func named: ' . a:func
+            return 0
+        endtry
+        return call(a:func, get(a:, 1, []))
     elseif type(a:func) == s:t_func
         let Fn = a:func
         return call(a:func, get(a:, 1, []))
@@ -63,7 +84,7 @@ function! ZFJobFuncCall(func, ...)
             return 0
         endif
         return call(a:func[s:jobFuncKey_func], extend(copy(a:func[s:jobFuncKey_arglist]), get(a:, 1, [])))
-    elseif type(a:func) == s:t_string || type(a:func) == s:t_list
+    elseif type(a:func) == s:t_list
         return ZFJobFuncCall(ZFJobFunc(a:func), get(a:, 1, []))
     else
         throw '[ZFJobFunc] unsupported func type: ' . type(a:func)
@@ -82,9 +103,14 @@ function! ZFJobFuncCallable(func)
         endif
         return 1
     elseif type(a:func) == s:t_string
-        " for logical safe, string is not treated as callable
-        " wrap as ZFJobFunc should do the work
-        return 0
+        try
+            call function(a:func)
+        catch
+            " for logical safe, plain string is not treated as callable
+            " wrap as ZFJobFunc should do the work
+            return 0
+        endtry
+        return 1
     elseif type(a:func) == s:t_list
         for line in a:func
             if type(line) != s:t_string

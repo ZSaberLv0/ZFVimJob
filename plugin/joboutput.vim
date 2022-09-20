@@ -192,7 +192,7 @@ function! s:autoCloseStart(outputId, jobStatus, timeout)
         call ZFJobOutputImpl_autoCloseOnTimer(a:outputId, a:jobStatus)
         return
     endif
-    let s:status[a:outputId]['autoCloseTimerId'] = ZFJobTimerStart(a:timeout, ZFJobFunc(function('ZFJobOutputImpl_autoCloseOnTimer'), [a:outputId, a:jobStatus]))
+    let s:status[a:outputId]['autoCloseTimerId'] = ZFJobTimerStart(a:timeout, ZFJobFunc('ZFJobOutputImpl_autoCloseOnTimer', [a:outputId, a:jobStatus]))
 endfunction
 
 function! s:autoCloseStop(outputId)

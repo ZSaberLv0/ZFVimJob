@@ -40,16 +40,16 @@ function! ZFStatuslineLogValue(text, ...)
     let statuslineOld = get(option, 'statuslineOld', &g:statusline)
 
     let PrefixChecker = get(option, 'prefixChecker', function('ZF_StatuslineLog_prefix'))
-    if ZFJobFuncCallable(PrefixChecker)
-        let prefix = ZFJobFuncCall(PrefixChecker, [statuslineOld])
-    else
+    if type(PrefixChecker) == type('') || !ZFJobFuncCallable(PrefixChecker)
         let prefix = PrefixChecker
+    else
+        let prefix = ZFJobFuncCall(PrefixChecker, [statuslineOld])
     endif
     let PostfixChecker = get(option, 'postfixChecker', function('ZF_StatuslineLog_postfix'))
-    if ZFJobFuncCallable(PostfixChecker)
-        let postfix = ZFJobFuncCall(PostfixChecker, [statuslineOld])
-    else
+    if type(PostfixChecker) == type('') || !ZFJobFuncCallable(PostfixChecker)
         let postfix = PostfixChecker
+    else
+        let postfix = ZFJobFuncCall(PostfixChecker, [statuslineOld])
     endif
 
     if get(option, 'escape', 1)
@@ -96,7 +96,7 @@ function! s:log(text, option)
     let s:observerAttached = 1
     if timeout > 0
         if ZFJobTimerAvailable()
-            let s:timeoutId = ZFJobTimerStart(timeout, ZFJobFunc(function('ZFStatuslineLogImpl_statuslineTimeout')))
+            let s:timeoutId = ZFJobTimerStart(timeout, ZFJobFunc('ZFStatuslineLogImpl_statuslineTimeout'))
         endif
     endif
 endfunction

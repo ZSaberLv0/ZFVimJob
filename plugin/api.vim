@@ -184,7 +184,7 @@ function! s:sleepJob_jobStart(jobOption)
     let s:jobMap[jobId] = jobStatus
     let jobStatus['jobImplData']['sleepJob'] = ZFJobTimerStart(
                 \ a:jobOption['jobCmd'],
-                \ ZFJobFunc(function('ZFJobImpl_sleepJob_jobStartDelay'), [jobId]))
+                \ ZFJobFunc('ZFJobImpl_sleepJob_jobStartDelay', [jobId]))
     call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
     return jobId
 endfunction
@@ -266,8 +266,8 @@ function! s:jobStart(param)
                 \ }
     let success = ZFJobFuncCall(g:ZFJobImpl['jobStart'], [
                 \   jobStatus
-                \ , ZFJobFunc(function('ZFJobImpl_onOutput'), [jobStatus])
-                \ , ZFJobFunc(function('ZFJobImpl_onExit'), [jobStatus])
+                \ , ZFJobFunc('ZFJobImpl_onOutput', [jobStatus])
+                \ , ZFJobFunc('ZFJobImpl_onExit', [jobStatus])
                 \ ])
     if !success
         redraw!
@@ -280,7 +280,7 @@ function! s:jobStart(param)
     endif
 
     if get(jobOption, 'jobTimeout', 0) > 0 && ZFJobTimerAvailable()
-        let jobStatus['jobImplData']['jobTimeoutId'] = ZFJobTimerStart(jobOption['jobTimeout'], ZFJobFunc(function('ZFJobImpl_onTimeout'), [jobStatus]))
+        let jobStatus['jobImplData']['jobTimeoutId'] = ZFJobTimerStart(jobOption['jobTimeout'], ZFJobFunc('ZFJobImpl_onTimeout', [jobStatus]))
     endif
 
     let jobId = s:jobIdNext()
@@ -420,7 +420,7 @@ function! ZFJobImpl_onOutput(jobStatus, textList, type)
             let a:jobStatus['jobImplData']['jobOutputDelayType'] = a:type
             let a:jobStatus['jobImplData']['jobOutputDelayTaskId'] = ZFJobTimerStart(
                         \   get(a:jobStatus['jobImplData'], 'jobOutputDelay', g:ZFJobOutputDelay),
-                        \   ZFJobFunc(function('ZFJobImpl_onOutputDelayCallback'), [a:jobStatus])
+                        \   ZFJobFunc('ZFJobImpl_onOutputDelayCallback', [a:jobStatus])
                         \ )
         endif
     else
@@ -495,7 +495,7 @@ endfunction
 
 " ============================================================
 function! ZFJobFallback(param)
-    if type(a:param) == type('') || ZFJobFuncCallable(a:param)
+    if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
         let jobOption = {
                     \   'jobCmd' : a:param,
                     \ }

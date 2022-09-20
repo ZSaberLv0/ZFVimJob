@@ -93,7 +93,7 @@ function! ZFAsyncRun(param, ...)
     call ZFAsyncRunStop(taskName)
 
     let outputTo = deepcopy(g:ZFAsyncRun_outputTo)
-    if type(a:param) == type('') || ZFJobFuncCallable(a:param)
+    if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
         let jobOption = {
                     \   'jobCmd' : a:param,
                     \   'outputTo' : outputTo,
@@ -105,7 +105,7 @@ function! ZFAsyncRun(param, ...)
         echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
         return -1
     endif
-    let outputTo['initCallback'] = ZFJobFunc(function('ZFAsyncRunImpl_logwinOnInit'), [taskName, get(outputTo, 'initCallback', '')])
+    let outputTo['initCallback'] = ZFJobFunc('ZFAsyncRunImpl_logwinOnInit', [taskName, get(outputTo, 'initCallback', '')])
 
     if empty(get(jobOption['outputTo'], 'outputId', ''))
         let jobOption['outputTo']['outputId'] = 'ZFAsyncRun:' . taskName
@@ -117,7 +117,7 @@ function! ZFAsyncRun(param, ...)
     let jobOption['jobImplData']['ZFAsyncRun_taskName'] = taskName
 
     let jobId = ZFGroupJobStart(extend(deepcopy(jobOption), {
-                \   'onExit' : ZFJobFunc(function('ZFAsyncRunImpl_onExit'), [taskName, get(jobOption, 'onExit', '')]),
+                \   'onExit' : ZFJobFunc('ZFAsyncRunImpl_onExit', [taskName, get(jobOption, 'onExit', '')]),
                 \ }))
     if jobId == -1
         " fail or finished sync

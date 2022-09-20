@@ -405,10 +405,10 @@ we supply a wrapper to simulate:
 
     func can be:
 
-    * vim `function('name')`
+    * vim `function('func_name')` or `'func_name'`
         * for `vim 7.4` or above, `function('s:func')` can be used
         * for `vim 7.3` or below, you must put it in global scope, like `function('Fn_func')`
-    * string or string list to `:execute`
+    * string list to `:execute`
 
         function params can be accessed by `a:000` series, example:
 
@@ -675,7 +675,7 @@ endfunction
 let g:ZFJobImpl = {
         \   'jobStart' : function('s:jobStart'),
         \   'jobStop' : function('s:jobStop'),
-        \   'jobSend' : ZFJobFunc(function('s:jobSend'), [extraArgs0, extraArgs1]),
+        \   'jobSend' : ZFJobFunc('s:jobSend', [extraArgs0, extraArgs1]),
         \ }
 ```
 

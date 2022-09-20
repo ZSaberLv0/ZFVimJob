@@ -51,7 +51,7 @@ function! s:outputInfoIntervalUpdate(outputStatus, jobStatus)
     endif
     if get(a:jobStatus['jobOption']['outputTo'], 'outputInfoInterval', 0) > 0 && ZFJobTimerAvailable()
         let a:outputStatus['outputImplData']['outputInfoTaskId']
-                    \ = ZFJobTimerStart(a:jobStatus['jobOption']['outputTo']['outputInfoInterval'], ZFJobFunc(function('ZFJobOutputImpl_outputInfoTimer'), [a:outputStatus, a:jobStatus]))
+                    \ = ZFJobTimerStart(a:jobStatus['jobOption']['outputTo']['outputInfoInterval'], ZFJobFunc('ZFJobOutputImpl_outputInfoTimer', [a:outputStatus, a:jobStatus]))
     endif
 endfunction
 

@@ -209,7 +209,7 @@ augroup ZFVimJob_ZFGroupJobOptionSetup_augroup
     autocmd User ZFGroupJobOptionSetup silent
 augroup END
 function! s:groupJobStart(param)
-    if type(a:param) == type('') || ZFJobFuncCallable(a:param)
+    if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
         let groupJobOption = {
                     \   'jobCmd' : a:param,
                     \ }
@@ -272,7 +272,7 @@ function! s:groupJobStart(param)
     if get(groupJobOption, 'groupJobTimeout', 0) > 0 && ZFJobTimerAvailable()
         let groupJobStatus['jobImplData']['groupJobTimeoutId'] = ZFJobTimerStart(
                     \ groupJobOption['groupJobTimeout'],
-                    \ ZFJobFunc(function('ZFGroupJobImpl_onTimeout'), [groupJobStatus]))
+                    \ ZFJobFunc('ZFGroupJobImpl_onTimeout', [groupJobStatus]))
     endif
 
     return groupJobId
@@ -315,9 +315,9 @@ function! s:groupJobRunNext(groupJobStatus)
 
     for jobOption in jobList
         let jobOptionTmp = extend(extend(copy(jobOptionDefault), jobOption), {
-                    \   'onLog' : ZFJobFunc(function('ZFGroupJobImpl_onJobLog'), [a:groupJobStatus, get(jobOption, 'onLog', '')]),
-                    \   'onOutput' : ZFJobFunc(function('ZFGroupJobImpl_onJobOutput'), [a:groupJobStatus, get(jobOption, 'onOutput', '')]),
-                    \   'onExit' : ZFJobFunc(function('ZFGroupJobImpl_onJobExit'), [a:groupJobStatus, get(jobOption, 'onExit', '')]),
+                    \   'onLog' : ZFJobFunc('ZFGroupJobImpl_onJobLog', [a:groupJobStatus, get(jobOption, 'onLog', '')]),
+                    \   'onOutput' : ZFJobFunc('ZFGroupJobImpl_onJobOutput', [a:groupJobStatus, get(jobOption, 'onOutput', '')]),
+                    \   'onExit' : ZFJobFunc('ZFGroupJobImpl_onJobExit', [a:groupJobStatus, get(jobOption, 'onExit', '')]),
                     \ })
         if !exists("jobOptionTmp['jobImplData']")
             let jobOptionTmp['jobImplData'] = {}
@@ -368,7 +368,7 @@ function! s:groupJobRunNextDelayed(groupJobStatus)
 
     let a:groupJobStatus['jobImplData']['groupJobRunNextDelayedId'] = ZFJobTimerStart(
                 \   0,
-                \   ZFJobFunc(function('ZFGroupJobImpl_groupJobRunNextDelayedAction'), [a:groupJobStatus])
+                \   ZFJobFunc('ZFGroupJobImpl_groupJobRunNextDelayedAction', [a:groupJobStatus])
                 \ )
 endfunction
 function! ZFGroupJobImpl_groupJobRunNextDelayedAction(groupJobStatus, ...)

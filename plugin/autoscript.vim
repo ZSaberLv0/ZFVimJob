@@ -47,7 +47,7 @@ function! ZFAutoScript(projDir, param)
     endif
 
     let projDir = s:projDir(a:projDir)
-    if type(a:param) == type('') || ZFJobFuncCallable(a:param)
+    if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
         let jobOption = {
                     \   'jobCmd' : a:param,
                     \   'outputTo' : g:ZFAutoScript_outputTo,
@@ -230,7 +230,7 @@ function! s:fileWrite()
         if autoScriptDelay > 0
             let jobOption['autoScriptDelayTimerId'] = ZFJobTimerStart(
                         \ autoScriptDelay,
-                        \ ZFJobFunc(function('ZFAutoScriptImpl_runDelay'), [projDir, file]))
+                        \ ZFJobFunc('ZFAutoScriptImpl_runDelay', [projDir, file]))
         else
             call s:run(projDir, file)
         endif
@@ -266,8 +266,8 @@ endfunction
 
 " ============================================================
 function! s:fixJobOption(jobOption)
-    let a:jobOption['onEnter'] = ZFJobFunc(function('ZFAutoScriptImpl_onEnter'), [get(a:jobOption, 'onEnter', '')])
-    let a:jobOption['onExit'] = ZFJobFunc(function('ZFAutoScriptImpl_onExit'), [get(a:jobOption, 'onExit', '')])
+    let a:jobOption['onEnter'] = ZFJobFunc('ZFAutoScriptImpl_onEnter', [get(a:jobOption, 'onEnter', '')])
+    let a:jobOption['onExit'] = ZFJobFunc('ZFAutoScriptImpl_onExit', [get(a:jobOption, 'onExit', '')])
     return a:jobOption
 endfunction
 

@@ -87,7 +87,7 @@ function! ZFLogWinAdd(logId, content)
         noautocmd call s:logWinOnAdd(a:logId)
     else
         if status['lazyUpdateTimerId'] == -1
-            let status['lazyUpdateTimerId'] = ZFJobTimerStart(status['lazyUpdate'], ZFJobFunc(function('ZFLogWinImpl_logWinAddOnTimer'), [a:logId]))
+            let status['lazyUpdateTimerId'] = ZFJobTimerStart(status['lazyUpdate'], ZFJobFunc('ZFLogWinImpl_logWinAddOnTimer', [a:logId]))
         endif
     endif
 endfunction
@@ -370,10 +370,10 @@ function! s:logWinFocus(logId, autoCreate)
     endif
 
     let config = s:status[a:logId]['config']
-    if ZFJobFuncCallable(config['newWinCmd'])
-        call ZFJobFuncCall(config['newWinCmd'], [a:logId])
-    else
+    if type(config['newWinCmd']) == type('') || !ZFJobFuncCallable(config['newWinCmd'])
         execute config['newWinCmd']
+    else
+        call ZFJobFuncCall(config['newWinCmd'], [a:logId])
     endif
     if bn == -1
         execute 'silent file ' . s:bufId(a:logId)

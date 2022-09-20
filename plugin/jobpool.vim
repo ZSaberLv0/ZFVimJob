@@ -172,15 +172,15 @@ function! s:jobPoolStart(param)
                 \   }, get(jobOption, 'jobImplData', {})),
                 \ }
 
-    let jobOption['onOutput'] = ZFJobFunc(function('ZFJobPoolImpl_jobOnOutput'), [
+    let jobOption['onOutput'] = ZFJobFunc('ZFJobPoolImpl_jobOnOutput', [
                 \   jobPoolStatus,
                 \   get(jobOption, 'onOutput', {})
                 \ ])
-    let jobOption['onEnter'] = ZFJobFunc(function('ZFJobPoolImpl_jobOnEnter'), [
+    let jobOption['onEnter'] = ZFJobFunc('ZFJobPoolImpl_jobOnEnter', [
                 \   jobPoolStatus,
                 \   get(jobOption, 'onEnter', {})
                 \ ])
-    let jobOption['onExit'] = ZFJobFunc(function('ZFJobPoolImpl_jobOnExit'), [
+    let jobOption['onExit'] = ZFJobFunc('ZFJobPoolImpl_jobOnExit', [
                 \   jobPoolStatus,
                 \   get(jobOption, 'onExit', {})
                 \ ])
@@ -262,7 +262,7 @@ function! s:jobPoolRunNextDelayed()
     if get(s:, 'jobPoolRunNextDelayedId', -1) != -1
         return
     endif
-    let s:jobPoolRunNextDelayedId = ZFJobTimerStart(0, ZFJobFunc(function('ZFJobPoolImpl_jobPoolRunNextDelayedAction')))
+    let s:jobPoolRunNextDelayedId = ZFJobTimerStart(0, ZFJobFunc('ZFJobPoolImpl_jobPoolRunNextDelayedAction'))
 endfunction
 function! ZFJobPoolImpl_jobPoolRunNextDelayedAction(...)
     let s:jobPoolRunNextDelayedId = -1
