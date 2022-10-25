@@ -586,7 +586,7 @@ options:
 
     ```
     { // jobOption passed to ZFAsyncRun
-        'autoScriptDelay' : 'optional, delay before run, 1 second by default',
+        'autoScriptDelay' : 'optional, delay before run, 200 mili second by default',
     }
     ```
 
@@ -688,7 +688,7 @@ let g:ZFJobImpl = {
 by default, we support by vim's `has('timers')`
 
 also, we bundled a default fallback impl by `CursorHold`
-(which can be disabled by `let g:ZFJobTimerFallback = 1`),
+(which can be disabled by `let g:ZFJobTimerFallback = 0`),
 the fallback impl has these limitations:
 
 * it's simutated by `CursorHold/CursorHoldI` and `feedkeys("\<up>\<down\>", 'nt')`,
