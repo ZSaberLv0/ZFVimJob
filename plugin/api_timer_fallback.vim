@@ -1,4 +1,8 @@
 
+if !exists('g:ZFJobTimerFallbackCursorMoving')
+    let g:ZFJobTimerFallbackCursorMoving = 0
+endif
+
 if has('timers') || !get(g:, 'ZFJobTimerFallback', 1)
     finish
 endif
@@ -111,9 +115,6 @@ function! s:implCallback()
     endif
 endfunction
 
-if !exists('g:ZFJobTimerFallbackCursorMoving')
-    let g:ZFJobTimerFallbackCursorMoving = 0
-endif
 function! s:implPostUpdate()
     if (mode() != 'n' && mode() != 'i')
                 \ || getpos('.')[0] <= 0
