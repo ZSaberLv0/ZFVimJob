@@ -92,7 +92,9 @@ function! ZFJobOutput(jobStatus, content, ...)
     let Fn = get(impl, 'output', 0)
     if type(Fn) == type(function('function'))
         if type(a:content) == type([])
-            call Fn(s:status[outputId], a:jobStatus, a:content, get(a:, 1, 'stdout'))
+            if !empty(a:content)
+                call Fn(s:status[outputId], a:jobStatus, a:content, get(a:, 1, 'stdout'))
+            endif
         else
             call Fn(s:status[outputId], a:jobStatus, [a:content], get(a:, 1, 'stdout'))
         endif
