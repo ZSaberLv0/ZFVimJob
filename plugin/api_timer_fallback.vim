@@ -63,7 +63,7 @@ function! s:implStart()
     let s:lastTime = reltime()
     augroup ZFJobTimerFallback_augroup
         autocmd!
-        autocmd CursorHold,CursorHoldI * call s:implCallback()
+        autocmd CursorHold,CursorHoldI * nested call s:implCallback()
     augroup END
 endfunction
 
@@ -91,27 +91,45 @@ function! s:implCallback()
             call add(toInvokeList, [timerId, taskData])
         endif
     endfor
+
+    let hasScheduled = 0
+    if !empty(s:taskMap)
+        let hasScheduled = 1
+        call s:implPostUpdate()
+    endif
+
     for toInvoke in toInvokeList
         call ZFJobFuncCall(toInvoke[1]['jobFunc'], [toInvoke[0]])
     endfor
-    if empty(s:taskMap)
-        call s:implStop()
-        return
+
+    if !hasScheduled && !empty(s:taskMap)
+        call s:implPostUpdate()
     endif
 
-    call s:implPostUpdate()
+    if empty(s:taskMap)
+        call s:implStop()
+    endif
 endfunction
 
+if !exists('g:ZFJobTimerFallbackCursorMoving')
+    let g:ZFJobTimerFallbackCursorMoving = 0
+endif
 function! s:implPostUpdate()
     if (mode() != 'n' && mode() != 'i')
                 \ || getpos('.')[0] <= 0
         return
     endif
-    if line('.') > 1
-        call feedkeys("\<up>\<down>", 'nt')
-    else
-        call feedkeys("\<down>\<up>", 'nt')
-    endif
+
+    try
+        let g:ZFJobTimerFallbackCursorMoving += 1
+        if line('.') > 1
+            call feedkeys("\<up>\<down>", 'nt')
+        else
+            call feedkeys("\<down>\<up>", 'nt')
+        endif
+    finally
+        let g:ZFJobTimerFallbackCursorMoving -= 1
+    endtry
 endfunction
 
 let g:ZFJobTimerImpl = {
