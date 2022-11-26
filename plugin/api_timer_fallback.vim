@@ -117,17 +117,12 @@ endfunction
 
 function! s:implPostUpdate()
     if (mode() != 'n' && mode() != 'i')
-                \ || getpos('.')[0] <= 0
         return
     endif
 
     try
         let g:ZFJobTimerFallbackCursorMoving += 1
-        if line('.') > 1
-            call feedkeys("\<up>\<down>", 'nt')
-        else
-            call feedkeys("\<down>\<up>", 'nt')
-        endif
+        call feedkeys("f\<esc>", 'n')
     finally
         let g:ZFJobTimerFallbackCursorMoving -= 1
     endtry

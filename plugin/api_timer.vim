@@ -9,37 +9,42 @@ function! ZFJobTimerAvailable()
     return has('timers') || !empty(get(get(g:, 'ZFJobTimerImpl', {}), 'timerStart', {}))
 endfunction
 function! ZFJobTimerStart(delay, jobFunc)
-    if !has('timers')
-        if !empty(get(get(g:, 'ZFJobTimerImpl', {}), 'timerStart', {}))
-            let Fn_timerStart = g:ZFJobTimerImpl['timerStart']
-            return Fn_timerStart(a:delay, a:jobFunc)
+    if !empty(get(get(g:, 'ZFJobTimerImpl', {}), 'timerStart', {}))
+        " custom impl
+        let Fn_timerStart = g:ZFJobTimerImpl['timerStart']
+        return Fn_timerStart(a:delay, a:jobFunc)
+    else
+        if has('timers')
+            " default impl
+            let timerId = timer_start(a:delay, function('s:jobTimerCallback'))
+            if timerId == -1
+                return -1
+            endif
+            let s:jobTimerMap[timerId] = a:jobFunc
+            return timerId
+        else
+            " fallback
+            call ZFJobFuncCall(a:jobFunc, [-1])
+            return -1
         endif
-        " fallback
-        call ZFJobFuncCall(a:jobFunc, [-1])
-        return -1
     endif
-    " default impl
-    let timerId = timer_start(a:delay, function('s:jobTimerCallback'))
-    if timerId == -1
-        return -1
-    endif
-    let s:jobTimerMap[timerId] = a:jobFunc
-    return timerId
 endfunction
 function! ZFJobTimerStop(timerId)
-    if !has('timers')
-        if !empty(get(get(g:, 'ZFJobTimerImpl', {}), 'timerStart', {}))
-            let Fn_timerStop = g:ZFJobTimerImpl['timerStop']
-            call Fn_timerStop(a:timerId)
-            return
+    if !empty(get(get(g:, 'ZFJobTimerImpl', {}), 'timerStart', {}))
+        " custom impl
+        let Fn_timerStop = g:ZFJobTimerImpl['timerStop']
+        call Fn_timerStop(a:timerId)
+        return
+    else
+        if has('timers')
+            " default impl
+            if !exists('s:jobTimerMap[a:timerId]')
+                return
+            endif
+            call remove(s:jobTimerMap, a:timerId)
+            call timer_stop(a:timerId)
         endif
     endif
-    " default impl
-    if !exists('s:jobTimerMap[a:timerId]')
-        return
-    endif
-    call remove(s:jobTimerMap, a:timerId)
-    call timer_stop(a:timerId)
 endfunction
 if !exists('s:jobTimerMap')
     " <jobTimerId, Fn_callback>
