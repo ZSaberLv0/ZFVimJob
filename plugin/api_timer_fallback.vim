@@ -122,7 +122,23 @@ function! s:implPostUpdate()
 
     try
         let g:ZFJobTimerFallbackCursorMoving += 1
-        call feedkeys("f\<esc>", 'n')
+        if mode() == 'i'
+            if line('$') == 1
+                if col('.') > 1
+                    call feedkeys("\<left>\<right>", 'n')
+                else
+                    call feedkeys("\<right>\<left>", 'n')
+                endif
+            else
+                if line('.') > 1
+                    call feedkeys("\<up>\<down>", 'n')
+                else
+                    call feedkeys("\<down>\<up>", 'n')
+                endif
+            endif
+        else
+            call feedkeys("f\<esc>", 'n')
+        endif
     finally
         let g:ZFJobTimerFallbackCursorMoving -= 1
     endtry

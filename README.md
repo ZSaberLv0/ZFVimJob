@@ -691,9 +691,11 @@ also, we bundled a default fallback impl by `CursorHold`
 (which can be disabled by `let g:ZFJobTimerFallback = 0`),
 the fallback impl has these limitations:
 
-* it's simutated by `CursorHold/CursorHoldI` and `feedkeys("\<up>\<down\>", 'nt')`,
+* it's simutated by `CursorHold/CursorHoldI` and `feedkeys(xxx, 'n')`,
     so the timer won't fired in modes except `Normal` and `Insert`,
-    and it may or may not breaks some actions depends on the cursor movement
+    and it may or may not breaks some actions depends on the cursor movement,
+    you may check it by `if get(g:, 'ZFJobTimerFallbackCursorMoving', 0)`
+* the fallback does not work when `pumvisible()`
 
 
 you may also supply your own timer impl by:
