@@ -29,14 +29,23 @@ function! s:jobStart(jobStatus, onOutput, onExit)
     if !empty(get(a:jobStatus['jobOption'], 'jobCwd', ''))
         let jobImplOption['cwd'] = a:jobStatus['jobOption']['jobCwd']
     endif
+    if !empty(get(a:jobStatus['jobOption'], 'jobEnv', {}))
+        let jobImplOption['env'] = a:jobStatus['jobOption']['jobEnv']
+    endif
+
+    " vim's job_start does not expand env vars
+    let jobCmdTmp = a:jobStatus['jobOption']['jobCmd']
+    if get(g:, 'ZFJobImpl_vim_fixCmdEnv', 1)
+        let jobCmdTmp = ZFJobImplEnvEscapeCmd(jobCmdTmp, get(a:jobStatus['jobOption'], 'jobEnv', {}))
+    endif
 
     if v:version <= 800
         " for some weird vim version,
         " `python "a.py"` would fail because of double quotes
         " causing `no such file "a.py"`
-        let jobCmd = ZFJobCmdToList(a:jobStatus['jobOption']['jobCmd'])
+        let jobCmd = ZFJobCmdToList(jobCmdTmp)
     else
-        let jobCmd = a:jobStatus['jobOption']['jobCmd']
+        let jobCmd = jobCmdTmp
     endif
 
     try

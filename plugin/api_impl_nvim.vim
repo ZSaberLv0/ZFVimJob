@@ -26,6 +26,9 @@ function! s:jobStart(jobStatus, onOutput, onExit)
     if !empty(get(a:jobStatus['jobOption'], 'jobCwd', ''))
         let jobImplOption['cwd'] = a:jobStatus['jobOption']['jobCwd']
     endif
+    if !empty(get(a:jobStatus['jobOption'], 'jobEnv', {}))
+        let jobImplOption['env'] = a:jobStatus['jobOption']['jobEnv']
+    endif
 
     try
         let jobImplId = jobstart(a:jobStatus['jobOption']['jobCmd'], jobImplOption)

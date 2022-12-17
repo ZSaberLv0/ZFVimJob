@@ -269,6 +269,7 @@ but there are some limitations you should concern:
                  // * number, use `ZFJobTimerStart()` to delay,
                  //   has better performance than starting a `sleep` job
       'jobCwd' : 'optional, cwd to run the job',
+      'jobEnv' : 'optional, a dictionary to specify the environement variable',
       'onLog' : 'optional, func(jobStatus, log)',
       'onOutputFilter' : 'optional, func(jobStatus, textList, type[stdout/stderr]), modify textList or empty to discard',
       'onOutput' : 'optional, func(jobStatus, textList, type[stdout/stderr])',
@@ -327,6 +328,7 @@ but there are some limitations you should concern:
       ],
       'jobCmd' : 'optional, used only when jobList not supplied',
       'jobCwd' : 'optional, if supplied, would use as default value for child ZFJobStart',
+      'jobEnv' : 'optional, if supplied, would use as default value for child ZFJobStart',
       'onLog' : 'optional, func(groupJobStatus, log)',
       'onOutputFilter' : 'optional, func(groupJobStatus, textList, type[stdout/stderr]), modify textList or empty to discard',
       'onOutput' : 'optional, func(groupJobStatus, textList, type[stdout/stderr])',

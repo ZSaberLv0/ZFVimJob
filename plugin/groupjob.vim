@@ -33,6 +33,7 @@ endfunction
 "   ],
 "   'jobCmd' : 'optional, used only when jobList not supplied',
 "   'jobCwd' : 'optional, if supplied, would use as default value for child ZFJobStart',
+"   'jobEnv' : 'optional, if supplied, would use as default value for child ZFJobStart',
 "   'onLog' : 'optional, func(groupJobStatus, log)',
 "   'onOutputFilter' : 'optional, func(groupJobStatus, textList, type[stdout/stderr]), modify textList or empty to discard',
 "   'onOutput' : 'optional, func(groupJobStatus, textList, type[stdout/stderr])',
@@ -302,6 +303,9 @@ function! s:groupJobRunNext(groupJobStatus)
     let jobOptionDefault = {}
     if !empty(get(a:groupJobStatus['jobOption'], 'jobCwd', ''))
         let jobOptionDefault['jobCwd'] = a:groupJobStatus['jobOption']['jobCwd']
+    endif
+    if !empty(get(a:groupJobStatus['jobOption'], 'jobEnv', {}))
+        let jobOptionDefault['jobEnv'] = a:groupJobStatus['jobOption']['jobEnv']
     endif
     if !empty(get(a:groupJobStatus['jobOption'], 'jobEncoding', ''))
         let jobOptionDefault['jobEncoding'] = a:groupJobStatus['jobOption']['jobEncoding']

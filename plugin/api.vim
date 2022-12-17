@@ -45,6 +45,7 @@ endfunction
 "            // * number, use `ZFJobTimerStart()` to delay,
 "            //   has better performance than starting a `sleep` job
 "   'jobCwd' : 'optional, cwd to run the job',
+"   'jobEnv' : 'optional, a dictionary to specify the environement variable',
 "   'onLog' : 'optional, func(jobStatus, log)',
 "   'onOutputFilter' : 'optional, func(jobStatus, textList, type[stdout/stderr]), modify textList or empty to discard',
 "   'onOutput' : 'optional, func(jobStatus, textList, type[stdout/stderr])',
@@ -341,7 +342,7 @@ function! s:jobStop(jobStatus, exitCode, callImpl)
     return ret
 endfunction
 
-function! s:jobEncoding(jobStatus)
+function! ZFJobImplSrcEncoding(jobStatus)
     if !exists('*iconv')
         return ''
     endif
@@ -364,7 +365,7 @@ function! s:jobSend(jobId, text)
     endif
 
     call s:jobLog(jobStatus, 'send: ' . a:text)
-    let jobEncoding = s:jobEncoding(jobStatus)
+    let jobEncoding = ZFJobImplSrcEncoding(jobStatus)
     if empty(jobEncoding)
         let text = a:text
     else
@@ -375,7 +376,7 @@ function! s:jobSend(jobId, text)
 endfunction
 
 function! ZFJobImpl_onOutput(jobStatus, textList, type)
-    let jobEncoding = s:jobEncoding(a:jobStatus)
+    let jobEncoding = ZFJobImplSrcEncoding(a:jobStatus)
 
     let textListLen = len(a:textList)
     let iTextList = 0
@@ -493,106 +494,96 @@ function! ZFJobImplGetWindowsEncoding()
     return s:WindowsCodePage
 endfunction
 
-" ============================================================
-function! ZFJobFallback(param)
-    if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
-        let jobOption = {
-                    \   'jobCmd' : a:param,
-                    \ }
-    elseif type(a:param) == type({})
-        let jobOption = copy(a:param)
-    else
-        echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
-        return -1
+" update to envDesired, and return a dict for ZFJobImplEnvRestore
+function! ZFJobImplEnvUpdate(envDesired)
+    let envSaved = {}
+    for key in keys(a:envDesired)
+        execute printf('let envSaved[key] = $%s', key)
+        execute printf('let $%s = a:envDesired[key]', key)
+    endfor
+    return envSaved
+endfunction
+
+" restore env set by ZFJobImplEnvUpdate
+function! ZFJobImplEnvRestore(envSaved)
+    for key in keys(a:envSaved)
+        execute printf('let $%s = a:envSaved[key]', key)
+    endfor
+endfunction
+
+" escape cmd accorrding to envDesired
+" modes: {
+"    'Windows' : 1/0/-1, // -1 by default
+"    'Posix' : 1/0/-1, // 1 by default
+" }
+"
+" for Windows:
+"   %VAR% : escaped
+"   \%VAR\% : not escaped
+"
+" for Posix:
+"   $VAR : escaped
+"   ${VAR} : escaped
+"   \$VAR : not escaped
+"   \${VAR} : not escaped
+function! ZFJobImplEnvEscapeCmd(cmd, envDesired, ...)
+    if empty(a:cmd)
+        return a:cmd
     endif
+    let cmd = a:cmd
+    let token = nr2char(127)
 
-    let jobStatus = {
-                \   'jobId' : 0,
-                \   'jobOption' : jobOption,
-                \   'jobOutput' : [],
-                \   'exitCode' : '',
-                \   'jobImplData' : copy(get(jobOption, 'jobImplData', {})),
-                \ }
+    let modes = get(a:, 1, {})
+    let modes_Windows = get(modes, 'Windows', -1)
+    let modes_Posix = get(modes, 'Posix', 1)
 
-    call s:jobLog(jobStatus, 'start (fallback): `' . ZFJobInfo(jobStatus) . '`')
-
-    let T_jobCmd = get(jobOption, 'jobCmd', '')
-    if type(T_jobCmd) == type('')
-        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
-
-        let jobCmd = T_jobCmd
-        if !empty(get(jobOption, 'jobCwd', ''))
-            let jobCmd = 'cd "' . jobOption['jobCwd'] . '" && ' . jobCmd
-        endif
-        let result = system(jobCmd)
-        let exitCode = '' . v:shell_error
-    elseif type(T_jobCmd) == type(0)
-        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
-
-        " for fallback, sleep job has nothing to do
-        let result = ''
-        let exitCode = '0'
-    elseif ZFJobFuncCallable(T_jobCmd)
-        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
-
-        if !empty(get(jobOption, 'jobCwd', ''))
-            let cwdSaved = CygpathFix_absPath(getcwd())
-            let jobCwd = CygpathFix_absPath(jobOption['jobCwd'])
-            if cwdSaved != jobCwd
-                execute 'cd ' . fnameescape(jobCwd)
-            else
-                let cwdSaved = ''
+    if (modes_Windows == -1 && ((has('win32') || has('win64')) && !has('unix')))
+                \ || modes_Windows != 0
+        let cmd = substitute(cmd, '\\%', token, 'g')
+        while 1
+            " %VAR%
+            " (?<=%)[a-z_0-9]+(?=%)
+            let var = matchstr(cmd, '\%(%\)\@<=[a-z_0-9]\+\%(%\)\@=')
+            if !empty(var)
+                let cmd = substitute(cmd, '%'.var.'%', s:envForVar(a:envDesired, var), 'g')
+                continue
             endif
-        else
-            let cwdSaved = ''
-        endif
 
-        let result = ''
-        let exitCode = '0'
-        if exists('*execute')
-            try
-                let result = execute('let T_result = ZFJobFuncCall(T_jobCmd, [jobStatus])', 'silent')
-            catch
-                let result = v:exception
-                let exitCode = '-1'
-            endtry
-        else
-            try
-                redir => result
-                silent let T_result = ZFJobFuncCall(T_jobCmd, [jobStatus])
-            catch
-                let result = v:exception
-            finally
-                redir END
-            endtry
-        endif
-
-        if !empty(cwdSaved)
-            execute 'cd ' . fnameescape(cwdSaved)
-        endif
-
-        if exists('T_result') && type(T_result) == type({}) && exists("T_result['output']") && exists("T_result['exitCode']")
-            let result = T_result['output']
-            let exitCode = '' . T_result['exitCode']
-        endif
-    else
-        call s:jobLog(jobStatus, 'invalid jobCmd')
-        return -1
+            break
+        endwhile
+        let cmd = substitute(cmd, token, '\\%', 'g')
     endif
 
-    let jobEncoding = s:jobEncoding(jobStatus)
-    if empty(jobEncoding)
-        let jobOutput = result
-    else
-        let jobOutput = iconv(result, jobEncoding, &encoding)
-    endif
-    call ZFJobImpl_onOutput(jobStatus, split(jobOutput, "\n"), 'stdout')
+    if (modes_Posix == -1 && has('unix'))
+                \ || modes_Posix != 0
+        let cmd = substitute(cmd, '\\\$', token, 'g')
+        while 1
+            " $VAR
+            " (?<=\$)[a-z_0-9]+\>
+            let var = matchstr(cmd, '\%(\$\)\@<=[a-z_0-9]\+\>')
+            if !empty(var)
+                let cmd = substitute(cmd, '\$'.var, s:envForVar(a:envDesired, var), 'g')
+                continue
+            endif
 
-    call ZFJobImpl_onExit(jobStatus, exitCode)
-    if exitCode != '0'
-        return -1
-    else
-        return 0
+            " ${VAR}
+            " (?<=\$\{)[a-z_0-9]+(?=\})
+            let var = matchstr(cmd, '\%(\${\)\@<=[a-z_0-9]\+\%(}\)\@=')
+            if !empty(var)
+                let cmd = substitute(cmd, '\${'.var.'}', s:envForVar(a:envDesired, var), 'g')
+                continue
+            endif
+
+            break
+        endwhile
+        let cmd = substitute(cmd, token, '\\\$', 'g')
     endif
+
+    return cmd
+endfunction
+function! s:envForVar(envDesired, var)
+    execute 'let def = $' . a:var
+    let def = get(a:envDesired, a:var, def)
+    return substitute(def, ' ', '\\\\ ', 'g')
 endfunction
 
