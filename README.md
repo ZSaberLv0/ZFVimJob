@@ -36,7 +36,7 @@ features / why another remake:
 
     * tested on vim 7.3 or above, fallback to `system()` if no job impl available
 
-        * job callback invoke normally, no job send support, though
+        * all job logic works as expected (job env, callback, group job chain, etc), no job send support, though
         * further more, we bundled a builtin timer fallback impl,
             complex group job also works well even if no timer support (`!has('timers')`)
 
