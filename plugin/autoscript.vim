@@ -222,6 +222,7 @@ function! s:fileWrite()
     let file = s:projDir(file)
     for projDir in keys(s:config)
         if strpart(file, 0, len(projDir)) != projDir
+                    \ || (len(file) > len(projDir) && file[len(projDir)] != '/')
             continue
         endif
         let jobOption = s:config[projDir]
