@@ -39,6 +39,16 @@ command! -nargs=0 ZFAutoScriptLogAll :call ZFAutoScriptLogAll()
 
 " param: { // jobOption passed to ZFAsyncRun
 "   'autoScriptDelay' : 'optional, delay before run, 200ms by default',
+"   'autoScriptFilter' : 'optional, rules to filter file path, empty by default',
+"       // can be one of these:
+"       // * regexp string or list, pattern follow perl style if `othree/eregex.vim` installed
+"       // * function(params), return 1 if filtered
+"       //     params: {
+"       //       'path' : 'the abs file path which was written',
+"       //       'dir' : {}, // the formated rule dir passed from ZFAutoScript
+"       //       'option' : {}, // the original jobOption passed from ZFAutoScript
+"       //     }
+"   'autoScriptBreakOnRun' : 'optional, whether break to prevent auto script in parent path to be run, 1 by default',
 " }
 function! ZFAutoScript(projDir, param)
     call ZFAutoScriptRemove(a:projDir)
@@ -220,13 +230,26 @@ function! s:fileWrite()
         return
     endif
     let file = s:projDir(file)
+
+    let projDirToRun = []
     for projDir in keys(s:config)
         if strpart(file, 0, len(projDir)) != projDir
                     \ || (len(file) > len(projDir) && file[len(projDir)] != '/')
             continue
         endif
+        if s:autoScriptFilterCheck(projDir, file)
+            continue
+        endif
+        call add(projDirToRun, projDir)
+    endfor
+    call sort(projDirToRun)
+
+    let i = len(projDirToRun) - 1
+    while i >= 0
+        let projDir = projDirToRun[i]
         let jobOption = s:config[projDir]
         call ZFAutoScriptStop(projDir)
+        let autoScriptBreakOnRun = get(jobOption, 'autoScriptBreakOnRun', 1)
         let autoScriptDelay = get(jobOption, 'autoScriptDelay', 200)
         if autoScriptDelay > 0
             let jobOption['autoScriptDelayTimerId'] = ZFJobTimerStart(
@@ -235,8 +258,48 @@ function! s:fileWrite()
         else
             call s:run(projDir, file)
         endif
-        break
+
+        if autoScriptBreakOnRun
+            break
+        endif
+
+        let i -= 1
+    endwhile
+endfunction
+
+function! s:autoScriptFilterCheck(projDir, file)
+    let jobOption = s:config[a:projDir]
+    let Fn_autoScriptFilter = get(jobOption, 'autoScriptFilter', '')
+    if empty(Fn_autoScriptFilter)
+        return 0
+    endif
+    if type(Fn_autoScriptFilter) == type([])
+        let autoScriptFilterList = Fn_autoScriptFilter
+    else
+        let autoScriptFilterList = [Fn_autoScriptFilter]
+    endif
+
+    for Fn in autoScriptFilterList
+        if type(Fn) == type('')
+            if exists('*E2v')
+                let pattern = E2v(Fn)
+            else
+                let pattern = Fn
+            endif
+            if match(a:file, pattern) >= 0
+                return 1
+            endif
+        elseif ZFJobFuncCallable(Fn)
+            if ZFJobFuncCall(Fn, {
+                        \   'path' : a:file,
+                        \   'dir' : a:projDir,
+                        \   'option' : jobOption,
+                        \ })
+                return 1
+            endif
+        endif
     endfor
+    return 0
 endfunction
 
 function! s:runDelayStop(projDir)

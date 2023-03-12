@@ -589,6 +589,16 @@ options:
     ```
     { // jobOption passed to ZFAsyncRun
         'autoScriptDelay' : 'optional, delay before run, 200 mili second by default',
+        'autoScriptFilter' : 'optional, rules to filter file path, empty by default',
+            // can be one of these:
+            // * regexp string or list, pattern follow perl style if `othree/eregex.vim` installed
+            // * function(params), return 1 if filtered
+            //     params: {
+            //       'path' : 'the abs file path which was written',
+            //       'dir' : {}, // the formated rule dir passed from ZFAutoScript
+            //       'option' : {}, // the original jobOption passed from ZFAutoScript
+            //     }
+        'autoScriptBreakOnRun' : 'optional, whether break to prevent auto script in parent path to be run, 1 by default',
     }
     ```
 
