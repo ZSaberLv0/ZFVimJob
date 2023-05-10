@@ -167,6 +167,10 @@ function! ZFLogWinShow(logId)
     noautocmd return s:ZFLogWinShow(a:logId)
 endfunction
 function! s:ZFLogWinShow(logId)
+    if exists('s:status[a:logId]') && s:status[a:logId]['silentState']
+        return
+    endif
+
     let oldPos = s:logWinFocus(a:logId, 1)
     call s:redraw(a:logId, 'none')
     call s:logWinRestorePos(oldPos)
@@ -200,6 +204,22 @@ function! ZFLogWinHide(logId)
     endif
 endfunction
 
+function! ZFLogWinSilent(logId, ...)
+    if !exists('s:status[a:logId]')
+        return
+    endif
+
+    let silentState = s:status[a:logId]['silentState']
+    if get(a:, 1, 1)
+        let s:status[a:logId]['silentState'] = silentState + 1
+        call ZFLogWinHide(a:logId)
+    else
+        if silentState > 0
+            let s:status[a:logId]['silentState'] = silentState - 1
+        endif
+    endif
+endfunction
+
 function! ZFLogWinStatus(logId)
     return get(s:status, a:logId, {})
 endfunction
@@ -229,6 +249,7 @@ endfunction
 "   'lines' : [],
 "   'lazyUpdate' : 1,
 "   'lazyUpdateTimerId' : -1,
+"   'silentState' : 0,
 " }
 if !exists('s:status')
     let s:status = {}
@@ -240,6 +261,7 @@ function! s:statusInit(config)
                 \   'lines' : [],
                 \   'lazyUpdate' : get(a:config, 'lazyUpdate', 10),
                 \   'lazyUpdateTimerId' : -1,
+                \   'silentState' : 0,
                 \ }
     if !ZFJobTimerAvailable()
         let status['lazyUpdate'] = 0
@@ -267,6 +289,10 @@ endfunction
 function! s:logWinOnAdd(logId)
     if !exists('s:status[a:logId]')
         let s:status[a:logId] = s:statusInit(deepcopy(g:ZFLogWin_defaultConfig))
+    endif
+
+    if s:status[a:logId]['silentState']
+        return
     endif
 
     let bn = bufnr(s:bufId(a:logId))
