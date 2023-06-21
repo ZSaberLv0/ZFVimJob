@@ -178,6 +178,11 @@ function! ZFAutoScriptTaskMap()
     return s:status
 endfunction
 
+function! ZFAutoScriptConfig(...)
+    let projDir = s:projDir(get(a:, 1, ''))
+    return get(s:config, projDir, {})
+endfunction
+
 function! ZFAutoScriptConfigMap()
     return s:config
 endfunction
@@ -356,9 +361,17 @@ function! s:appendJobInfo(jobStatus, text)
 endfunction
 
 " ============================================================
-if exists('g:ZFAutoScript')
-    for projDir in keys(g:ZFAutoScript)
-        call ZFAutoScript(projDir, g:ZFAutoScript[projDir])
+function! ZFAutoScriptConfigReload()
+    for projDir in keys(s:config)
+        call ZFAutoScriptRemove(projDir)
     endfor
-endif
+
+    if exists('g:ZFAutoScript')
+        for projDir in keys(g:ZFAutoScript)
+            call ZFAutoScript(projDir, g:ZFAutoScript[projDir])
+        endfor
+    endif
+endfunction
+
+call ZFAutoScriptConfigReload()
 
