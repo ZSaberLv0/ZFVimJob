@@ -8,7 +8,7 @@ if has('timers') || !get(g:, 'ZFJobTimerFallback', 1)
 endif
 
 if !exists('g:ZFJobTimerFallbackInterval')
-    let g:ZFJobTimerFallbackInterval = 50
+    let g:ZFJobTimerFallbackInterval = 10
 endif
 
 function! ZFJobTimerFallbackStart(delay, jobFunc)
@@ -122,7 +122,7 @@ function! s:implPostUpdate()
 
     try
         let g:ZFJobTimerFallbackCursorMoving += 1
-        if mode() == 'i'
+        if mode() == 'i' || mode() == 'n'
             if line('$') == 1
                 if col('.') > 1
                     call feedkeys("\<left>\<right>", 'n')
@@ -136,8 +136,6 @@ function! s:implPostUpdate()
                     call feedkeys("\<down>\<up>", 'n')
                 endif
             endif
-        else
-            call feedkeys("f\<esc>", 'n')
         endif
     finally
         let g:ZFJobTimerFallbackCursorMoving -= 1
