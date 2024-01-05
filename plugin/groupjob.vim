@@ -480,7 +480,7 @@ function! ZFGroupJobImpl_onJobExit(groupJobStatus, onExit, jobStatus, exitCode)
                     \   , a:exitCode
                     \   , ZFGroupJobInfo(a:jobStatus)
                     \ ))
-        call s:groupJobStop(a:groupJobStatus, a:jobStatus, g:ZFJOBSTOP)
+        call s:groupJobStop(a:groupJobStatus, a:jobStatus, a:exitCode)
         return
     endif
 

@@ -101,11 +101,11 @@ function! ZFJobTaskMapInfo()
 endfunction
 
 function! ZFJobInfo(jobStatus)
-    let jobCmd = get(get(a:jobStatus, 'jobOption', {}), 'jobCmd', '')
-    if type(jobCmd) == type(0)
-        return 'sleep ' . jobCmd . 'ms'
+    let T_jobCmd = get(get(a:jobStatus, 'jobOption', {}), 'jobCmd', '')
+    if type(T_jobCmd) == type(0)
+        return 'sleep ' . T_jobCmd . 'ms'
     else
-        return ZFJobFuncInfo(jobCmd)
+        return ZFJobFuncInfo(T_jobCmd)
     endif
 endfunction
 
