@@ -64,7 +64,7 @@ function! ZFAutoScript(projDir, param)
                     \ }
     elseif type(a:param) == type({})
         let jobOption = deepcopy(a:param)
-        let jobOption['outputTo'] = extend(deepcopy(g:ZFAutoScript_outputTo), get(jobOption, 'outputTo', {}))
+        let jobOption['outputTo'] = ZFJobOptionExtend(deepcopy(g:ZFAutoScript_outputTo), get(jobOption, 'outputTo', {}))
     else
         echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
         return -1

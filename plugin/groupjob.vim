@@ -318,7 +318,7 @@ function! s:groupJobRunNext(groupJobStatus)
     endif
 
     for jobOption in jobList
-        let jobOptionTmp = extend(extend(copy(jobOptionDefault), jobOption), {
+        let jobOptionTmp = extend(ZFJobOptionExtend(deepcopy(jobOptionDefault), jobOption), {
                     \   'onLog' : ZFJobFunc('ZFGroupJobImpl_onJobLog', [a:groupJobStatus, get(jobOption, 'onLog', '')]),
                     \   'onOutput' : ZFJobFunc('ZFGroupJobImpl_onJobOutput', [a:groupJobStatus, get(jobOption, 'onOutput', '')]),
                     \   'onExit' : ZFJobFunc('ZFGroupJobImpl_onJobExit', [a:groupJobStatus, get(jobOption, 'onExit', '')]),

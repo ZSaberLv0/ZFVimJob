@@ -221,6 +221,19 @@ function! ZFJobRunningToken(jobStatus, ...)
 endfunction
 
 " ============================================================
+" job option
+function! ZFJobOptionExtend(option1, option2)
+    for k2 in keys(a:option2)
+        if !exists('a:option1[k2]') || type(a:option1[k2]) != type({})
+            let a:option1[k2] = a:option2[k2]
+        else
+            call ZFJobOptionExtend(a:option1[k2], a:option2[k2])
+        endif
+    endfor
+    return a:option1
+endfunction
+
+" ============================================================
 " others
 function! CygpathFix_absPath(path)
     if len(a:path) <= 0|return ''|endif
