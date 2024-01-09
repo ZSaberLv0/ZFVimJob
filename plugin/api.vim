@@ -3,6 +3,12 @@ let g:ZFJOBSTOP = 'ZFJOBSTOP'
 let g:ZFJOBERROR = 'ZFJOBERROR'
 let g:ZFJOBTIMEOUT = 'ZFJOBTIMEOUT'
 
+let g:ZFJOB_T_NUMBER = type(0)
+let g:ZFJOB_T_STRING = type('')
+let g:ZFJOB_T_LIST = type([])
+let g:ZFJOB_T_DICT = type({})
+let g:ZFJOB_T_FUNC = type(function('function'))
+
 if !exists('g:ZFJobVerboseLog')
     let g:ZFJobVerboseLog = []
 endif
@@ -102,7 +108,7 @@ endfunction
 
 function! ZFJobInfo(jobStatus)
     let T_jobCmd = get(get(a:jobStatus, 'jobOption', {}), 'jobCmd', '')
-    if type(T_jobCmd) == type(0)
+    if type(T_jobCmd) == g:ZFJOB_T_NUMBER
         return 'sleep ' . T_jobCmd . 'ms'
     else
         return ZFJobFuncInfo(T_jobCmd)
@@ -110,7 +116,7 @@ function! ZFJobInfo(jobStatus)
 endfunction
 
 function! ZFJobLog(jobIdOrJobStatus, log)
-    if type(a:jobIdOrJobStatus) == type({})
+    if type(a:jobIdOrJobStatus) == g:ZFJOB_T_DICT
         let jobStatus = a:jobIdOrJobStatus
     else
         let jobStatus = ZFJobStatus(a:jobIdOrJobStatus)
@@ -221,14 +227,15 @@ augroup ZFVimJob_ZFJobOptionSetup_augroup
     autocmd User ZFJobOptionSetup silent
 augroup END
 function! s:jobStart(param)
-    if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
+    let paramType = type(a:param)
+    if paramType == g:ZFJOB_T_STRING || paramType == g:ZFJOB_T_NUMBER || ZFJobFuncCallable(a:param)
         let jobOption = {
                     \   'jobCmd' : a:param,
                     \ }
-    elseif type(a:param) == type({})
+    elseif paramType == g:ZFJOB_T_DICT
         let jobOption = copy(a:param)
     else
-        echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
+        echomsg '[ZFVimJob] unsupported param type: ' . paramType
         return -1
     endif
 
@@ -236,7 +243,7 @@ function! s:jobStart(param)
     doautocmd User ZFJobOptionSetup
     unlet g:ZFJobOptionSetup
 
-    if type(get(jobOption, 'jobCmd', '')) == type(0)
+    if type(get(jobOption, 'jobCmd', '')) == g:ZFJOB_T_NUMBER
         return s:sleepJob_jobStart(jobOption)
     endif
 
@@ -254,7 +261,7 @@ function! s:jobStart(param)
         return -1
     endif
 
-    if type(jobOption['jobCmd']) != type('') && ZFJobFuncCallable(jobOption['jobCmd'])
+    if type(jobOption['jobCmd']) != g:ZFJOB_T_STRING && ZFJobFuncCallable(jobOption['jobCmd'])
         return ZFJobFallback(jobOption)
     endif
 

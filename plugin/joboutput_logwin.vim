@@ -30,7 +30,7 @@ function! ZFJobOutput_logwin_init(outputStatus, jobStatus)
     let config = get(a:jobStatus['jobOption']['outputTo'], 'logwin', {})
     if empty(get(config, 'statusline', '')) && !empty(get(a:jobStatus['jobOption']['outputTo'], 'outputInfo', ''))
         let T_outputInfo = a:jobStatus['jobOption']['outputTo']['outputInfo']
-        if type(T_outputInfo) == type('')
+        if type(T_outputInfo) == g:ZFJOB_T_STRING
             let config = copy(config)
             let config['statusline'] = T_outputInfo
         elseif ZFJobFuncCallable(T_outputInfo)

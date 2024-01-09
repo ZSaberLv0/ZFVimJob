@@ -57,16 +57,17 @@ function! ZFAutoScript(projDir, param)
     endif
 
     let projDir = s:projDir(a:projDir)
-    if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
+    let paramType = type(a:param)
+    if paramType == g:ZFJOB_T_STRING || paramType == g:ZFJOB_T_NUMBER || ZFJobFuncCallable(a:param)
         let jobOption = {
                     \   'jobCmd' : a:param,
                     \   'outputTo' : g:ZFAutoScript_outputTo,
                     \ }
-    elseif type(a:param) == type({})
+    elseif paramType == g:ZFJOB_T_DICT
         let jobOption = deepcopy(a:param)
         let jobOption['outputTo'] = ZFJobOptionExtend(deepcopy(g:ZFAutoScript_outputTo), get(jobOption, 'outputTo', {}))
     else
-        echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
+        echomsg '[ZFVimJob] unsupported param type: ' . paramType
         return -1
     endif
     if !exists("jobOption['jobImplData']")
@@ -278,14 +279,14 @@ function! s:autoScriptFilterCheck(projDir, file)
     if empty(Fn_autoScriptFilter)
         return 0
     endif
-    if type(Fn_autoScriptFilter) == type([])
+    if type(Fn_autoScriptFilter) == g:ZFJOB_T_LIST
         let autoScriptFilterList = Fn_autoScriptFilter
     else
         let autoScriptFilterList = [Fn_autoScriptFilter]
     endif
 
     for Fn in autoScriptFilterList
-        if type(Fn) == type('')
+        if type(Fn) == g:ZFJOB_T_STRING
             if exists('*E2v')
                 let pattern = E2v(Fn)
             else

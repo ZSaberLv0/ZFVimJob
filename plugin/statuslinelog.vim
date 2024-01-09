@@ -40,13 +40,13 @@ function! ZFStatuslineLogValue(text, ...)
     let statuslineOld = get(option, 'statuslineOld', &g:statusline)
 
     let PrefixChecker = get(option, 'prefixChecker', function('ZF_StatuslineLog_prefix'))
-    if type(PrefixChecker) == type('') || !ZFJobFuncCallable(PrefixChecker)
+    if type(PrefixChecker) == g:ZFJOB_T_STRING || !ZFJobFuncCallable(PrefixChecker)
         let prefix = PrefixChecker
     else
         let prefix = ZFJobFuncCall(PrefixChecker, [statuslineOld])
     endif
     let PostfixChecker = get(option, 'postfixChecker', function('ZF_StatuslineLog_postfix'))
-    if type(PostfixChecker) == type('') || !ZFJobFuncCallable(PostfixChecker)
+    if type(PostfixChecker) == g:ZFJOB_T_STRING || !ZFJobFuncCallable(PostfixChecker)
         let postfix = PostfixChecker
     else
         let postfix = ZFJobFuncCall(PostfixChecker, [statuslineOld])
@@ -71,7 +71,7 @@ endif
 function! s:log(text, option)
     call s:cleanup()
 
-    if type(a:option) == type(0)
+    if type(a:option) == g:ZFJOB_T_NUMBER
         let option = {
                     \   'timeout' : a:option,
                     \ }

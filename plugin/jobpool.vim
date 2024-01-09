@@ -56,7 +56,7 @@ function! ZFJobPoolInfo(jobPoolStatus)
 endfunction
 
 function! ZFJobPoolLog(jobPoolIdOrJobPoolStatus, log)
-    if type(a:jobPoolIdOrJobPoolStatus) == type({})
+    if type(a:jobPoolIdOrJobPoolStatus) == g:ZFJOB_T_DICT
         let jobPoolStatus = a:jobPoolIdOrJobPoolStatus
     else
         let jobPoolStatus = ZFJobPoolStatus(a:jobPoolIdOrJobPoolStatus)
@@ -150,14 +150,15 @@ function! s:jobPoolQueueTake()
 endfunction
 
 function! s:jobPoolStart(param)
-    if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
+    let paramType = type(a:param)
+    if paramType == g:ZFJOB_T_STRING || paramType == g:ZFJOB_T_NUMBER || ZFJobFuncCallable(a:param)
         let jobOption = {
                     \   'jobCmd' : a:param,
                     \ }
-    elseif type(a:param) == type({})
+    elseif paramType == g:ZFJOB_T_DICT
         let jobOption = copy(a:param)
     else
-        echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
+        echomsg '[ZFVimJob] unsupported param type: ' . paramType
         return -1
     endif
 

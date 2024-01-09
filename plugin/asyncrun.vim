@@ -69,7 +69,7 @@ command! -nargs=0 ZFAsyncRunLogAll :call ZFAsyncRunLogAll()
 
 let s:taskNameDefault = '-'
 function! s:taskName(taskName)
-    if type(a:taskName) == type(0)
+    if type(a:taskName) == g:ZFJOB_T_NUMBER
         let jobStatus = ZFGroupJobStatus(a:taskName)
         if empty(jobStatus)
             return ''
@@ -93,16 +93,17 @@ function! ZFAsyncRun(param, ...)
     call ZFAsyncRunStop(taskName)
 
     let outputTo = deepcopy(g:ZFAsyncRun_outputTo)
-    if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
+    let paramType = type(a:param)
+    if paramType == g:ZFJOB_T_STRING || paramType == g:ZFJOB_T_NUMBER || ZFJobFuncCallable(a:param)
         let jobOption = {
                     \   'jobCmd' : a:param,
                     \   'outputTo' : outputTo,
                     \ }
-    elseif type(a:param) == type({})
+    elseif paramType == g:ZFJOB_T_DICT
         let jobOption = deepcopy(a:param)
         let jobOption['outputTo'] = extend(outputTo, get(jobOption, 'outputTo', {}))
     else
-        echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
+        echomsg '[ZFVimJob] unsupported param type: ' . paramType
         return -1
     endif
     let outputTo['initCallback'] = ZFJobFunc('ZFAsyncRunImpl_logwinOnInit', [taskName, get(outputTo, 'initCallback', '')])

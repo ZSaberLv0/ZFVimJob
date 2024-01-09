@@ -1,13 +1,14 @@
 
 function! ZFJobFallback(param)
-    if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
+    let paramType = type(a:param)
+    if paramType == g:ZFJOB_T_STRING || paramType == g:ZFJOB_T_NUMBER || ZFJobFuncCallable(a:param)
         let jobOption = {
                     \   'jobCmd' : a:param,
                     \ }
-    elseif type(a:param) == type({})
+    elseif paramType == g:ZFJOB_T_DICT
         let jobOption = copy(a:param)
     else
-        echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
+        echomsg '[ZFVimJob] unsupported param type: ' . paramType
         return -1
     endif
 
@@ -29,7 +30,7 @@ function! s:ZFJobFallback(jobOption)
     call ZFJobLog(jobStatus, 'start (fallback): `' . ZFJobInfo(jobStatus) . '`')
 
     let T_jobCmd = get(a:jobOption, 'jobCmd', '')
-    if type(T_jobCmd) == type('')
+    if type(T_jobCmd) == g:ZFJOB_T_STRING
         call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
 
         let jobCmd = T_jobCmd
@@ -38,7 +39,7 @@ function! s:ZFJobFallback(jobOption)
         endif
         let result = system(jobCmd)
         let exitCode = '' . v:shell_error
-    elseif type(T_jobCmd) == type(0)
+    elseif type(T_jobCmd) == g:ZFJOB_T_NUMBER
         call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
 
         " for fallback, sleep job has nothing to do
@@ -83,7 +84,7 @@ function! s:ZFJobFallback(jobOption)
             execute 'cd ' . fnameescape(cwdSaved)
         endif
 
-        if exists('T_result') && type(T_result) == type({}) && exists("T_result['output']") && exists("T_result['exitCode']")
+        if exists('T_result') && type(T_result) == g:ZFJOB_T_DICT && exists("T_result['output']") && exists("T_result['exitCode']")
             let result = T_result['output']
             let exitCode = '' . T_result['exitCode']
         endif

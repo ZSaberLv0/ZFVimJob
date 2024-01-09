@@ -1,6 +1,6 @@
 
 " show a tip of number of running jobs
-if !get(g:, 'ZFJobIndicator', 1)
+if !get(g:, 'ZFJobIndicator_enable', 1)
     finish
 endif
 
@@ -14,6 +14,7 @@ augroup END
 
 function! s:setup(jobOption)
     if !exists('*ZFPopupAvailable') || !ZFPopupAvailable()
+                \ || !get(g:, 'ZFJobIndicator', 1)
         return
     endif
     let a:jobOption['onEnter'] = ZFJobFunc('ZFJobIndicatorImpl_onEnter', [get(a:jobOption, 'onEnter', '')])

@@ -72,7 +72,7 @@ function! ZFLogWinAdd(logId, content)
         let s:status[a:logId] = s:statusInit(deepcopy(g:ZFLogWin_defaultConfig))
     endif
     let status = s:status[a:logId]
-    if type(a:content) == type([])
+    if type(a:content) == g:ZFJOB_T_LIST
         call extend(status['lines'], a:content)
     else
         call add(status['lines'], a:content)
@@ -396,7 +396,7 @@ function! s:logWinFocus(logId, autoCreate)
     endif
 
     let config = s:status[a:logId]['config']
-    if type(config['newWinCmd']) == type('') || !ZFJobFuncCallable(config['newWinCmd'])
+    if type(config['newWinCmd']) == g:ZFJOB_T_STRING || !ZFJobFuncCallable(config['newWinCmd'])
         execute config['newWinCmd']
     else
         call ZFJobFuncCall(config['newWinCmd'], [a:logId])
@@ -416,7 +416,7 @@ endfunction
 function! s:logWinStatusline(logId, statusline)
     if empty(a:statusline)
         return ''
-    elseif type(a:statusline) == type('')
+    elseif type(a:statusline) == g:ZFJOB_T_STRING
         return a:statusline
     elseif ZFJobFuncCallable(a:statusline)
         return ZFJobFuncCall(a:statusline, [a:logId])

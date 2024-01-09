@@ -116,7 +116,7 @@ function! ZFGroupJobInfo(groupJobStatus)
     endif
     let ret = []
     for jobGroup in a:groupJobStatus['jobOption']['jobList']
-        if type(jobGroup) == type([])
+        if type(jobGroup) == g:ZFJOB_T_LIST
             let retTmp = []
             for jobOption in jobGroup
                 let info = ZFGroupJobChildImpl()['jobInfo']({
@@ -133,7 +133,7 @@ function! ZFGroupJobInfo(groupJobStatus)
                     call add(ret, '[' . join(retTmp, ', ') . ']')
                 endif
             endif
-        elseif type(jobGroup) == type({})
+        elseif type(jobGroup) == g:ZFJOB_T_DICT
             let info = ZFGroupJobChildImpl()['jobInfo']({
                         \   'jobOption' : jobGroup,
                         \ })
@@ -146,7 +146,7 @@ function! ZFGroupJobInfo(groupJobStatus)
 endfunction
 
 function! ZFGroupJobLog(groupJobIdOrGroupJobStatus, log)
-    if type(a:groupJobIdOrGroupJobStatus) == type({})
+    if type(a:groupJobIdOrGroupJobStatus) == g:ZFJOB_T_DICT
         let groupJobStatus = a:groupJobIdOrGroupJobStatus
     else
         let groupJobStatus = ZFGroupJobStatus(a:groupJobIdOrGroupJobStatus)
@@ -210,14 +210,15 @@ augroup ZFVimJob_ZFGroupJobOptionSetup_augroup
     autocmd User ZFGroupJobOptionSetup silent
 augroup END
 function! s:groupJobStart(param)
-    if type(a:param) == type('') || type(a:param) == type(0) || ZFJobFuncCallable(a:param)
+    let paramType = type(a:param)
+    if paramType == g:ZFJOB_T_STRING || paramType == g:ZFJOB_T_NUMBER || ZFJobFuncCallable(a:param)
         let groupJobOption = {
                     \   'jobCmd' : a:param,
                     \ }
-    elseif type(a:param) == type({})
+    elseif paramType == g:ZFJOB_T_DICT
         let groupJobOption = copy(a:param)
     else
-        echomsg '[ZFVimJob] unsupported param type: ' . type(a:param)
+        echomsg '[ZFVimJob] unsupported param type: ' . paramType
         return -1
     endif
 
@@ -233,7 +234,7 @@ function! s:groupJobStart(param)
     else
         let jobIndex = len(groupJobOption['jobList']) - 1
         while jobIndex >= 0
-            if type(groupJobOption['jobList'][jobIndex]) != type([])
+            if type(groupJobOption['jobList'][jobIndex]) != g:ZFJOB_T_LIST
                 let groupJobOption['jobList'][jobIndex] = [groupJobOption['jobList'][jobIndex]]
             endif
             let jobIndex -= 1

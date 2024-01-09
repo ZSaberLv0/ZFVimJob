@@ -51,7 +51,7 @@ function! ZFJobOutput(jobStatus, content, ...)
     else
         while 1
             let Fn = get(impl, 'fallbackCheck', 0)
-            if type(Fn) != type(function('function'))
+            if type(Fn) != g:ZFJOB_T_FUNC
                 break
             endif
             let outputTypeTmp = Fn()
@@ -74,7 +74,7 @@ function! ZFJobOutput(jobStatus, content, ...)
                     \   'outputImplData' : {},
                     \ }
         let Fn = get(impl, 'init', 0)
-        if type(Fn) == type(function('function'))
+        if type(Fn) == g:ZFJOB_T_FUNC
             call Fn(s:status[outputId], a:jobStatus)
         endif
     endif
@@ -82,7 +82,7 @@ function! ZFJobOutput(jobStatus, content, ...)
     if index(s:status[outputId]['jobList'], a:jobStatus) < 0
         call add(s:status[outputId]['jobList'], a:jobStatus)
         let Fn = get(impl, 'attach', 0)
-        if type(Fn) == type(function('function'))
+        if type(Fn) == g:ZFJOB_T_FUNC
             call Fn(s:status[outputId], a:jobStatus)
         endif
     endif
@@ -90,8 +90,8 @@ function! ZFJobOutput(jobStatus, content, ...)
     call s:autoCloseStop(outputId)
 
     let Fn = get(impl, 'output', 0)
-    if type(Fn) == type(function('function'))
-        if type(a:content) == type([])
+    if type(Fn) == g:ZFJOB_T_FUNC
+        if type(a:content) == g:ZFJOB_T_LIST
             if !empty(a:content)
                 call Fn(s:status[outputId], a:jobStatus, a:content, get(a:, 1, 'stdout'))
             endif
@@ -117,7 +117,7 @@ function! ZFJobOutputCleanup(jobStatus)
     call remove(s:status[outputId]['jobList'], index)
 
     let Fn = get(g:ZFJobOutputImpl[s:status[outputId]['outputType']], 'detach', 0)
-    if type(Fn) == type(function('function'))
+    if type(Fn) == g:ZFJOB_T_FUNC
         call Fn(s:status[outputId], a:jobStatus)
     endif
 
@@ -223,14 +223,14 @@ function! ZFJobOutputImpl_autoCloseOnTimer(outputId, jobStatus, ...)
 
     if index >= 0
         let Fn = get(g:ZFJobOutputImpl[outputStatus['outputType']], 'detach', 0)
-        if type(Fn) == type(function('function'))
+        if type(Fn) == g:ZFJOB_T_FUNC
             call Fn(outputStatus, a:jobStatus)
         endif
     endif
 
     if empty(outputStatus['jobList'])
         let Fn = get(g:ZFJobOutputImpl[outputStatus['outputType']], 'cleanup', 0)
-        if type(Fn) == type(function('function'))
+        if type(Fn) == g:ZFJOB_T_FUNC
             call Fn(outputStatus, a:jobStatus)
         endif
     endif

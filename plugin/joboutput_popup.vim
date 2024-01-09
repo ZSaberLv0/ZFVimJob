@@ -63,7 +63,7 @@ function! s:updateOutputInfo(outputStatus, jobStatus)
     else
         let content = copy(popupContent)
         let Fn = a:jobStatus['jobOption']['outputTo']['outputInfo']
-        if type(Fn) == type('')
+        if type(Fn) == g:ZFJOB_T_STRING
             call add(content, '')
             call add(content, Fn)
         elseif ZFJobFuncCallable(Fn)
