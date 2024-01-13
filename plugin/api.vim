@@ -45,9 +45,14 @@ endfunction
 " 'jobCmd' : 'job cmd',
 "            // jobCmd can be:
 "            // * string, shell command to run as job
-"            // * vim `function(jobStatus)` or any callable object to `ZFJobFuncCall()`,
-"            //   return `{output:xxx, exitCode:0}` to indicate invoke result,
-"            //   if none, it's considered as success
+"            // * vim `function(jobStatus)` or any callable object to `ZFJobFuncCall()`, return:
+"            //   * `{output:xxx, exitCode:0}` to indicate invoke result, if none, it's considered as success
+"            //   * `{notifySend(jobStatus, text), notifyStop:function(jobStatus), }` to indicate job is running in fake async mode,
+"            //     the `notifySend` would be called if owner `ZFJobSend()` called,
+"            //     the `notifyStop` would be called if owner `ZFJobStop()` called,
+"            //     also, you must call these method to implement job logic
+"            //     * `ZFJobFallback_notifyOutput(jobStatus, textList, type[stdout/stderr])`
+"            //     * `ZFJobFallback_notifyExit(jobStatus, exitCode)`
 "            // * number, use `ZFJobTimerStart()` to delay,
 "            //   has better performance than starting a `sleep` job
 "   'jobCwd' : 'optional, cwd to run the job',
@@ -73,10 +78,12 @@ function! ZFJobStart(param)
     return s:jobStart(a:param)
 endfunction
 
+" return 0/1 : whether stop success
 function! ZFJobStop(jobId, ...)
     return s:jobStop(ZFJobStatus(a:jobId), '' . get(a:, 1, g:ZFJOBSTOP), 1)
 endfunction
 
+" return 0/1 : whether send success
 function! ZFJobSend(jobId, text)
     return s:jobSend(a:jobId, a:text)
 endfunction
@@ -175,53 +182,6 @@ function! s:jobRemove(jobId)
     endif
 endfunction
 
-" for sleep job, jobImplData: {
-"   'sleepJob' : 'timerId', // ensured exists for sleepJob, reset to -1 when sleep done
-" }
-function! s:sleepJob_jobStart(jobOption)
-    let jobId = s:jobIdNext()
-    let jobStatus = {
-                \   'jobId' : jobId,
-                \   'jobOption' : a:jobOption,
-                \   'jobOutput' : [],
-                \   'exitCode' : '',
-                \   'jobImplData' : copy(get(a:jobOption, 'jobImplData', {})),
-                \ }
-    call s:jobLog(jobStatus, 'start: `' . ZFJobInfo(jobStatus) . '`')
-    let s:jobMap[jobId] = jobStatus
-    let jobStatus['jobImplData']['sleepJob'] = ZFJobTimerStart(
-                \ a:jobOption['jobCmd'],
-                \ ZFJobFunc('ZFJobImpl_sleepJob_jobStartDelay', [jobId]))
-    call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
-    return jobId
-endfunction
-function! ZFJobImpl_sleepJob_jobStartDelay(jobId, ...)
-    let jobStatus = ZFJobStatus(a:jobId)
-    if empty(jobStatus)
-        return
-    endif
-    call s:sleepJob_jobStop(jobStatus, '0')
-endfunction
-function! s:sleepJob_jobStop(jobStatus, exitCode)
-    call s:jobRemove(a:jobStatus['jobId'])
-    call s:jobLog(a:jobStatus, 'stop with exitCode ' . a:exitCode . ': `' . ZFJobInfo(a:jobStatus) . '`')
-
-    let sleepJobTimerId = a:jobStatus['jobImplData']['sleepJob']
-    if sleepJobTimerId >= 0
-        let a:jobStatus['jobImplData']['sleepJob'] = -1
-        call ZFJobTimerStop(sleepJobTimerId)
-        let ret = 1
-    else
-        let ret = 0
-    endif
-
-    call ZFJobFuncCall(get(a:jobStatus['jobOption'], 'onExit', ''), [a:jobStatus, a:exitCode])
-    call ZFJobOutputCleanup(a:jobStatus)
-
-    let a:jobStatus['jobId'] = -1
-    return ret
-endfunction
-
 augroup ZFVimJob_ZFJobOptionSetup_augroup
     autocmd!
     autocmd User ZFJobOptionSetup silent
@@ -255,14 +215,14 @@ function! s:jobStart(param)
     if !ZFJobAvailable()
         redraw!
         if get(jobOption, 'jobFallback', 1)
-            return ZFJobFallback(jobOption)
+            return s:fallbackJob_jobStart(jobOption)
         endif
         echomsg '[ZFVimJob] no job impl available'
         return -1
     endif
 
     if type(jobOption['jobCmd']) != g:ZFJOB_T_STRING && ZFJobFuncCallable(jobOption['jobCmd'])
-        return ZFJobFallback(jobOption)
+        return s:fallbackJob_jobStart(jobOption)
     endif
 
     let jobStatus = {
@@ -306,10 +266,6 @@ function! s:jobStop(jobStatus, exitCode, callImpl)
     endif
     let a:jobStatus['exitCode'] = a:exitCode
 
-    if exists("a:jobStatus['jobImplData']['sleepJob']")
-        return s:sleepJob_jobStop(a:jobStatus, a:exitCode)
-    endif
-
     if get(a:jobStatus['jobImplData'], 'jobOutputDelayTaskId', -1) >= 0
         call ZFJobTimerStop(a:jobStatus['jobImplData']['jobOutputDelayTaskId'])
         unlet a:jobStatus['jobImplData']['jobOutputDelayTaskId']
@@ -318,34 +274,37 @@ function! s:jobStop(jobStatus, exitCode, callImpl)
             unlet a:jobStatus['jobImplData']['jobOutputDelayExitCode']
         endif
     endif
+    let jobTimeoutId = get(a:jobStatus['jobImplData'], 'jobTimeoutId', -1)
+    if jobTimeoutId != -1
+        call ZFJobTimerStop(jobTimeoutId)
+        unlet a:jobStatus['jobImplData']['jobTimeoutId']
+    endif
 
     call s:jobLog(a:jobStatus, 'stop with exitCode ' . a:exitCode . ': `' . ZFJobInfo(a:jobStatus) . '`')
 
-    if a:jobStatus['jobId'] == 0
-        let jobStatus = a:jobStatus
-    else
+    if a:jobStatus['jobId'] > 0
         let jobStatus = s:jobRemove(a:jobStatus['jobId'])
         if empty(jobStatus)
             return 0
         endif
     endif
 
-    let jobTimeoutId = get(jobStatus['jobImplData'], 'jobTimeoutId', -1)
-    if jobTimeoutId != -1
-        call ZFJobTimerStop(jobTimeoutId)
-        unlet jobStatus['jobImplData']['jobTimeoutId']
-    endif
-
-    if a:callImpl
-        let ret = ZFJobFuncCall(g:ZFJobImpl['jobStop'], [jobStatus])
+    if exists("a:jobStatus['jobImplData']['sleepJob']")
+        let ret = s:sleepJob_jobStop(a:jobStatus, a:exitCode)
+    elseif exists("a:jobStatus['jobImplData']['fallbackJob_fakeAsync']")
+        let ret = s:fallbackJob_jobStop(a:jobStatus, a:exitCode)
     else
-        let ret = 1
+        if a:callImpl
+            let ret = ZFJobFuncCall(g:ZFJobImpl['jobStop'], [a:jobStatus])
+        else
+            let ret = 1
+        endif
     endif
 
-    call ZFJobFuncCall(get(jobStatus['jobOption'], 'onExit', ''), [jobStatus, a:exitCode])
+    call ZFJobFuncCall(get(a:jobStatus['jobOption'], 'onExit', ''), [a:jobStatus, a:exitCode])
     call ZFJobOutputCleanup(a:jobStatus)
 
-    let jobStatus['jobId'] = -1
+    let a:jobStatus['jobId'] = -1
     return ret
 endfunction
 
@@ -366,10 +325,6 @@ function! s:jobSend(jobId, text)
     if empty(jobStatus)
         return 0
     endif
-    let Fn_jobSend = get(g:ZFJobImpl, 'jobSend', '')
-    if empty(Fn_jobSend)
-        return 0
-    endif
 
     call s:jobLog(jobStatus, 'send: ' . a:text)
     let jobEncoding = ZFJobImplSrcEncoding(jobStatus)
@@ -379,7 +334,17 @@ function! s:jobSend(jobId, text)
         let text = iconv(a:text, &encoding, jobEncoding)
     endif
 
-    return ZFJobFuncCall(Fn_jobSend, [jobStatus, text])
+    if exists("a:jobStatus['jobImplData']['sleepJob']")
+        return 0
+    elseif exists("a:jobStatus['jobImplData']['fallbackJob_fakeAsync']")
+        return s:fallbackJob_jobSend(a:jobStatus, text)
+    else
+        let Fn_jobSend = get(g:ZFJobImpl, 'jobSend', '')
+        if empty(Fn_jobSend)
+            return 0
+        endif
+        return ZFJobFuncCall(Fn_jobSend, [jobStatus, text])
+    endif
 endfunction
 
 function! ZFJobImpl_onOutput(jobStatus, textList, type)
@@ -592,5 +557,190 @@ function! s:envForVar(envDesired, var)
     execute 'let def = $' . a:var
     let def = get(a:envDesired, a:var, def)
     return substitute(def, ' ', '\\\\ ', 'g')
+endfunction
+
+" ============================================================
+" for sleep job, jobImplData: {
+"   'sleepJob' : 'timerId', // ensured exists for sleepJob, reset to -1 when sleep done
+" }
+function! s:sleepJob_jobStart(jobOption)
+    let jobId = s:jobIdNext()
+    let jobStatus = {
+                \   'jobId' : jobId,
+                \   'jobOption' : a:jobOption,
+                \   'jobOutput' : [],
+                \   'exitCode' : '',
+                \   'jobImplData' : copy(get(a:jobOption, 'jobImplData', {})),
+                \ }
+    call s:jobLog(jobStatus, 'start: `' . ZFJobInfo(jobStatus) . '`')
+    let s:jobMap[jobId] = jobStatus
+    let jobStatus['jobImplData']['sleepJob'] = ZFJobTimerStart(
+                \ a:jobOption['jobCmd'],
+                \ ZFJobFunc('ZFJobImpl_sleepJob_jobStartDelay', [jobId]))
+    call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
+    return jobId
+endfunction
+function! ZFJobImpl_sleepJob_jobStartDelay(jobId, ...)
+    let jobStatus = ZFJobStatus(a:jobId)
+    if empty(jobStatus)
+        return
+    endif
+    call s:jobStop(jobStatus, '0', 0)
+endfunction
+function! s:sleepJob_jobStop(jobStatus, exitCode)
+    let sleepJobTimerId = a:jobStatus['jobImplData']['sleepJob']
+    if sleepJobTimerId >= 0
+        let a:jobStatus['jobImplData']['sleepJob'] = -1
+        call ZFJobTimerStop(sleepJobTimerId)
+        return 1
+    else
+        return 0
+    endif
+endfunction
+
+" ============================================================
+" for fallback job, jobImplData: {
+"   'fallbackJob_fakeAsync' : { // ensured exists if in fake async mode
+"     'notifySend' : function(jobStatus, text),
+"     'notifyStop' : function(jobStatus, exitCode),
+"   },
+" }
+function! s:fallbackJob_jobStart(param)
+    let paramType = type(a:param)
+    if paramType == g:ZFJOB_T_STRING || paramType == g:ZFJOB_T_NUMBER || ZFJobFuncCallable(a:param)
+        let jobOption = {
+                    \   'jobCmd' : a:param,
+                    \ }
+    elseif paramType == g:ZFJOB_T_DICT
+        let jobOption = copy(a:param)
+    else
+        echomsg '[ZFVimJob] unsupported param type: ' . paramType
+        return -1
+    endif
+
+    let envSaved = ZFJobImplEnvUpdate(get(jobOption, 'jobEnv', {}))
+    let ret = s:fallbackJob_jobStartImpl(jobOption)
+    call ZFJobImplEnvRestore(envSaved)
+    return ret
+endfunction
+
+function! s:fallbackJob_jobStartImpl(jobOption)
+    let jobId = s:jobIdNext()
+    let jobStatus = {
+                \   'jobId' : jobId,
+                \   'jobOption' : a:jobOption,
+                \   'jobOutput' : [],
+                \   'exitCode' : '',
+                \   'jobImplData' : copy(get(a:jobOption, 'jobImplData', {})),
+                \ }
+    let s:jobMap[jobId] = jobStatus
+
+    call s:jobLog(jobStatus, 'start (fallback): `' . ZFJobInfo(jobStatus) . '`')
+
+    let T_jobCmd = get(a:jobOption, 'jobCmd', '')
+    if type(T_jobCmd) == g:ZFJOB_T_STRING
+        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
+
+        let jobCmd = T_jobCmd
+        if !empty(get(a:jobOption, 'jobCwd', ''))
+            let jobCmd = 'cd "' . a:jobOption['jobCwd'] . '" && ' . jobCmd
+        endif
+        let result = system(jobCmd)
+        let exitCode = '' . v:shell_error
+    elseif type(T_jobCmd) == g:ZFJOB_T_NUMBER
+        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
+
+        " for fallback, sleep job has nothing to do
+        let result = ''
+        let exitCode = '0'
+    elseif ZFJobFuncCallable(T_jobCmd)
+        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
+
+        if !empty(get(a:jobOption, 'jobCwd', ''))
+            let cwdSaved = CygpathFix_absPath(getcwd())
+            let jobCwd = CygpathFix_absPath(a:jobOption['jobCwd'])
+            if cwdSaved != jobCwd
+                execute 'cd ' . fnameescape(jobCwd)
+            else
+                let cwdSaved = ''
+            endif
+        else
+            let cwdSaved = ''
+        endif
+
+        let result = ''
+        let exitCode = '0'
+        if exists('*execute')
+            try
+                let result = execute('let T_result = ZFJobFuncCall(T_jobCmd, [jobStatus])', 'silent')
+            catch
+                let result = v:exception
+                let exitCode = '-1'
+            endtry
+        else
+            try
+                redir => result
+                silent let T_result = ZFJobFuncCall(T_jobCmd, [jobStatus])
+            catch
+                let result = v:exception
+            finally
+                redir END
+            endtry
+        endif
+
+        if !empty(cwdSaved)
+            execute 'cd ' . fnameescape(cwdSaved)
+        endif
+
+        if exists('T_result') && type(T_result) == g:ZFJOB_T_DICT
+            if exists("T_result['notifyStop']")
+                let jobStatus['jobImplData']['fallbackJob_fakeAsync'] = T_result
+                return jobId
+            elseif exists("T_result['output']") && exists("T_result['exitCode']")
+                let result = T_result['output']
+                let exitCode = '' . T_result['exitCode']
+            endif
+        endif
+    else
+        call s:jobLog(jobStatus, 'invalid jobCmd')
+        call s:jobRemove(jobStatus['jobId'])
+        return -1
+    endif
+
+    let jobEncoding = ZFJobImplSrcEncoding(jobStatus)
+    if empty(jobEncoding)
+        let jobOutput = result
+    else
+        let jobOutput = iconv(result, jobEncoding, &encoding)
+    endif
+    call ZFJobImpl_onOutput(jobStatus, split(jobOutput, "\n"), 'stdout')
+
+    call ZFJobImpl_onExit(jobStatus, exitCode)
+    if exitCode != '0'
+        return -1
+    else
+        return 0
+    endif
+endfunction
+
+" only called when jobImplData.fallbackJob_fakeAsync is set
+function! s:fallbackJob_jobSend(jobStatus, text)
+    call ZFJobFuncCall(get(a:jobStatus['jobImplData']['fallbackJob_fakeAsync'], 'notifySend', ''), [a:jobStatus, a:text])
+endfunction
+" only called when jobImplData.fallbackJob_fakeAsync is set
+function! s:fallbackJob_jobStop(jobStatus, exitCode)
+    call ZFJobFuncCall(get(a:jobStatus['jobImplData']['fallbackJob_fakeAsync'], 'notifyStop', ''), [a:jobStatus, a:exitCode])
+endfunction
+
+function! ZFJobFallback_notifyOutput(jobStatus, textList, type)
+    if a:jobStatus['jobId'] > 0
+        call ZFJobImpl_onOutput(a:jobStatus, a:textList, a:type)
+    endif
+endfunction
+
+function! ZFJobFallback_notifyExit(jobStatus, exitCode)
+    if a:jobStatus['jobId'] > 0
+        call ZFJobImpl_onExit(a:jobStatus, a:exitCode)
+    endif
 endfunction
 

@@ -5,9 +5,6 @@ function! ZFJobFuncImpl_funcWrap(cmd, ...)
     for cmd in a:cmd
         execute cmd
     endfor
-    if exists('ZFJobFuncRet')
-        return ZFJobFuncRet
-    endif
 endfunction
 
 let s:jobFuncKey_func = 'ZF_fn'

@@ -263,9 +263,14 @@ but there are some limitations you should concern:
       'jobCmd' : 'job cmd',
                  // jobCmd can be:
                  // * string, shell command to run as job
-                 // * vim `function(jobStatus)` or any callable object to `ZFJobFuncCall()`,
-                 //   return `{output:xxx, exitCode:0}` to indicate invoke result,
-                 //   if none, it's considered as success
+                 // * vim `function(jobStatus)` or any callable object to `ZFJobFuncCall()`, return:
+                 //   * `{output:xxx, exitCode:0}` to indicate invoke result, if none, it's considered as success
+                 //   * `{notifySend(jobStatus, text), notifyStop:function(jobStatus), }` to indicate job is running in fake async mode,
+                 //     the `notifySend` would be called if owner `ZFJobSend()` called,
+                 //     the `notifyStop` would be called if owner `ZFJobStop()` called,
+                 //     also, you must call these method to implement job logic
+                 //     * `ZFJobFallback_notifyOutput(jobStatus, textList, type[stdout/stderr])`
+                 //     * `ZFJobFallback_notifyExit(jobStatus, exitCode)`
                  // * number, use `ZFJobTimerStart()` to delay,
                  //   has better performance than starting a `sleep` job
       'jobCwd' : 'optional, cwd to run the job',
@@ -421,13 +426,11 @@ we supply a wrapper to simulate:
         ```
         let Fn = ZFJobFunc([
                 \   'let ret = Wrap(a:1, a:2, a:3, a:4)',
-                \   'let ZFJobFuncRet = ret["xxx"]',
+                \   'return ret["xxx"]',
                 \ ], ['a', 'b'])
         call ZFJobFuncCall(Fn, ['c', 'd'])
         " Wrap() would be called as: Wrap('a', 'b', 'c', 'd')
         ```
-
-        to return values within the strings to `:execute`, `let ZFJobFuncRet = yourValue`
 
 * `ZFJobFuncCall(jobFunc, argList)` : run the function of `ZFJobFunc()`
 * `ZFJobFuncInfo(jobFunc)` : return function info
