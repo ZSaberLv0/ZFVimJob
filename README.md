@@ -265,7 +265,7 @@ but there are some limitations you should concern:
                  // * string, shell command to run as job
                  // * vim `function(jobStatus)` or any callable object to `ZFJobFuncCall()`, return:
                  //   * `{output:xxx, exitCode:0}` to indicate invoke result, if none, it's considered as success
-                 //   * `{notifySend(jobStatus, text), notifyStop:function(jobStatus), }` to indicate job is running in fake async mode,
+                 //   * `{notifySend(jobStatus, text), notifyStop:function(jobStatus, exitCode), }` to indicate job is running in fake async mode,
                  //     the `notifySend` would be called if owner `ZFJobSend()` called,
                  //     the `notifyStop` would be called if owner `ZFJobStop()` called,
                  //     also, you must call these method to implement job logic
