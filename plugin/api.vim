@@ -326,7 +326,7 @@ function! s:jobSend(jobId, text)
         return 0
     endif
 
-    call s:jobLog(jobStatus, 'send: ' . a:text)
+    call s:jobLog(jobStatus, 'send: ' . substitute(substitute(a:text, '\n', '\\n', 'g'), '\r', '\\r', 'g'))
     let jobEncoding = ZFJobImplSrcEncoding(jobStatus)
     if empty(jobEncoding)
         let text = a:text

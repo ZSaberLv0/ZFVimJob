@@ -122,7 +122,7 @@ function! ZFJobFuncInfo(func)
         if len(a:func) == 1
             return string(a:func[0])
         else
-            return string(a:func)
+            return substitute(string(a:func), '\n', ' ', 'g')
         endif
     else
         return string(a:func)
