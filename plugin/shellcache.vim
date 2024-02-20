@@ -71,7 +71,7 @@ function! s:decode(item)
 endfunction
 
 function! _ZFShellCache_onExit(cmd, callback, jobStatus, exitCode)
-    let result = join(a:jobStatus['jobOutput'], "\n")
+    let result = a:exitCode == '0' ? join(a:jobStatus['jobOutput'], "\n") : ''
     let resultPrev = s:cache[a:cmd]['result']
 
     let s:cache[a:cmd]['jobId'] = -1
