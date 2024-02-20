@@ -1,7 +1,7 @@
 
 " util to cache shell results
 "
-" function! OnGetNodeVersion(cmd, result)
+" function! OnGetNodeVersion(cmd, result, exitCode)
 " endfunction
 " let result = ZFShellCache('node --version', function('OnGetNodeVersion'))
 "
@@ -71,16 +71,16 @@ function! s:decode(item)
 endfunction
 
 function! _ZFShellCache_onExit(cmd, callback, jobStatus, exitCode)
-    let result = a:exitCode == '0' ? join(a:jobStatus['jobOutput'], "\n") : ''
+    let result = join(a:jobStatus['jobOutput'], "\n")
     let resultPrev = s:cache[a:cmd]['result']
 
     let s:cache[a:cmd]['jobId'] = -1
-    let s:cache[a:cmd]['result'] = result
+    let s:cache[a:cmd]['result'] = a:exitCode == '0' ? result : ''
     let s:cache[a:cmd]['cacheTime'] = localtime()
     call s:cacheSave()
 
-    if result != resultPrev
-        call ZFJobFuncCall(a:callback, [a:cmd, result])
+    if result != resultPrev || a:exitCode != '0'
+        call ZFJobFuncCall(a:callback, [a:cmd, result, a:exitCode])
     endif
 endfunction
 function! s:update(cmd, callback)

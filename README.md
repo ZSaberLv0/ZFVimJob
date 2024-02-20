@@ -665,7 +665,7 @@ options:
     util to cache shell results
 
     ```
-    function! OnGetNodeVersion(cmd, result)
+    function! OnGetNodeVersion(cmd, result, exitCode)
     endfunction
     let result = ZFShellCache('node --version', function('OnGetNodeVersion'))
     ```
