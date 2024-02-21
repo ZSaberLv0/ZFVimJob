@@ -17,7 +17,6 @@
             * [Popup](#popup)
         * [Async run](#async-run)
         * [Auto script](#auto-script)
-        * [Shell cache](#shell-cache)
 * [Other](#other)
     * [verbose log](#verbose-log)
     * [custom impl](#custom-impl)
@@ -656,24 +655,6 @@ options:
                 \   },
                 \ }
     ```
-
-
-### Shell cache
-
-* `let result = ZFShellCache('some shell cmd', ...)`
-
-    util to cache shell results
-
-    ```
-    function! OnGetNodeVersion(cmd, result, exitCode)
-    endfunction
-    let result = ZFShellCache('node --version', function('OnGetNodeVersion'))
-    ```
-
-    if cache exists or job not available, the function return the result immediately
-    otherwise, return an empty string, and call the callback on the future
-
-    the cache file path can be configured by `let g:ZFShellCache_cacheFile = 'xxx'`
 
 
 # Other
