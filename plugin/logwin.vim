@@ -116,9 +116,7 @@ function! s:ZFLogWinClear(logId, ...)
     endif
     let alsoDeleteStatus = get(a:, 1, 0)
     if alsoDeleteStatus
-        execute bn . 'bdelete'
-        call s:statusCleanup(s:status[a:logId])
-        unlet s:status[a:logId]
+        call s:bdeleteWhenAvailable(bn, a:logId)
         return
     endif
 
@@ -172,8 +170,10 @@ function! s:ZFLogWinShow(logId)
     endif
 
     let oldPos = s:logWinFocus(a:logId, 1)
-    call s:redraw(a:logId, 'none')
-    call s:logWinRestorePos(oldPos)
+    if !empty(oldPos)
+        call s:redraw(a:logId, 'none')
+        call s:logWinRestorePos(oldPos)
+    endif
 endfunction
 
 function! ZFLogWinFocus(logId)
@@ -181,7 +181,9 @@ function! ZFLogWinFocus(logId)
 endfunction
 function! s:ZFLogWinFocus(logId)
     let oldPos = s:logWinFocus(a:logId, 1)
-    call s:redraw(a:logId, 'none')
+    if !empty(oldPos)
+        call s:redraw(a:logId, 'none')
+    endif
     return oldPos
 endfunction
 function! ZFLogWinIsFocused(logId)
@@ -200,7 +202,7 @@ function! ZFLogWinHide(logId)
     call s:logWinAddCleanup(s:status[a:logId])
     let bn = bufnr(s:bufId(a:logId))
     if bn != -1
-        execute bn . 'bdelete'
+        call s:bdeleteWhenAvailable(bn, '')
     endif
 endfunction
 
@@ -240,6 +242,11 @@ endfunction
 
 function! ZFLogWinTaskMap()
     return s:status
+endfunction
+
+" not available when inside command line window
+function! ZFLogWinAvailable()
+    return !exists('*getcmdwintype') || empty(getcmdwintype())
 endfunction
 
 " ============================================================
@@ -301,20 +308,22 @@ function! s:logWinOnAdd(logId)
     endif
 
     let oldPos = s:logWinFocus(a:logId, 1)
-    let config = s:status[a:logId]['config']
-    let cursor = getpos('.')
-    let moveTo = 'none'
-    if config['revertLines']
-        let moveTo = (cursor[1] == 1) ? 'head' : 'none'
-    else
-        if !exists('b:ZFLogWinTailPos')
-            let b:ZFLogWinTailPos = 1
+    if !empty(oldPos)
+        let config = s:status[a:logId]['config']
+        let cursor = getpos('.')
+        let moveTo = 'none'
+        if config['revertLines']
+            let moveTo = (cursor[1] == 1) ? 'head' : 'none'
+        else
+            if !exists('b:ZFLogWinTailPos')
+                let b:ZFLogWinTailPos = 1
+            endif
+            let moveTo = (cursor[1] >= b:ZFLogWinTailPos) ? 'tail' : 'none'
+            let b:ZFLogWinTailPos = len(s:status[a:logId]['lines'])
         endif
-        let moveTo = (cursor[1] >= b:ZFLogWinTailPos) ? 'tail' : 'none'
-        let b:ZFLogWinTailPos = len(s:status[a:logId]['lines'])
+        call s:redraw(a:logId, moveTo)
+        call s:logWinRestorePos(oldPos)
     endif
-    call s:redraw(a:logId, moveTo)
-    call s:logWinRestorePos(oldPos)
 endfunction
 function! s:logWinAddCleanup(status)
     if a:status['lazyUpdateTimerId'] != -1
@@ -371,6 +380,10 @@ function! s:redraw(logId, moveTo)
 endfunction
 
 function! s:logWinFocus(logId, autoCreate)
+    if !ZFLogWinAvailable()
+        return {}
+    endif
+
     let bn = bufnr(s:bufId(a:logId))
     if bn == -1 && !a:autoCreate
         return {}
@@ -472,4 +485,50 @@ function! s:logWinRestorePos(oldPos)
         silent! normal gv
     endif
 endfunction
+
+" ============================================================
+" delay bdelete when inside command line window
+function! s:bdeleteWhenAvailable(bufnr, logIdToClear)
+    if ZFLogWinAvailable() || !ZFJobTimerAvailable()
+        call s:bdeleteAction(a:bufnr, a:logIdToClear)
+    else
+        if !exists('s:bdeleteQueue')
+            let s:bdeleteQueue = []
+        endif
+        call add(s:bdeleteQueue, {
+                    \   'bufnr' : a:bufnr,
+                    \   'logIdToClear' : a:logIdToClear,
+                    \ })
+    endif
+endfunction
+function! s:bdeleteAction(bufnr, logIdToClear)
+    execute a:bufnr . 'bdelete'
+    if exists('s:status[a:logIdToClear]')
+        call s:statusCleanup(s:status[a:logIdToClear])
+        unlet s:status[a:logIdToClear]
+    endif
+endfunction
+function! _ZFLogWin_bdeleteQueueProcessAction(...)
+    let s:bdeleteQueueProcessDelayId = -1
+    if !exists('s:bdeleteQueue') || empty(s:bdeleteQueue)
+        return
+    endif
+    let queue = s:bdeleteQueue
+    let s:bdeleteQueue = []
+    for item in queue
+        call s:bdeleteAction(item['bufnr'], item['logIdToClear'])
+    endfor
+endfunction
+function! s:bdeleteQueueProcess()
+    if !exists('s:bdeleteQueue') || empty(s:bdeleteQueue)
+        return
+    endif
+    if get(s:, 'bdeleteQueueProcessDelayId', -1) == -1
+        let s:bdeleteQueueProcessDelayId = ZFJobTimerStart(0, function('_ZFLogWin_bdeleteQueueProcessAction'))
+    endif
+endfunction
+augroup _ZFLogWin_bdelete_augroup
+    autocmd!
+    autocmd CmdwinLeave * call s:bdeleteQueueProcess()
+augroup END
 

@@ -106,7 +106,13 @@ function! ZFAsyncRun(param, ...)
         echomsg '[ZFVimJob] unsupported param type: ' . paramType
         return -1
     endif
-    let outputTo['initCallback'] = ZFJobFunc('ZFAsyncRunImpl_logwinOnInit', [taskName, get(outputTo, 'initCallback', '')])
+
+    if outputTo['outputType'] == 'logwin'
+        if !exists("outputTo['logwin']")
+            let outputTo['logwin'] = {}
+        endif
+        let outputTo['logwin']['initCallback'] = ZFJobFunc('ZFAsyncRunImpl_logwinOnInit', [taskName, get(outputTo['logwin'], 'initCallback', '')])
+    endif
 
     if empty(get(jobOption['outputTo'], 'outputId', ''))
         let jobOption['outputTo']['outputId'] = 'ZFAsyncRun:' . taskName

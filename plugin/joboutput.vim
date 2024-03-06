@@ -121,6 +121,11 @@ function! ZFJobOutputCleanup(jobStatus)
         call Fn(s:status[outputId], a:jobStatus)
     endif
 
+    let Fn = get(g:ZFJobOutputImpl[s:status[outputId]['outputType']], 'exit', 0)
+    if type(Fn) == g:ZFJOB_T_FUNC
+        call Fn(s:status[outputId], a:jobStatus)
+    endif
+
     if !empty(s:status[outputId]['jobList'])
         if get(s:status[outputId]['outputTo'], 'outputAutoCleanup', 10000) > 0
             call s:autoCloseStart(outputId, a:jobStatus, get(s:status[outputId]['outputTo'], 'outputAutoCleanup', 10000))
@@ -142,6 +147,7 @@ endfunction
 "   'outputType' : {
 "     'fallbackCheck' : 'optional, function() that return fallback outputType or empty to use current',
 "     'init' : 'optional, function(outputStatus, jobStatus)',
+"     'exit' : 'optional, function(outputStatus, jobStatus)',
 "     'cleanup' : 'optional, function(outputStatus, jobStatus)',
 "     'attach' : 'optional, function(outputStatus, jobStatus)',
 "     'detach' : 'optional, function(outputStatus, jobStatus)',
