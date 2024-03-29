@@ -8,6 +8,8 @@ endfunction
 if !exists('g:ZFAutoScript_outputTo')
     let g:ZFAutoScript_outputTo = {
                 \   'outputType' : 'popup',
+                \   'outputTypeSuccess' : 'popup',
+                \   'outputTypeFail' : 'logwin',
                 \   'outputId' : 'ZFAutoScript',
                 \   'outputInfo' : function('ZF_AutoScriptOutputInfo'),
                 \   'outputInfoInterval' : 1000,

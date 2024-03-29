@@ -466,7 +466,9 @@ functions:
     jobStatus : {
         'jobOption' : {
             'outputTo' : {
-                'outputType' : 'statusline/logwin',
+                'outputType' : 'statusline/logwin/popup',
+                'outputTypeSuccess' : 'statusline/logwin/popup, used only when job success',
+                'outputTypeFail' : 'statusline/logwin/popup, used only when job failed',
                 'outputId' : 'if exists, use this fixed outputId',
                 'outputInfo' : 'optional, text or function(jobStatus) which return text',
                 'outputInfoInterval' : 'if greater than 0, notify impl to update outputInfo with this interval',
@@ -562,19 +564,22 @@ options:
 
     ```
     let g:ZFAsyncRun_outputTo = {
-                \   'outputType' : 'logwin',
+                \   'outputType' : 'popup',
+                \   'outputTypeSuccess' : 'logwin',
+                \   'outputTypeFail' : 'logwin',
                 \   'outputInfo' : function('ZF_AsyncRunOutputInfo'),
+                \   'outputInfoInterval' : 1000,
                 \   'logwin' : {
                 \     'filetype' : 'ZFAsyncRunLog',
                 \     'autoShow' : 1,
                 \   },
                 \   'popup' : {
-                \     'pos' : 'bottom',
+                \     'pos' : 'right|bottom',
                 \     'width' : 1.0/3,
                 \     'height' : 1.0/4,
                 \     'x' : 1,
                 \     'y' : 2,
-                \     'wrap' : 1,
+                \     'wrap' : 0,
                 \     'contentAlign' : 'bottom',
                 \   },
                 \ }
@@ -637,8 +642,11 @@ options:
     ```
     let g:ZFAutoScript_outputTo = {
                 \   'outputType' : 'popup',
+                \   'outputTypeSuccess' : 'popup',
+                \   'outputTypeFail' : 'logwin',
                 \   'outputId' : 'ZFAutoScript',
                 \   'outputInfo' : function('ZF_AutoScriptOutputInfo'),
+                \   'outputInfoInterval' : 1000,
                 \   'logwin' : {
                 \     'newWinCmd' : '99wincmd l | vertical rightbelow 20new',
                 \     'filetype' : 'ZFAutoScriptLog',

@@ -40,7 +40,9 @@ endfunction
 " see ZFJobOutput
 if !exists('g:ZFAsyncRun_outputTo')
     let g:ZFAsyncRun_outputTo = {
-                \   'outputType' : 'logwin',
+                \   'outputType' : 'popup',
+                \   'outputTypeSuccess' : 'logwin',
+                \   'outputTypeFail' : 'logwin',
                 \   'outputInfo' : function('ZF_AsyncRunOutputInfo'),
                 \   'outputInfoInterval' : 1000,
                 \   'logwin' : {
@@ -48,12 +50,12 @@ if !exists('g:ZFAsyncRun_outputTo')
                 \     'autoShow' : 1,
                 \   },
                 \   'popup' : {
-                \     'pos' : 'bottom',
+                \     'pos' : 'right|bottom',
                 \     'width' : 1.0/3,
                 \     'height' : 1.0/4,
                 \     'x' : 1,
                 \     'y' : 2,
-                \     'wrap' : 1,
+                \     'wrap' : 0,
                 \     'contentAlign' : 'bottom',
                 \   },
                 \ }
