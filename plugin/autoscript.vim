@@ -14,7 +14,6 @@ if !exists('g:ZFAutoScript_outputTo')
                 \   'outputInfo' : function('ZF_AutoScriptOutputInfo'),
                 \   'outputInfoInterval' : 1000,
                 \   'logwin' : {
-                \     'newWinCmd' : '99wincmd l | vertical rightbelow 20new',
                 \     'filetype' : 'ZFAutoScriptLog',
                 \     'autoShow' : 1,
                 \   },
