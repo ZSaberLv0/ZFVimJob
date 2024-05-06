@@ -1,13 +1,15 @@
 
 function! ZF_AsyncRunOutputInfo(jobStatus)
-    let statusline = ZFJobRunningToken(a:jobStatus, ':')
     let taskName = get(get(a:jobStatus, 'jobImplData', {}), 'ZFAsyncRun_taskName', s:taskNameDefault)
     if taskName == s:taskNameDefault
-        let statusline .= 'ZFAsyncRun ' . ZFGroupJobInfo(a:jobStatus)
+        let jobInfo = 'ZFAsyncRun ' . ZFGroupJobInfo(a:jobStatus)
     else
-        let statusline .= '[' . taskName . '] ' . ZFGroupJobInfo(a:jobStatus)
+        let jobInfo = '[' . taskName . '] ' . ZFGroupJobInfo(a:jobStatus)
     endif
-    return statusline
+    return printf('[%s]%s'
+                \ , ZFJobRunTime(a:jobStatus)
+                \ , jobInfo
+                \ )
 endfunction
 
 function! ZF_AsyncRunMakeDefaultKeymap_input(input, cr)

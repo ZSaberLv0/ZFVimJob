@@ -90,6 +90,7 @@ endfunction
 
 " return: {
 "   'jobId' : -1,
+"   'startTime' : localtime(),
 "   'jobOption' : {},
 "   'jobOutput' : [],
 "   'exitCode' : 'ensured string type, empty if running, not empty when job finished',
@@ -227,6 +228,7 @@ function! s:jobStart(param)
 
     let jobStatus = {
                 \   'jobId' : -1,
+                \   'startTime' : localtime(),
                 \   'jobOption' : jobOption,
                 \   'jobOutput' : [],
                 \   'exitCode' : '',
@@ -567,6 +569,7 @@ function! s:sleepJob_jobStart(jobOption)
     let jobId = s:jobIdNext()
     let jobStatus = {
                 \   'jobId' : jobId,
+                \   'startTime' : localtime(),
                 \   'jobOption' : a:jobOption,
                 \   'jobOutput' : [],
                 \   'exitCode' : '',
@@ -628,6 +631,7 @@ function! s:fallbackJob_jobStartImpl(jobOption)
     let jobId = s:jobIdNext()
     let jobStatus = {
                 \   'jobId' : jobId,
+                \   'startTime' : localtime(),
                 \   'jobOption' : a:jobOption,
                 \   'jobOutput' : [],
                 \   'exitCode' : '',

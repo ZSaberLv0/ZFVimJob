@@ -1,7 +1,10 @@
 
 function! ZF_AutoScriptOutputInfo(jobStatus)
     let projDir = s:projDir(get(get(a:jobStatus, 'jobImplData', {}), 'ZFAutoScript_projDir', ''))
-    return ZFJobRunningToken(a:jobStatus, ':') . 'ZFAutoScriptRun ' . fnamemodify(projDir, ':~')
+    return printf('[%s]ZFAutoScript: %s'
+                \ , ZFJobRunTime(a:jobStatus)
+                \ , fnamemodify(projDir, ':~')
+                \ )
 endfunction
 
 " ============================================================

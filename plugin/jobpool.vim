@@ -22,6 +22,7 @@ endfunction
 
 " return: {
 "   'jobId' : -1, // it's jobPoolId
+"   'startTime' : localtime(),
 "   'jobOption' : {},
 "   'jobOutput' : [],
 "   'exitCode' : 'ensured string type, empty if running, not empty when job finished',
@@ -164,6 +165,7 @@ function! s:jobPoolStart(param)
 
     let jobPoolStatus = {
                 \   'jobId' : s:jobPoolIdNext(),
+                \   'startTime' : localtime(),
                 \   'jobOption' : jobOption,
                 \   'jobOutput' : [],
                 \   'exitCode' : '',

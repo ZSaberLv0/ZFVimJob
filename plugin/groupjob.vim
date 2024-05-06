@@ -88,6 +88,7 @@ endfunction
 
 " groupJobStatus : {
 "   'jobId' : '',
+"   'startTime' : '',
 "   'jobOption' : {},
 "   'jobOutput' : [],
 "   'exitCode' : 'ensured string type, empty if running, not empty when job finished',
@@ -248,6 +249,7 @@ function! s:groupJobStart(param)
     let groupJobId = s:groupJobIdNext()
     let groupJobStatus = {
                 \   'jobId' : groupJobId,
+                \   'startTime' : localtime(),
                 \   'jobOption' : groupJobOption,
                 \   'jobOutput' : [],
                 \   'exitCode' : '',

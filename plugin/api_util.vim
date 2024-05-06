@@ -207,6 +207,29 @@ function! ZFJobRunningToken(jobStatus, ...)
 endfunction
 
 " ============================================================
+" run time
+function! ZFJobRunTime(jobStatus)
+    let startTime = get(a:jobStatus, 'startTime', -1)
+    let g:zfzfzf=keys(a:jobStatus)
+    if startTime < 0
+        return '00:00'
+    endif
+    let cost = localtime() - startTime
+    if cost >= 60 * 60
+        return printf('%02s:%02s:%02s'
+                    \   , cost / 60 / 60
+                    \   , (cost / 60) % 60
+                    \   , cost % 60
+                    \ )
+    else
+        return printf('%02s:%02s'
+                    \   , (cost / 60) % 60
+                    \   , cost % 60
+                    \ )
+    endif
+endfunction
+
+" ============================================================
 " job option
 function! ZFJobOptionExtend(option1, option2)
     for k2 in keys(a:option2)
