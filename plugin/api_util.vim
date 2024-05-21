@@ -210,7 +210,6 @@ endfunction
 " run time
 function! ZFJobRunTime(jobStatus)
     let startTime = get(a:jobStatus, 'startTime', -1)
-    let g:zfzfzf=keys(a:jobStatus)
     if startTime < 0
         return '00:00'
     endif
