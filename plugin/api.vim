@@ -55,6 +55,7 @@ endfunction
 "            //     * `ZFJobFallback_notifyExit(jobStatus, exitCode)`
 "            // * number, use `ZFJobTimerStart()` to delay,
 "            //   has better performance than starting a `sleep` job
+"            // * empty or not exist, a dummy job, but onEnter/onExit would be called normally
 "   'jobCwd' : 'optional, cwd to run the job',
 "   'jobEnv' : 'optional, a dictionary to specify the environement variable',
 "   'onLog' : 'optional, func(jobStatus, log)',
@@ -208,11 +209,6 @@ function! s:jobStart(param)
         return s:sleepJob_jobStart(jobOption)
     endif
 
-    if empty(get(jobOption, 'jobCmd', ''))
-        echomsg '[ZFVimJob] empty jobCmd'
-        return -1
-    endif
-
     if !ZFJobAvailable()
         redraw!
         if get(jobOption, 'jobFallback', 1)
@@ -220,10 +216,6 @@ function! s:jobStart(param)
         endif
         echomsg '[ZFVimJob] no job impl available'
         return -1
-    endif
-
-    if type(jobOption['jobCmd']) != g:ZFJOB_T_STRING && ZFJobFuncCallable(jobOption['jobCmd'])
-        return s:fallbackJob_jobStart(jobOption)
     endif
 
     let jobStatus = {
@@ -234,6 +226,17 @@ function! s:jobStart(param)
                 \   'exitCode' : '',
                 \   'jobImplData' : copy(get(jobOption, 'jobImplData', {})),
                 \ }
+    if empty(get(jobOption, 'jobCmd', ''))
+        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onEnter', ''), [jobStatus])
+        let jobStatus['exitCode'] = '0'
+        call ZFJobFuncCall(get(jobStatus['jobOption'], 'onExit', ''), [jobStatus, '0'])
+        return 0
+    endif
+
+    if type(jobOption['jobCmd']) != g:ZFJOB_T_STRING && ZFJobFuncCallable(jobOption['jobCmd'])
+        return s:fallbackJob_jobStart(jobOption)
+    endif
+
     let success = ZFJobFuncCall(g:ZFJobImpl['jobStart'], [
                 \   jobStatus
                 \ , ZFJobFunc('ZFJobImpl_onOutput', [jobStatus])
@@ -708,6 +711,7 @@ function! s:fallbackJob_jobStartImpl(jobOption)
     else
         call s:jobLog(jobStatus, 'invalid jobCmd')
         call s:jobRemove(jobStatus['jobId'])
+        echomsg '[ZFVimJob] invalid jobCmd'
         return -1
     endif
 
@@ -720,11 +724,7 @@ function! s:fallbackJob_jobStartImpl(jobOption)
     call ZFJobImpl_onOutput(jobStatus, split(jobOutput, "\n"), 'stdout')
 
     call ZFJobImpl_onExit(jobStatus, exitCode)
-    if exitCode != '0'
-        return -1
-    else
-        return 0
-    endif
+    return 0
 endfunction
 
 " only called when jobImplData.fallbackJob_fakeAsync is set

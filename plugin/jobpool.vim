@@ -172,6 +172,8 @@ function! s:jobPoolStart(param)
                 \   'jobImplData' : extend({
                 \     'jobPool_jobId' : -1,
                 \     'jobPool_sendQueue' : [],
+                \     'jobPool_onEnterSaved' : get(jobOption, 'onEnter', {}),
+                \     'jobPool_onExitSaved' : get(jobOption, 'onExit', {}),
                 \   }, get(jobOption, 'jobImplData', {})),
                 \ }
 
@@ -241,6 +243,20 @@ function! s:jobPoolRunNext()
     let s:jobPoolRunning[jobPoolStatus['jobId']] = jobPoolStatus
 
     let jobId = ZFJobStart(jobPoolStatus['jobOption'])
+    if jobId == -1
+        let jobPoolStatus['jobId'] = -1
+        let jobStatus = {
+                    \   'jobId' : -1,
+                    \   'startTime' : localtime(),
+                    \   'jobOption' : jobPoolStatus['jobOption'],
+                    \   'jobOutput' : [],
+                    \   'exitCode' : g:ZFJOBERROR,
+                    \   'jobImplData' : extend({}, get(jobPoolStatus['jobOption'], 'jobImplData', {})),
+                    \ }
+        call ZFJobFuncCall(jobPoolStatus['jobImplData']['jobPool_onEnterSaved'], jobStatus)
+        call ZFJobFuncCall(jobPoolStatus['jobImplData']['jobPool_onExitSaved'], jobStatus, g:ZFJOBERROR)
+        return
+    endif
     let jobPoolStatus['jobImplData']['jobPool_jobId'] = jobId
     if jobId == -1 || jobId == 0
         let jobPoolStatus['jobImplData']['jobPool_sendQueue'] = []

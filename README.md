@@ -273,6 +273,7 @@ but there are some limitations you should concern:
                  //     * `ZFJobFallback_notifyExit(jobStatus, exitCode)`
                  // * number, use `ZFJobTimerStart()` to delay,
                  //   has better performance than starting a `sleep` job
+                 // * empty or not exist, a dummy job, but onEnter/onExit would be called normally
       'jobCwd' : 'optional, cwd to run the job',
       'jobEnv' : 'optional, a dictionary to specify the environement variable',
       'onLog' : 'optional, func(jobStatus, log)',
