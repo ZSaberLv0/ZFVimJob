@@ -99,12 +99,11 @@ let g:ZFJobImpl = {
 "   ['', 'ccc', '']
 " one new line:
 "   ['', '']
-" dummy end, no need to output:
+" new line between contents:
+"   ['', 'a', '']
+" dummy end, indicates output end, no need to output:
 "   ['']
 function! s:nvim_outputFix(jobImplId, msgList, type)
-    if len(a:msgList) == 1 && a:msgList[0] == ''
-        return
-    endif
     if empty(a:msgList)
         return
     endif
@@ -132,10 +131,12 @@ function! s:nvim_outputFix(jobImplId, msgList, type)
         endif
     endif
 
-    if !empty(jobImplState[fixKey]) && jobImplState[fixKey][-1] == ''
+    if !empty(jobImplState[fixKey]) && (jobImplState[fixKey][-1] == '' || (a:msgList[0] == '' && len(a:msgList) == 1))
         let msgList = jobImplState[fixKey]
         let jobImplState[fixKey] = []
-        call remove(msgList, -1)
+        if msgList[-1] == ''
+            call remove(msgList, -1)
+        endif
         if empty(msgList)
             return
         endif
