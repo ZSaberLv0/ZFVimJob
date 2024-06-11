@@ -1,4 +1,6 @@
+
 if !exists('*job_start') || !has('channel') || !has('patch-7.4.1590') || !has('timers')
+            \ || !get(g:, 'ZFJobImpl_vim', 1)
     finish
 endif
 if !empty(get(g:, 'ZFJobImpl', {}))

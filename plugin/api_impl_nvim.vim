@@ -1,4 +1,6 @@
+
 if !exists('*jobstart')
+            \ || !get(g:, 'ZFJobImpl_nvim', 1)
     finish
 endif
 if !empty(get(g:, 'ZFJobImpl', {}))

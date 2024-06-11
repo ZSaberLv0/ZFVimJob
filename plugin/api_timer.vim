@@ -6,7 +6,8 @@ function! ZFJobTimerAvailable()
     "   'timerStart' : func(delay, jobFunc), // return timerId
     "   'timerStop' : func(timerId),
     " }
-    return has('timers') || !empty(get(get(g:, 'ZFJobTimerImpl', {}), 'timerStart', {}))
+    return (get(g:, 'ZFJobTimer', 1) && has('timers'))
+                \ || !empty(get(get(g:, 'ZFJobTimerImpl', {}), 'timerStart', {}))
 endfunction
 function! ZFJobTimerStart(delay, jobFunc)
     if !empty(get(get(g:, 'ZFJobTimerImpl', {}), 'timerStart', {}))
@@ -14,7 +15,7 @@ function! ZFJobTimerStart(delay, jobFunc)
         let Fn_timerStart = g:ZFJobTimerImpl['timerStart']
         return Fn_timerStart(a:delay, a:jobFunc)
     else
-        if has('timers')
+        if get(g:, 'ZFJobTimer', 1) && has('timers')
             " default impl
             let timerId = timer_start(a:delay, function('s:jobTimerCallback'))
             if timerId == -1
@@ -36,7 +37,7 @@ function! ZFJobTimerStop(timerId)
         call Fn_timerStop(a:timerId)
         return
     else
-        if has('timers')
+        if get(g:, 'ZFJobTimer', 1) && has('timers')
             " default impl
             if !exists('s:jobTimerMap[a:timerId]')
                 return

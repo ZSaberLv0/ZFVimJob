@@ -3,7 +3,8 @@ if !exists('g:ZFJobTimerFallbackCursorMoving')
     let g:ZFJobTimerFallbackCursorMoving = 0
 endif
 
-if has('timers') || !get(g:, 'ZFJobTimerFallback', 1)
+if (get(g:, 'ZFJobTimer', 1) && has('timers'))
+            \ || !get(g:, 'ZFJobTimerFallback', 1)
     finish
 endif
 
