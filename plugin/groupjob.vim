@@ -37,7 +37,7 @@ endfunction
 "   'onLog' : 'optional, func(groupJobStatus, log)',
 "   'onOutputFilter' : 'optional, func(groupJobStatus, textList, type[stdout/stderr]), modify textList or empty to discard',
 "   'onOutput' : 'optional, func(groupJobStatus, textList, type[stdout/stderr])',
-"   'onEnter' : 'optional, func(groupJobStatus)',
+"   'onEnter' : 'optional, func(groupJobStatus), note: jobId not available during onEnter',
 "   'onExit' : 'optional, func(groupJobStatus, exitCode)',
 "   'jobOutputDelay' : 'optional, default is g:ZFJobOutputDelay',
 "   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in groupJobStatus, default is g:ZFJobOutputLimit',
