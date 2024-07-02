@@ -1,22 +1,22 @@
 
-function! s:fallbackCheck()
+function! ZFJobOutput_statusline_fallbackCheck()
     return ''
 endfunction
 
-function! s:init(outputStatus, jobStatus)
+function! ZFJobOutput_statusline_init(outputStatus, jobStatus)
 endfunction
 
-function! s:cleanup(outputStatus, jobStatus)
+function! ZFJobOutput_statusline_cleanup(outputStatus, jobStatus)
     call ZFStatuslineLogClear()
 endfunction
 
-function! s:attach(outputStatus, jobStatus)
+function! ZFJobOutput_statusline_attach(outputStatus, jobStatus)
 endfunction
 
-function! s:detach(outputStatus, jobStatus)
+function! ZFJobOutput_statusline_detach(outputStatus, jobStatus)
 endfunction
 
-function! s:output(outputStatus, jobStatus, textList, type)
+function! ZFJobOutput_statusline_output(outputStatus, jobStatus, textList, type)
     let option = get(a:outputStatus['outputTo'], 'statusline', {})
     if !exists("option['timeout']")
         let option = copy(option)
@@ -29,11 +29,11 @@ if !exists('g:ZFJobOutputImpl')
     let g:ZFJobOutputImpl = {}
 endif
 let g:ZFJobOutputImpl['statusline'] = {
-            \   'fallbackCheck' : function('s:fallbackCheck'),
-            \   'init' : function('s:init'),
-            \   'cleanup' : function('s:cleanup'),
-            \   'attach' : function('s:attach'),
-            \   'detach' : function('s:detach'),
-            \   'output' : function('s:output'),
+            \   'fallbackCheck' : function('ZFJobOutput_statusline_fallbackCheck'),
+            \   'init' : function('ZFJobOutput_statusline_init'),
+            \   'cleanup' : function('ZFJobOutput_statusline_cleanup'),
+            \   'attach' : function('ZFJobOutput_statusline_attach'),
+            \   'detach' : function('ZFJobOutput_statusline_detach'),
+            \   'output' : function('ZFJobOutput_statusline_output'),
             \ }
 

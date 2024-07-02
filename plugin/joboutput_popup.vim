@@ -1,5 +1,5 @@
 
-function! s:fallbackCheck()
+function! ZFJobOutput_popup_fallbackCheck()
     if !exists('*ZFPopupAvailable') || !ZFPopupAvailable()
         return 'logwin'
     else
@@ -7,13 +7,13 @@ function! s:fallbackCheck()
     endif
 endfunction
 
-function! s:init(outputStatus, jobStatus)
+function! ZFJobOutput_popup_init(outputStatus, jobStatus)
     let a:outputStatus['outputImplData']['popupid'] = ZFPopupCreate(get(a:jobStatus['jobOption']['outputTo'], 'popup', {}))
     let a:outputStatus['outputImplData']['popupContent'] = []
     call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
 endfunction
 
-function! s:cleanup(outputStatus, jobStatus)
+function! ZFJobOutput_popup_cleanup(outputStatus, jobStatus)
     if get(a:outputStatus['outputImplData'], 'outputInfoTaskId', -1) != -1
         call ZFJobTimerStop(a:outputStatus['outputImplData']['outputInfoTaskId'])
         unlet a:outputStatus['outputImplData']['outputInfoTaskId']
@@ -21,14 +21,14 @@ function! s:cleanup(outputStatus, jobStatus)
     call ZFPopupClose(a:outputStatus['outputImplData']['popupid'])
 endfunction
 
-function! s:attach(outputStatus, jobStatus)
+function! ZFJobOutput_popup_attach(outputStatus, jobStatus)
 endfunction
 
-function! s:detach(outputStatus, jobStatus)
+function! ZFJobOutput_popup_detach(outputStatus, jobStatus)
     call s:updateOutputInfo(a:outputStatus, a:jobStatus)
 endfunction
 
-function! s:output(outputStatus, jobStatus, textList, type)
+function! ZFJobOutput_popup_output(outputStatus, jobStatus, textList, type)
     call extend(a:outputStatus['outputImplData']['popupContent'], a:textList)
 
     let jobOutputLimit = get(a:jobStatus['jobOption'], 'jobOutputLimit', g:ZFJobOutputLimit)
@@ -81,11 +81,11 @@ if !exists('g:ZFJobOutputImpl')
     let g:ZFJobOutputImpl = {}
 endif
 let g:ZFJobOutputImpl['popup'] = {
-            \   'fallbackCheck' : function('s:fallbackCheck'),
-            \   'init' : function('s:init'),
-            \   'cleanup' : function('s:cleanup'),
-            \   'attach' : function('s:attach'),
-            \   'detach' : function('s:detach'),
-            \   'output' : function('s:output'),
+            \   'fallbackCheck' : function('ZFJobOutput_popup_fallbackCheck'),
+            \   'init' : function('ZFJobOutput_popup_init'),
+            \   'cleanup' : function('ZFJobOutput_popup_cleanup'),
+            \   'attach' : function('ZFJobOutput_popup_attach'),
+            \   'detach' : function('ZFJobOutput_popup_detach'),
+            \   'output' : function('ZFJobOutput_popup_output'),
             \ }
 

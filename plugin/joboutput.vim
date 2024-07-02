@@ -137,6 +137,8 @@ function! ZFJobOutputCleanup(jobStatus)
         call Fn(s:status[outputId], a:jobStatus)
     endif
 
+    unlet Fn
+
     let Fn = get(get(g:ZFJobOutputImpl, s:status[outputId]['outputType'], {}), 'exit', 0)
     if type(Fn) == g:ZFJOB_T_FUNC
         call Fn(s:status[outputId], a:jobStatus)

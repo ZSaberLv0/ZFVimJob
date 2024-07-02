@@ -17,7 +17,7 @@ function! ZFJobTimerStart(delay, jobFunc)
     else
         if get(g:, 'ZFJobTimer', 1) && has('timers')
             " default impl
-            let timerId = timer_start(a:delay, function('s:jobTimerCallback'))
+            let timerId = timer_start(a:delay, function('ZFJobTimer_jobTimerCallback'))
             if timerId == -1
                 return -1
             endif
@@ -51,7 +51,7 @@ if !exists('s:jobTimerMap')
     " <jobTimerId, Fn_callback>
     let s:jobTimerMap = {}
 endif
-function! s:jobTimerCallback(timerId)
+function! ZFJobTimer_jobTimerCallback(timerId)
     if !exists('s:jobTimerMap[a:timerId]')
         return
     endif
