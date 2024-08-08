@@ -239,6 +239,9 @@ function! s:fileWrite()
     if empty(file)
         return
     endif
+    if !get(b:, 'ZFAutoScriptEnable', 1)
+        return
+    endif
     let file = s:projDir(file)
 
     let projDirToRun = []
