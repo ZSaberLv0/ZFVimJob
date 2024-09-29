@@ -307,6 +307,10 @@ function! s:jobStop(jobStatus, exitCode, callImpl)
     call ZFJobFuncCall(get(a:jobStatus['jobOption'], 'onExit', ''), [a:jobStatus, a:exitCode])
     call ZFJobOutputCleanup(a:jobStatus)
 
+    if a:exitCode != a:jobStatus['exitCode']
+        call s:jobLog(a:jobStatus, 'exitCode changed during onExit: ' . a:exitCode . ' => ' . a:jobStatus['exitCode'])
+    endif
+
     let a:jobStatus['jobId'] = -1
     return ret
 endfunction
