@@ -468,6 +468,7 @@ functions:
         'jobOption' : {
             'outputTo' : {
                 'outputType' : 'statusline/logwin/popup',
+                'outputTypeExpand' : 'statusline/logwin/popup, used when ZFJobOutputExpand() called',
                 'outputTypeSuccess' : 'statusline/logwin/popup, used only when job success',
                 'outputTypeFail' : 'statusline/logwin/popup, used only when job failed',
                 'outputId' : 'if exists, use this fixed outputId',
@@ -566,6 +567,7 @@ options:
     ```
     let g:ZFAsyncRun_outputTo = {
                 \   'outputType' : 'popup',
+                \   'outputTypeExpand' : 'logwin',
                 \   'outputTypeSuccess' : 'logwin',
                 \   'outputTypeFail' : 'logwin',
                 \   'outputInfo' : function('ZF_AsyncRunOutputInfo'),
@@ -643,6 +645,7 @@ options:
     ```
     let g:ZFAutoScript_outputTo = {
                 \   'outputType' : 'popup',
+                \   'outputTypeExpand' : 'logwin',
                 \   'outputTypeSuccess' : 'popup',
                 \   'outputTypeFail' : 'logwin',
                 \   'outputId' : 'ZFAutoScript',

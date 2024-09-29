@@ -11,6 +11,7 @@ endfunction
 if !exists('g:ZFAutoScript_outputTo')
     let g:ZFAutoScript_outputTo = {
                 \   'outputType' : 'popup',
+                \   'outputTypeExpand' : 'logwin',
                 \   'outputTypeSuccess' : 'popup',
                 \   'outputTypeFail' : 'logwin',
                 \   'outputId' : 'ZFAutoScript',
@@ -96,6 +97,7 @@ function! ZFAutoScriptEnable()
 endfunction
 function! ZFAutoScriptDisable()
     let s:ZFAutoScriptIsEnable = 0
+    call ZFAutoScriptStopAll()
     echo '[ZFAutoScript] disabled'
 endfunction
 function! ZFAutoScriptIsEnable()

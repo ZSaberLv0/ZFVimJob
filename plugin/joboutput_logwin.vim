@@ -27,9 +27,9 @@ function! s:outputInfoIntervalUpdate(outputStatus, jobStatus)
 endfunction
 
 function! ZFJobOutput_logwin_init(outputStatus, jobStatus)
-    let config = get(a:jobStatus['jobOption']['outputTo'], 'logwin', {})
-    if empty(get(config, 'statusline', '')) && !empty(get(a:jobStatus['jobOption']['outputTo'], 'outputInfo', ''))
-        let T_outputInfo = a:jobStatus['jobOption']['outputTo']['outputInfo']
+    let config = get(a:outputStatus['outputTo'], 'logwin', {})
+    if empty(get(config, 'statusline', '')) && !empty(get(a:outputStatus['outputTo'], 'outputInfo', ''))
+        let T_outputInfo = a:outputStatus['outputTo']['outputInfo']
         if type(T_outputInfo) == g:ZFJOB_T_STRING
             let config = copy(config)
             let config['statusline'] = T_outputInfo
@@ -40,6 +40,7 @@ function! ZFJobOutput_logwin_init(outputStatus, jobStatus)
         endif
     endif
     call ZFLogWinConfig(a:outputStatus['outputId'], config)
+    call ZFLogWinJobStatusSet(a:outputStatus['outputId'], a:jobStatus)
 endfunction
 
 function! ZFJobOutput_logwin_cleanup(outputStatus, jobStatus)
@@ -57,16 +58,11 @@ function! ZFJobOutput_logwin_cleanup(outputStatus, jobStatus)
     endif
 endfunction
 
-function! ZFJobOutput_logwin_attach(outputStatus, jobStatus)
-    call ZFLogWinJobStatusSet(a:outputStatus['outputId'], a:jobStatus)
-endfunction
-
-function! ZFJobOutput_logwin_detach(outputStatus, jobStatus)
-    call ZFLogWinRedrawStatusline(a:outputStatus['outputId'])
-endfunction
-
 function! ZFJobOutput_logwin_output(outputStatus, jobStatus, textList, type)
-    call ZFLogWinAdd(a:outputStatus['outputId'], a:textList)
+    if !ZFLogWinExist(a:outputStatus['outputId'])
+        call ZFJobOutput_logwin_init(a:outputStatus, a:jobStatus)
+    endif
+    call ZFLogWinReplace(a:outputStatus['outputId'], a:textList)
     call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
 endfunction
 
@@ -77,8 +73,6 @@ let g:ZFJobOutputImpl['logwin'] = {
             \   'fallbackCheck' : function('ZFJobOutput_logwin_fallbackCheck'),
             \   'init' : function('ZFJobOutput_logwin_init'),
             \   'cleanup' : function('ZFJobOutput_logwin_cleanup'),
-            \   'attach' : function('ZFJobOutput_logwin_attach'),
-            \   'detach' : function('ZFJobOutput_logwin_detach'),
             \   'output' : function('ZFJobOutput_logwin_output'),
             \ }
 

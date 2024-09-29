@@ -67,11 +67,15 @@ function! s:ZFLogWinConfig(logId, ...)
     return s:status[a:logId]['config']
 endfunction
 
-function! ZFLogWinAdd(logId, content)
+function! ZFLogWinAdd(logId, content, ...)
     if !exists('s:status[a:logId]')
         let s:status[a:logId] = s:statusInit(deepcopy(g:ZFLogWin_defaultConfig))
     endif
     let status = s:status[a:logId]
+    let replace = (get(a:, 1, '') == 'replace')
+    if replace
+        let status['lines'] = []
+    endif
     if type(a:content) == g:ZFJOB_T_LIST
         call extend(status['lines'], a:content)
     else
@@ -90,6 +94,9 @@ function! ZFLogWinAdd(logId, content)
             let status['lazyUpdateTimerId'] = ZFJobTimerStart(status['lazyUpdate'], ZFJobFunc('ZFLogWinImpl_logWinAddOnTimer', [a:logId]))
         endif
     endif
+endfunction
+function! ZFLogWinReplace(logId, content)
+    call ZFLogWinAdd(a:logId, a:content, 'replace')
 endfunction
 
 function! ZFLogWinContent(logId)
@@ -174,6 +181,10 @@ function! s:ZFLogWinShow(logId)
         call s:redraw(a:logId, 'none')
         call s:logWinRestorePos(oldPos)
     endif
+endfunction
+
+function! ZFLogWinExist(logId)
+    return exists('s:status[a:logId]')
 endfunction
 
 function! ZFLogWinFocus(logId)

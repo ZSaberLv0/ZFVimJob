@@ -10,12 +10,6 @@ function! ZFJobOutput_statusline_cleanup(outputStatus, jobStatus)
     call ZFStatuslineLogClear()
 endfunction
 
-function! ZFJobOutput_statusline_attach(outputStatus, jobStatus)
-endfunction
-
-function! ZFJobOutput_statusline_detach(outputStatus, jobStatus)
-endfunction
-
 function! ZFJobOutput_statusline_output(outputStatus, jobStatus, textList, type)
     let option = get(a:outputStatus['outputTo'], 'statusline', {})
     if !exists("option['timeout']")
@@ -32,8 +26,6 @@ let g:ZFJobOutputImpl['statusline'] = {
             \   'fallbackCheck' : function('ZFJobOutput_statusline_fallbackCheck'),
             \   'init' : function('ZFJobOutput_statusline_init'),
             \   'cleanup' : function('ZFJobOutput_statusline_cleanup'),
-            \   'attach' : function('ZFJobOutput_statusline_attach'),
-            \   'detach' : function('ZFJobOutput_statusline_detach'),
             \   'output' : function('ZFJobOutput_statusline_output'),
             \ }
 

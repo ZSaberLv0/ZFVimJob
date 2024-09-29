@@ -43,6 +43,7 @@ endfunction
 if !exists('g:ZFAsyncRun_outputTo')
     let g:ZFAsyncRun_outputTo = {
                 \   'outputType' : 'popup',
+                \   'outputTypeExpand' : 'logwin',
                 \   'outputTypeSuccess' : 'logwin',
                 \   'outputTypeFail' : 'logwin',
                 \   'outputInfo' : function('ZF_AsyncRunOutputInfo'),
@@ -111,12 +112,10 @@ function! ZFAsyncRun(param, ...)
         return -1
     endif
 
-    if outputTo['outputType'] == 'logwin'
-        if !exists("outputTo['logwin']")
-            let outputTo['logwin'] = {}
-        endif
-        let outputTo['logwin']['initCallback'] = ZFJobFunc('ZFAsyncRunImpl_logwinOnInit', [taskName, get(outputTo['logwin'], 'initCallback', '')])
+    if !exists("outputTo['logwin']")
+        let outputTo['logwin'] = {}
     endif
+    let outputTo['logwin']['initCallback'] = ZFJobFunc('ZFAsyncRunImpl_logwinOnInit', [taskName, get(outputTo['logwin'], 'initCallback', '')])
 
     if empty(get(jobOption['outputTo'], 'outputId', ''))
         let jobOption['outputTo']['outputId'] = 'ZFAsyncRun:' . taskName

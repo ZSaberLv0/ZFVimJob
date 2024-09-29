@@ -8,7 +8,7 @@ function! ZFJobOutput_popup_fallbackCheck()
 endfunction
 
 function! ZFJobOutput_popup_init(outputStatus, jobStatus)
-    let a:outputStatus['outputImplData']['popupid'] = ZFPopupCreate(get(a:jobStatus['jobOption']['outputTo'], 'popup', {}))
+    let a:outputStatus['outputImplData']['popupid'] = ZFPopupCreate(get(a:outputStatus['outputTo'], 'popup', {}))
     let a:outputStatus['outputImplData']['popupContent'] = []
     call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
 endfunction
@@ -21,15 +21,8 @@ function! ZFJobOutput_popup_cleanup(outputStatus, jobStatus)
     call ZFPopupClose(a:outputStatus['outputImplData']['popupid'])
 endfunction
 
-function! ZFJobOutput_popup_attach(outputStatus, jobStatus)
-endfunction
-
-function! ZFJobOutput_popup_detach(outputStatus, jobStatus)
-    call s:updateOutputInfo(a:outputStatus, a:jobStatus)
-endfunction
-
 function! ZFJobOutput_popup_output(outputStatus, jobStatus, textList, type)
-    call extend(a:outputStatus['outputImplData']['popupContent'], a:textList)
+    let a:outputStatus['outputImplData']['popupContent'] = copy(a:textList)
 
     let jobOutputLimit = get(a:jobStatus['jobOption'], 'jobOutputLimit', g:ZFJobOutputLimit)
     if jobOutputLimit >= 0 && len(a:outputStatus['outputImplData']['popupContent']) > jobOutputLimit
@@ -84,8 +77,6 @@ let g:ZFJobOutputImpl['popup'] = {
             \   'fallbackCheck' : function('ZFJobOutput_popup_fallbackCheck'),
             \   'init' : function('ZFJobOutput_popup_init'),
             \   'cleanup' : function('ZFJobOutput_popup_cleanup'),
-            \   'attach' : function('ZFJobOutput_popup_attach'),
-            \   'detach' : function('ZFJobOutput_popup_detach'),
             \   'output' : function('ZFJobOutput_popup_output'),
             \ }
 
