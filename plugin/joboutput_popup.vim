@@ -21,6 +21,10 @@ function! ZFJobOutput_popup_cleanup(outputStatus, jobStatus)
     call ZFPopupClose(a:outputStatus['outputImplData']['popupid'])
 endfunction
 
+function! ZFJobOutput_popup_hide(outputStatus, jobStatus)
+    call ZFPopupHide(a:outputStatus['outputImplData']['popupid'])
+endfunction
+
 function! ZFJobOutput_popup_output(outputStatus, jobStatus, textList, type)
     let a:outputStatus['outputImplData']['popupContent'] = copy(a:textList)
 
@@ -31,6 +35,7 @@ function! ZFJobOutput_popup_output(outputStatus, jobStatus, textList, type)
 
     call s:updateOutputInfo(a:outputStatus, a:jobStatus)
     call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
+    call ZFPopupShow(a:outputStatus['outputImplData']['popupid'])
 endfunction
 
 function! ZFJobOutputImpl_outputInfoTimer(outputStatus, jobStatus, ...)
@@ -77,6 +82,7 @@ let g:ZFJobOutputImpl['popup'] = {
             \   'fallbackCheck' : function('ZFJobOutput_popup_fallbackCheck'),
             \   'init' : function('ZFJobOutput_popup_init'),
             \   'cleanup' : function('ZFJobOutput_popup_cleanup'),
+            \   'hide' : function('ZFJobOutput_popup_hide'),
             \   'output' : function('ZFJobOutput_popup_output'),
             \ }
 

@@ -19,7 +19,6 @@
 "       'logwin' : { // see g:ZFLogWin_defaultConfig
 "         ...
 "         'logwinNoCloseWhenFocused' : 1,
-"         'logwinAutoClosePreferHide' : 0,
 "       },
 "       'popup' : {...}, // see g:ZFPopup_defaultConfig
 "     },
@@ -48,6 +47,7 @@ function! ZFJobOutput(jobStatus, content, ...)
                 return
             endif
             let s:status[outputId]['outputTypeCur'] = outputType
+            let s:status[outputId]['done'] = 0
             call s:impl_init(s:status[outputId], outputType)
         endif
     else
@@ -62,6 +62,8 @@ function! ZFJobOutput(jobStatus, content, ...)
         let s:status[outputId] = {
                     \   'outputTo' : outputTo,
                     \   'expanded' : 0,
+                    \   'expandedPrev' : 0,
+                    \   'done' : 0,
                     \   'outputTypeCur' : outputType,
                     \   'outputTypeFixed' : outputType,
                     \   'outputTypeExpandFixed' : outputTypeExpand,
@@ -106,6 +108,7 @@ endfunction
 function! s:ZFJobOutputExpand(outputId)
     call s:outputTypeDone_detach(a:outputId, s:status[a:outputId])
 
+    let s:status[a:outputId]['expandedPrev'] = s:status[a:outputId]['expanded']
     let s:status[a:outputId]['expanded'] = 1 - s:status[a:outputId]['expanded']
     let outputTypeOld = s:status[a:outputId]['outputTypeCur']
     if s:status[a:outputId]['expanded']
@@ -164,10 +167,8 @@ endfunction
 "   'outputType' : {
 "     'fallbackCheck' : 'optional, function() that return fallback outputType or empty to use current',
 "     'init' : 'optional, function(outputStatus, jobStatus)',
-"     'exit' : 'optional, function(outputStatus, jobStatus)',
 "     'cleanup' : 'optional, function(outputStatus, jobStatus)',
-"     'attach' : 'optional, function(outputStatus, jobStatus)',
-"     'detach' : 'optional, function(outputStatus, jobStatus)',
+"     'hide' : 'optional, function(outputStatus, jobStatus)',
 "     'output' : 'optional, function(outputStatus, jobStatus, textList, type)',
 "   },
 " }
@@ -184,6 +185,8 @@ endif
 "   outputId : { // first output jobStatus decide actual outputType and param
 "     'outputTo' : {}, // jobStatus['jobOption']['outputTo']
 "     'expanded' : 0/1,
+"     'expandedPrev' : 0/1,
+"     'done' : 0/1,
 "     'outputTypeCur' : 'outputTypeFixed or outputTypeExpandFixed',
 "     'outputTypeFixed' : 'fixed type after fallback check, maybe empty',
 "     'outputTypeExpandFixed' : 'fixed type after fallback check, maybe empty',
@@ -249,6 +252,12 @@ function! s:impl_cleanup(outputStatus, outputType)
         call Fn(a:outputStatus, a:outputStatus['jobStatus'])
     endif
 endfunction
+function! s:impl_hide(outputStatus, outputType)
+    let Fn = get(get(g:ZFJobOutputImpl, a:outputType, {}), 'hide', 0)
+    if type(Fn) == g:ZFJOB_T_FUNC
+        call Fn(a:outputStatus, a:outputStatus['jobStatus'])
+    endif
+endfunction
 function! s:impl_output(outputStatus, outputType, ...)
     let Fn = get(get(g:ZFJobOutputImpl, a:outputType, {}), 'output', 0)
     if type(Fn) == g:ZFJOB_T_FUNC
@@ -306,6 +315,8 @@ function! ZFJobOutputImpl_autoCloseOnTimer(outputId, ...)
         unlet s:status[a:outputId]
         call s:impl_cleanup(outputStatus, outputStatus['outputTypeCur'])
         let outputStatus['outputTypeCur'] = ''
+    else
+        call s:impl_hide(outputStatus, outputStatus['outputTypeCur'])
     endif
 
     call s:outputTypeDone_detach(a:outputId, outputStatus)
@@ -341,6 +352,7 @@ function! ZFJobOutputImpl_outputTypeDoneOnTimer(outputId, outputTypeDone, jobSta
     let s:status[a:outputId]['outputTypeDoneDelayId'] = -1
     let outputStatus = s:status[a:outputId]
     let outputStatus['outputTypeDoneFixed'] = a:outputTypeDone
+    let outputStatus['done'] = 1
     call s:impl_init(outputStatus, a:outputTypeDone)
     call s:impl_output(outputStatus, a:outputTypeDone, a:jobStatus['jobOutput'])
     call s:autoCloseStartCheck(a:outputId, 'outputManualCleanup')

@@ -41,6 +41,9 @@ function! ZFJobOutput_logwin_init(outputStatus, jobStatus)
     endif
     call ZFLogWinConfig(a:outputStatus['outputId'], config)
     call ZFLogWinJobStatusSet(a:outputStatus['outputId'], a:jobStatus)
+    if a:outputStatus['expanded']
+        call ZFLogWinFocus(a:outputStatus['outputId'])
+    endif
 endfunction
 
 function! ZFJobOutput_logwin_cleanup(outputStatus, jobStatus)
@@ -48,13 +51,17 @@ function! ZFJobOutput_logwin_cleanup(outputStatus, jobStatus)
         call ZFJobTimerStop(a:outputStatus['outputImplData']['outputInfoTaskId'])
         unlet a:outputStatus['outputImplData']['outputInfoTaskId']
     endif
-    if !get(get(a:outputStatus['outputTo'], 'logwin', {}), 'logwinNoCloseWhenFocused', 1) || !ZFLogWinIsFocused(a:outputStatus['outputId'])
-        if get(get(a:outputStatus['outputTo'], 'logwin', {}), 'logwinAutoClosePreferHide', 0)
-            call ZFLogWinHide(a:outputStatus['outputId'])
-        else
-            call ZFLogWinClose(a:outputStatus['outputId'])
-        endif
+    if !get(get(a:outputStatus['outputTo'], 'logwin', {}), 'logwinNoCloseWhenFocused', 1)
+                \ || !ZFLogWinIsFocused(a:outputStatus['outputId'])
+                \ || (a:outputStatus['expandedPrev'] && !a:outputStatus['expanded'])
+        call ZFLogWinClose(a:outputStatus['outputId'])
         call ZFLogWinJobStatusSet(a:outputStatus['outputId'], {})
+    endif
+endfunction
+
+function! ZFJobOutput_logwin_hide(outputStatus, jobStatus)
+    if !ZFLogWinIsFocused(a:outputStatus['outputId'])
+        call ZFLogWinHide(a:outputStatus['outputId'])
     endif
 endfunction
 
@@ -73,6 +80,7 @@ let g:ZFJobOutputImpl['logwin'] = {
             \   'fallbackCheck' : function('ZFJobOutput_logwin_fallbackCheck'),
             \   'init' : function('ZFJobOutput_logwin_init'),
             \   'cleanup' : function('ZFJobOutput_logwin_cleanup'),
+            \   'hide' : function('ZFJobOutput_logwin_hide'),
             \   'output' : function('ZFJobOutput_logwin_output'),
             \ }
 

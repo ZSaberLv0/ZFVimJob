@@ -482,7 +482,6 @@ functions:
                 'logwin' : { // see g:ZFLogWin_defaultConfig
                     ...
                     'logwinNoCloseWhenFocused' : 1,
-                    'logwinAutoClosePreferHide' : 0,
                 },
                 'popup' : {...}, // see g:ZFPopup_defaultConfig
             },
