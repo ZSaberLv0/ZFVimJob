@@ -253,8 +253,8 @@ function! s:jobPoolRunNext()
                     \   'exitCode' : g:ZFJOBERROR,
                     \   'jobImplData' : extend({}, get(jobPoolStatus['jobOption'], 'jobImplData', {})),
                     \ }
-        call ZFJobFuncCall(jobPoolStatus['jobImplData']['jobPool_onEnterSaved'], jobStatus)
-        call ZFJobFuncCall(jobPoolStatus['jobImplData']['jobPool_onExitSaved'], jobStatus, g:ZFJOBERROR)
+        call ZFJobFuncCall(jobPoolStatus['jobImplData']['jobPool_onEnterSaved'], [jobStatus])
+        call ZFJobFuncCall(jobPoolStatus['jobImplData']['jobPool_onExitSaved'], [jobStatus, g:ZFJOBERROR])
         return
     endif
     let jobPoolStatus['jobImplData']['jobPool_jobId'] = jobId

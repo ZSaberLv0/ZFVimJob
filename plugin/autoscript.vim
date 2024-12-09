@@ -305,11 +305,11 @@ function! s:autoScriptFilterCheck(projDir, file)
                 return 1
             endif
         elseif ZFJobFuncCallable(Fn)
-            if ZFJobFuncCall(Fn, {
+            if ZFJobFuncCall(Fn, [{
                         \   'path' : a:file,
                         \   'dir' : a:projDir,
                         \   'option' : jobOption,
-                        \ })
+                        \ }])
                 return 1
             endif
         endif
