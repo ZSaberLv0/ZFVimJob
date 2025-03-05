@@ -121,9 +121,7 @@ function! s:ZFJobOutputExpand(outputId)
     endif
     let s:status[a:outputId]['outputTypeCur'] = outputTypeNew
 
-    let jobList = s:status[a:outputId]['jobList']
     if outputTypeOld != outputTypeNew
-                \ && !empty(jobList)
         if !empty(outputTypeOld)
             call s:impl_cleanup(s:status[a:outputId], outputTypeOld)
         endif
@@ -274,6 +272,8 @@ function! s:impl_output(outputStatus, outputType, ...)
         endif
         if !empty(textList)
             call Fn(a:outputStatus, a:outputStatus['jobStatus'], textList, 'stdout')
+        else
+            call Fn(a:outputStatus, a:outputStatus['jobStatus'], a:outputStatus['jobStatus']['jobOutput'], 'stdout')
         endif
     endif
 endfunction
