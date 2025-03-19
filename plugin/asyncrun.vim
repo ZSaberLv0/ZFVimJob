@@ -105,7 +105,7 @@ function! ZFAsyncRun(param, ...)
                     \   'outputTo' : outputTo,
                     \ }
     elseif paramType == g:ZFJOB_T_DICT
-        let jobOption = deepcopy(a:param)
+        let jobOption = copy(a:param)
         let jobOption['outputTo'] = extend(outputTo, get(jobOption, 'outputTo', {}))
     else
         echomsg '[ZFVimJob] unsupported param type: ' . paramType
@@ -126,7 +126,7 @@ function! ZFAsyncRun(param, ...)
     endif
     let jobOption['jobImplData']['ZFAsyncRun_taskName'] = taskName
 
-    let jobId = ZFGroupJobStart(extend(deepcopy(jobOption), {
+    let jobId = ZFGroupJobStart(extend(copy(jobOption), {
                 \   'onExit' : ZFJobFunc('ZFAsyncRunImpl_onExit', [taskName, get(jobOption, 'onExit', '')]),
                 \ }))
     if jobId == -1
