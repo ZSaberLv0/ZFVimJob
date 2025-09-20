@@ -18,6 +18,7 @@
 "       'statusline' : {...}, // see g:ZFStatuslineLog_defaultConfig
 "       'logwin' : { // see g:ZFLogWin_defaultConfig
 "         ...
+"         'logwinAutoFocus' : 0,
 "         'logwinNoCloseWhenFocused' : 1,
 "       },
 "       'popup' : {...}, // see g:ZFPopup_defaultConfig

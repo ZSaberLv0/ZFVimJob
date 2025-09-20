@@ -71,6 +71,9 @@ function! ZFJobOutput_logwin_output(outputStatus, jobStatus, textList, type)
     endif
     call ZFLogWinReplace(a:outputStatus['outputId'], a:textList)
     call s:outputInfoIntervalUpdate(a:outputStatus, a:jobStatus)
+    if get(get(a:outputStatus['outputTo'], 'logwin', {}), 'logwinAutoFocus', 0)
+        call ZFLogWinFocus(a:outputStatus['outputId'])
+    endif
 endfunction
 
 if !exists('g:ZFJobOutputImpl')
