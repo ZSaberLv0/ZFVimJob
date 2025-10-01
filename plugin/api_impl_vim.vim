@@ -130,7 +130,7 @@ function! s:queuedRunCallback(jobStatus, ...)
         let queuedOutput = jobImplState['queuedOutput']
         let jobImplState['queuedOutput'] = []
         for item in queuedOutput
-            call ZFJobFuncCall(jobImplState['onOutput'], [split(item[0], "\n"), item[1]])
+            call ZFJobFuncCall(jobImplState['onOutput'], [split(item[0], "\r*\n"), item[1]])
         endfor
     endwhile
     if jobImplState['queuedExitFlag'] == 0
