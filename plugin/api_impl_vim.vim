@@ -12,7 +12,10 @@ function! s:jobStart(jobStatus, onOutput, onExit)
                 \   'onOutput' : a:onOutput,
                 \   'onExit' : a:onExit,
                 \   'queuedTimerId' : -1,
-                \   'queuedOutput' : [],
+                \   'queuedOutput' : {
+                \     'stdout' : '',
+                \     'stderr' : '',
+                \   },
                 \   'queuedExitCode' : '',
                 \   'queuedExitFlag' : 0,
                 \ }
@@ -99,15 +102,13 @@ function! s:vim_out_cb(jobStatus, jobImplChannel, msg, ...)
     if a:jobStatus['jobId'] < 0
         return
     endif
-    call add(a:jobStatus['jobImplData']['impl_vim']['queuedOutput'], [a:msg, 'stdout'])
-    call s:queuedRun(a:jobStatus)
+    call s:queuedOutput(a:jobStatus, substitute(a:msg, "\r", '', 'g'), 'stdout')
 endfunction
 function! s:vim_err_cb(jobStatus, jobImplChannel, msg, ...)
     if a:jobStatus['jobId'] < 0
         return
     endif
-    call add(a:jobStatus['jobImplData']['impl_vim']['queuedOutput'], [a:msg, 'stderr'])
-    call s:queuedRun(a:jobStatus)
+    call s:queuedOutput(a:jobStatus, substitute(a:msg, "\r", '', 'g'), 'stderr')
 endfunction
 function! s:vim_exit_cb(jobStatus, jobImplId, exitCode, ...)
     if a:jobStatus['jobId'] < 0
@@ -117,22 +118,40 @@ function! s:vim_exit_cb(jobStatus, jobImplId, exitCode, ...)
     let a:jobStatus['jobImplData']['impl_vim']['queuedExitFlag'] = 1
     call s:queuedRun(a:jobStatus)
 endfunction
+
+function! s:queuedOutput(jobStatus, msg, type)
+    let jobImplState = a:jobStatus['jobImplData']['impl_vim']
+    let queuedOutput = jobImplState['queuedOutput']
+
+    if queuedOutput[a:type] != ''
+        let textList = split(queuedOutput[a:type] . a:msg, "\n", 1)
+    else
+        let textList = split(a:msg, "\n", 1)
+    endif
+    let queuedOutput[a:type] = remove(textList, -1)
+    if !empty(textList)
+        call ZFJobFuncCall(jobImplState['onOutput'], [textList, a:type])
+    endif
+
+    call s:queuedRun(a:jobStatus)
+endfunction
+
 function! s:queuedRun(jobStatus)
     if a:jobStatus['jobImplData']['impl_vim']['queuedTimerId'] != -1
-        return
+        call timer_stop(a:jobStatus['jobImplData']['impl_vim']['queuedTimerId'])
     endif
-    let a:jobStatus['jobImplData']['impl_vim']['queuedTimerId'] = timer_start(0, function('s:queuedRunCallback', [a:jobStatus]))
+    let a:jobStatus['jobImplData']['impl_vim']['queuedTimerId'] = timer_start(100, function('s:queuedRunCallback', [a:jobStatus]))
 endfunction
 function! s:queuedRunCallback(jobStatus, ...)
     let jobImplState = a:jobStatus['jobImplData']['impl_vim']
     let jobImplState['queuedTimerId'] = -1
-    while !empty(jobImplState['queuedOutput'])
-        let queuedOutput = jobImplState['queuedOutput']
-        let jobImplState['queuedOutput'] = []
-        for item in queuedOutput
-            call ZFJobFuncCall(jobImplState['onOutput'], [split(item[0], "\r*\n"), item[1]])
-        endfor
-    endwhile
+
+    for type in ['stdout', 'stderr']
+        if jobImplState['queuedOutput'][type] != ''
+            call ZFJobFuncCall(jobImplState['onOutput'], [[jobImplState['queuedOutput'][type]], type])
+        endif
+    endfor
+
     if jobImplState['queuedExitFlag'] == 0
         return
     elseif jobImplState['queuedExitFlag'] == 1
