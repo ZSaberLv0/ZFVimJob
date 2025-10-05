@@ -149,6 +149,7 @@ function! s:queuedRunCallback(jobStatus, ...)
     for type in ['stdout', 'stderr']
         if jobImplState['queuedOutput'][type] != ''
             call ZFJobFuncCall(jobImplState['onOutput'], [[jobImplState['queuedOutput'][type]], type])
+            let jobImplState['queuedOutput'][type] = ''
         endif
     endfor
 
