@@ -9,7 +9,7 @@
 "     causing later output getting lost
 if !exists('g:ZFLogWin_defaultConfig')
     let g:ZFLogWin_defaultConfig = {
-                \   'newWinCmd' : 'rightbelow 5new',
+                \   'newWinCmd' : 'botright 5new',
                 \   'filetype' : 'ZFLogWin',
                 \   'statusline' : '',
                 \   'makeDefaultKeymap' : 1,
