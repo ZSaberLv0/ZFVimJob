@@ -67,7 +67,7 @@ endfunction
 "   'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is g:ZFJobOutputLimit',
 "   'jobOutputCRFix' : 'optional, whether try to replace `\r\n` to `\n`, default is g:ZFJobOutputCRFix',
 "   'jobEncoding' : 'optional, if supplied, encoding conversion would be made before passing output textList',
-"   'jobTimeout' : 'optional, if supplied, ZFJobStop would be called with g:ZFJOBTIMEOUT',
+"   'jobTimeout' : 'optional, if supplied and timeout, ZFJobStop would be called with g:ZFJOBTIMEOUT (or 0 if jobTimeout < 0)',
 "   'jobFallback' : 'optional, true by default, whether fallback to `system()` if no job impl available',
 "   'jobImplData' : {}, // optional, if supplied, merge to jobStatus['jobImplData']
 " }
@@ -252,8 +252,8 @@ function! s:jobStart(param)
         return -1
     endif
 
-    if get(jobOption, 'jobTimeout', 0) > 0 && ZFJobTimerAvailable()
-        let jobStatus['jobImplData']['jobTimeoutId'] = ZFJobTimerStart(jobOption['jobTimeout'], ZFJobFunc('ZFJobImpl_onTimeout', [jobStatus]))
+    if get(jobOption, 'jobTimeout', 0) != 0 && ZFJobTimerAvailable()
+        let jobStatus['jobImplData']['jobTimeoutId'] = ZFJobTimerStart(abs(jobOption['jobTimeout']), ZFJobFunc('ZFJobImpl_onTimeout', [jobStatus, jobOption['jobTimeout']]))
     endif
 
     let jobId = s:jobIdNext()
@@ -456,11 +456,15 @@ function! ZFJobImpl_onExit(jobStatus, exitCode)
     endif
 endfunction
 
-function! ZFJobImpl_onTimeout(jobStatus, ...)
+function! ZFJobImpl_onTimeout(jobStatus, jobTimeout, ...)
     if exists("jobStatus['jobImplData']['jobTimeoutId']")
         unlet jobStatus['jobImplData']['jobTimeoutId']
     endif
-    call ZFJobStop(a:jobStatus['jobId'], g:ZFJOBTIMEOUT)
+    if a:jobTimeout < 0
+        call ZFJobStop(a:jobStatus['jobId'], '0')
+    else
+        call ZFJobStop(a:jobStatus['jobId'], g:ZFJOBTIMEOUT)
+    endif
 endfunction
 
 " ============================================================

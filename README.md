@@ -285,7 +285,7 @@ but there are some limitations you should concern:
       'jobOutputLimit' : 'optional, max line of jobOutput that would be stored in jobStatus, default is g:ZFJobOutputLimit',
       'jobOutputCRFix' : 'optional, whether try to replace `\r\n` to `\n`, default is g:ZFJobOutputCRFix',
       'jobEncoding' : 'optional, if supplied, encoding conversion would be made before passing output textList',
-      'jobTimeout' : 'optional, if supplied, ZFJobStop would be called with g:ZFJOBTIMEOUT',
+      'jobTimeout' : 'optional, if supplied and timeout, ZFJobStop would be called with g:ZFJOBTIMEOUT (or 0 if jobTimeout < 0)',
       'jobFallback' : 'optional, true by default, whether fallback to `system()` if no job impl available',
       'jobImplData' : {}, // optional, if supplied, merge to jobStatus['jobImplData']
     }
