@@ -7,7 +7,11 @@ function! ZFJobCmdComplete(ArgLead, CmdLine, CursorPos)
 
     let paramIndex = ZFJobCmdComplete_paramIndex(a:ArgLead, a:CmdLine, a:CursorPos)
     if paramIndex == 0
-        let ret = ZFJobCmdComplete_shellcmd(a:ArgLead, a:CmdLine, a:CursorPos)
+        if get(g:, 'ZFJobCmdComplete_completeVimCmd', 0)
+            let ret = ZFJobCmdComplete_vimcmd(a:ArgLead, a:CmdLine, a:CursorPos)
+        else
+            let ret = ZFJobCmdComplete_shellcmd(a:ArgLead, a:CmdLine, a:CursorPos)
+        endif
         if empty(ret)
             let ret = ZFJobCmdComplete_file(a:ArgLead, a:CmdLine, a:CursorPos)
         endif
@@ -18,13 +22,27 @@ endfunction
 
 " ============================================================
 function! ZFJobCmdComplete_paramIndex(ArgLead, CmdLine, CursorPos)
-    let cmd = substitute(a:CmdLine, '\\\\', '', 'g')
-    let cmd = substitute(cmd, '\\.', '', 'g')
-    let paramList = split(a:CmdLine, ' ')
-    if empty(a:ArgLead)
-        return len(paramList) - 1
+    let AL = s:fixArgLead(a:ArgLead)
+    let paramList = s:cmdSplit(a:CmdLine)
+    " (`|` is cursor pos)
+    " offset==0 && empty(AL.ArgLead) : 1 - 0
+    "     ls |
+    " offset==0 && !empty(AL.ArgLead) : 2 - 0 - 1
+    "     ls abc|
+    " offset==1 && empty(AL.ArgLead) : 2 - 1
+    "     ZFAsyncRun ls |
+    " offset==1 && !empty(AL.ArgLead) : 3 - 1 - 1
+    "     ZFAsyncRun ls abc|
+    let offset = 0
+    if get(g:, 'ZFJobCmdComplete_excludeFirstCmd', 1)
+        if len(paramList) >= 1 && exists(':' . paramList[0])
+            let offset = 1
+        endif
+    endif
+    if empty(AL.ArgLead)
+        return len(paramList) - offset
     else
-        return len(paramList) - 2
+        return len(paramList) - offset - 1
     endif
 endfunction
 function! ZFJobCmdComplete_filter(list, prefix)
@@ -86,13 +104,12 @@ function! ZFJobCmdComplete_env(ArgLead, CmdLine, CursorPos)
 endfunction
 
 function! ZFJobCmdComplete_shellcmd(ArgLead, CmdLine, CursorPos)
-    let ArgLead = s:fixArgLead(a:ArgLead)
-
+    let AL = s:fixArgLead(a:ArgLead)
     if exists('*getcompletion') && !get(g:, 'ZFJobCmdComplete_preferBuiltin', 0)
-        return s:fixPath(getcompletion(ArgLead, 'shellcmd'))
+        return s:restoreArgLead(s:fixPath(getcompletion(AL.ArgLead, 'shellcmd')), AL)
     endif
-    if match(ArgLead, '[/\\]') >= 0
-        return s:fixPath(split(glob(ArgLead . '*', 1), "\n"))
+    if match(AL.ArgLead, '[/\\]') >= 0
+        return s:restoreArgLead(s:fixPath(split(glob(AL.ArgLead . '*', 1), "\n")), AL)
     endif
 
     let map = {}
@@ -102,7 +119,7 @@ function! ZFJobCmdComplete_shellcmd(ArgLead, CmdLine, CursorPos)
         let pathList = split($PATH, ':')
     endif
     for path in pathList
-        let pattern = substitute(path, '\\', '/', 'g') . '/' . ArgLead . '*'
+        let pattern = substitute(path, '\\', '/', 'g') . '/' . AL.ArgLead . '*'
         let files = split(glob(pattern, 1), "\n")
         for file in files
             if !isdirectory(file)
@@ -113,14 +130,29 @@ function! ZFJobCmdComplete_shellcmd(ArgLead, CmdLine, CursorPos)
     return keys(map)
 endfunction
 
-function! ZFJobCmdComplete_file(ArgLead, CmdLine, CursorPos)
-    let ArgLead = s:fixArgLead(a:ArgLead)
-
+function! ZFJobCmdComplete_vimcmd(ArgLead, CmdLine, CursorPos)
+    let AL = s:fixArgLead(a:ArgLead)
     if exists('*getcompletion') && !get(g:, 'ZFJobCmdComplete_preferBuiltin', 0)
-        return s:fixPath(getcompletion(ArgLead, 'file'))
-    else
-        return s:fixPath(split(glob(ArgLead . '*', 1), "\n"))
+        return s:restoreArgLead(s:fixPath(getcompletion(AL.ArgLead, 'command')), AL)
     endif
+    return []
+endfunction
+
+function! ZFJobCmdComplete_file(ArgLead, CmdLine, CursorPos)
+    let AL = s:fixArgLead(a:ArgLead)
+    if exists('*getcompletion') && !get(g:, 'ZFJobCmdComplete_preferBuiltin', 0)
+        return s:restoreArgLead(s:fixPath(getcompletion(AL.ArgLead, 'file')), AL)
+    else
+        return s:restoreArgLead(s:fixPath(split(glob(AL.ArgLead . '*', 1), "\n")), AL)
+    endif
+endfunction
+
+function! s:cmdSplit(cmd)
+    let ret = []
+    for item in split(substitute(a:cmd, '\\ ', '_ZF_SPACE_ZF_', 'g'), ' ')
+        call add(ret, substitute(item, '_ZF_SPACE_ZF_', '\\ ', 'g'))
+    endfor
+    return ret
 endfunction
 
 function! s:fixPath(list)
@@ -138,15 +170,49 @@ function! s:fixPath(list)
     return ret
 endfunction
 
+" 'ls' => '' and 'ls'
+" 'ls ' => 'ls ' and ''
+" 'ls abc' => 'ls ' and 'abc'
+" 'ls c:' => 'ls ' and 'c:/'
+"
+" return: {
+"   'prefix' : '',
+"   'ArgLead' : '',
+" }
 function! s:fixArgLead(ArgLead)
-    if (has('win32') || has('win64'))
-        if match(a:ArgLead, '^[a-z]:$') >= 0
-            return a:ArgLead . '/'
-        else
-            return a:ArgLead
-        endif
-    else
-        return a:ArgLead
+    let tmp = s:cmdSplit(a:ArgLead)
+    if empty(tmp)
+        return {
+                    \   'prefix' : '',
+                    \   'ArgLead' : '',
+                    \ }
     endif
+    if a:ArgLead[len(a:ArgLead) - 1] == ' '
+        return {
+                    \   'prefix' : join(tmp, ' ') . ' ',
+                    \   'ArgLead' : '',
+                    \ }
+    endif
+
+    let ArgLead = tmp[len(tmp) - 1]
+    call remove(tmp, len(tmp) - 1)
+
+    if (has('win32') || has('win64'))
+                \ && match(ArgLead, '^[a-z]:$') >= 0
+        let ArgLead = ArgLead . '/'
+    endif
+
+    return {
+                \   'prefix' : !empty(tmp) ? join(tmp, ' ') . ' ' : '',
+                \   'ArgLead' : ArgLead,
+                \ }
+endfunction
+
+function! s:restoreArgLead(ret, AL)
+    let ret = []
+    for item in a:ret
+        call add(ret, a:AL.prefix . item)
+    endfor
+    return ret
 endfunction
 
