@@ -210,6 +210,7 @@ endfunction
 
 function! s:restoreArgLead(ret, AL)
     let ret = []
+    call add(ret, a:AL.prefix . a:AL.ArgLead)
     for item in a:ret
         call add(ret, a:AL.prefix . item)
     endfor
