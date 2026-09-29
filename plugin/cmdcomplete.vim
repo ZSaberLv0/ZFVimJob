@@ -212,7 +212,9 @@ function! s:restoreArgLead(ret, AL)
     let ret = []
     call add(ret, a:AL.prefix . a:AL.ArgLead)
     for item in a:ret
-        call add(ret, a:AL.prefix . item)
+        if item != a:AL.ArgLead
+            call add(ret, a:AL.prefix . item)
+        endif
     endfor
     return ret
 endfunction
