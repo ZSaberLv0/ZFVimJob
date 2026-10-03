@@ -237,7 +237,13 @@ function! s:fileWrite()
     if !s:ZFAutoScriptIsEnable
         return
     endif
-    let file = expand('<afile>:p')
+    let file = expand('%:p')
+    if !empty(file) && !filereadable(file)
+        let file = ''
+    endif
+    if empty(file)
+        let file = expand('<afile>:p')
+    endif
     if empty(file)
         return
     endif
