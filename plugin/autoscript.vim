@@ -242,6 +242,7 @@ function! s:fileWrite()
         return
     endif
     if !get(b:, 'ZFAutoScriptEnable', 1)
+                \ || exists('b:ZFTmpFileCustomAction')
         return
     endif
     let file = s:projDir(file)
